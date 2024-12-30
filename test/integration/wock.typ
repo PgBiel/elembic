@@ -1,4 +1,4 @@
-#import "/src/lib.typ": element
+#import "/src/lib.typ" as e: element
 
 #let (wock, wock-e) = element(
   "wock",
@@ -48,7 +48,7 @@
 
 #[
   #show wock-e.sel: it => {
-    let (body, fields) = (wock-e.show_)(it)
+    let (body, fields) = e.show_(it)
     [The color is #fields.at("color")]
 
     assert(fields.at("color") in (red, blue))
@@ -65,7 +65,7 @@
 
 #[
   #show selector.or(rect, wock-e.sel): it => {
-    let (body, fields, func) = (wock-e.show_)(it)
+    let (body, fields, func) = e.show_(it)
     if func == rect {
       [*We have a rect:* #body]
     } else if func == wock {
@@ -87,7 +87,7 @@
 *Querying:*
 
 #context {
-  let wocks = query(wock-e.sel).map(wock-e.show_)
+  let wocks = query(wock-e.sel).map(e.show_)
   let colors = wocks.map(e => e.fields.at("color", default: none)).dedup()
   [There are #wocks.len() wocks. We have #colors.len() colors: #colors]
 }

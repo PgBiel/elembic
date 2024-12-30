@@ -1,4 +1,4 @@
-#import "/src/lib.typ": element
+#import "/src/lib.typ" as e: element
 
 #let (wibble, wibble-e) = element(
   "wibble",
@@ -68,13 +68,13 @@
 
 #[
   #show selector.or(rect, wibble-e.sel, wobble-e.sel): it => {
-    let (body, fields, func) = (wibble-e.show_)(it)
+    let (body, fields, func) = e.show_(it)
     if func == rect {
       [*We have a rect:* #body]
     } else if func == wibble {
       [We have a wibble of color #fields.at("color"), inner #fields.at("inner"), and body #body]
     } else {
-      let (body, fields, func) = (wobble-e.show_)(it)
+      let (body, fields, func) = e.show_(it)
       if func == wobble {
         [We have a wobble of fill #fields.at("fill"), inner #fields.at("inner") and body #body]
       } else {
@@ -98,13 +98,13 @@
 *Querying:*
 
 #context {
-  let wibbles = query(wibble-e.sel).map(wibble-e.show_)
+  let wibbles = query(wibble-e.sel).map(e.show_)
   let colors = wibbles.map(e => e.fields.at("color", default: none)).dedup()
   [There are #wibbles.len() wibbles. We have #colors.len() colors: #colors]
 }
 
 #context {
-  let wobbles = query(wobble-e.sel).map(wobble-e.show_)
+  let wobbles = query(wobble-e.sel).map(e.show_)
   let fills = wobbles.map(e => e.fields.at("fill", default: none)).dedup()
   [There are #wobbles.len() wobbles. We have #fills.len() colors: #fills]
 }

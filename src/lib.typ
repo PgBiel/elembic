@@ -1,7 +1,33 @@
+// Prefix for the labels added to shown elements.
+#let lbl-show-head = "__custom_element_shown_"
+
+// Convert a custom element into a dictionary with (body, fields, func),
+// allowing you to access its fields and information when given content.
+//
+// When this is not a custom element, 'body' will be the given value,
+// 'fields' will be 'body.fields()' and 'func' will be 'body.func()'
+#let show_(it) = {
+    if type(it) != content {
+    // TODO: switch to dict
+    (body: it, fields: arguments(), func: none)
+  } else if str(it.at("label", default: "")).starts-with(lbl-show-head) and it.has("children") {
+    let data = it.children.at(1, default: (:)).at("value", default: (:))
+
+    // TODO: switch fields to dict
+    let body = data.at("body", default: it)
+    let fields = data.at("fields", default: arguments())
+    let func = data.at("func", default: it.func())
+
+    (body: body, fields: fields, func: func)
+  } else {
+    // TODO: switch to dict
+    (body: it, fields: arguments(..it.fields()), func: it.func())
+  }
+}
+
 // Create an element with the given name and constructor.
 #let element(name, constructor, prefix: "") = {
   let eid = prefix + "_" + name
-  let lbl-show-head = "__custom_element_shown_"
   let lbl-show = label(lbl-show-head + eid)
   let lbl-get = label("__custom_element_get_" + eid)
   let lbl-where(n) = label("__custom_element_where_" + str(n) + eid)
@@ -47,34 +73,6 @@
     receiver(defaults.args)
   }#lbl-get]
 
-  // "Apply show rules" to a placed element of this kind.
-  // Basically, takes the output of the modified constructor,
-  // of the form [#body#tag], and returns
-  // '(body: tag.value.body, fields: tag.value.fields)'.
-  //
-  // If 'it' is not an element of this kind, returns
-  // '(body: it, fields: none)' to indicate that this
-  // is not an element of this kind, however still allow
-  // just returning '.body' to keep the element unchanged.
-  let show-rule = it => {
-    if type(it) != content {
-      // TODO: switch to dict
-      (body: it, fields: arguments(), func: none)
-    } else if it.at("label", default: none) == lbl-show and it.has("children") {
-      let data = it.children.at(1, default: (:)).at("value", default: (:))
-
-      // TODO: switch fields to dict
-      let body = data.at("body", default: it)
-      let fields = data.at("fields", default: arguments())
-      let func = data.at("func", default: it.func())
-
-      (body: body, fields: fields, func: func)
-    } else {
-      // TODO: switch to dict
-      (body: it, fields: arguments(..it.fields()), func: it.func())
-    }
-  }
-
   // Prepare a 'element.where(..args)' selector which
   // can be used in "show sel: set". This works by applying
   // a show rule to all element instances and, if they
@@ -94,7 +92,7 @@
 
     // Add unique matching label to all found elements
     show lbl-show: it => {
-      let (fields,) = show-rule(it)
+      let (fields,) = show_(it)
 
       // Check if all positional and named arguments match
       if fields != none and fields.pos().slice(0, args.pos().len()) == pos {
@@ -123,7 +121,6 @@
       func: modified-constructor,
       set_: set-rule,
       get: get-rule,
-      show_: show-rule,
       where: where-rule,
       sel: lbl-show
     )
