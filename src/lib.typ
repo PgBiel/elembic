@@ -46,7 +46,7 @@
     where-rule-count: 0,
 
     // The current accumulated styles (default arguments) for the element.
-    args: arguments(),
+    args: (),
   )
 
   let modified-constructor(..args) = context {
@@ -56,7 +56,7 @@
 
       let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
   
-      let args = arguments(..defaults.args, ..args)
+      let args = arguments(..defaults.args.fold(arguments(), (a, b) => arguments(..a, ..b)), ..args)
       let body = constructor(..args)
       let tag = [#metadata((body: body, fields: args, func: modified-constructor))]
   
@@ -70,7 +70,7 @@
       let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
 
       set bibliography(title: previous-bib-title)
-      show lbl-get: set bibliography(title: [#metadata((..defaults, args: arguments(..defaults.args, ..args)))#lbl-get])
+      show lbl-get: set bibliography(title: [#metadata((..defaults, args: (..defaults.args, args)))#lbl-get])
       doc
     }#lbl-get]
   }
@@ -81,7 +81,7 @@
       let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
 
       set bibliography(title: previous-bib-title)
-      receiver(defaults.args)
+      receiver(defaults.args.fold(arguments(), (a, b) => arguments(..a, ..b)))
     }#lbl-get]
   }
 
