@@ -18,12 +18,12 @@
 #wobble()
 
 #[
-  #show: (wibble-e.set_)(color: blue)
+  #show: e.set_(wibble-e, color: blue)
 
   #wibble()
   #wobble()
 
-  #show: (wobble-e.set_)(fill: yellow)
+  #show: e.set_(wobble-e, fill: yellow)
 
   #wibble()
   #wobble()
@@ -32,13 +32,13 @@
   #(wobble-e.get)(v => assert.eq(v.at("fill"), yellow))
 
   #[
-    #show: (wibble-e.set_)(inner: [Buh bye!])
+    #show: e.set_(wibble-e, inner: [Buh bye!])
 
     #(wibble-e.get)(v => assert.eq(v.at("inner"), [Buh bye!]))
     #(wibble-e.get)(v => v)
 
     #[
-      #show: (wobble-e.set_)(inner: [Dance!])
+      #show: e.set_(wobble-e, inner: [Dance!])
       #(wobble-e.get)(v => assert.eq(v.at("inner"), [Dance!]))
       #(wobble-e.get)(v => v)
 
@@ -49,7 +49,7 @@
   ]
 
   #[
-    #show: (wibble-e.set_)(color: green)
+    #show: e.set_(wibble-e, color: green)
     #(wibble-e.get)(v => assert.eq(v.at("color"), green))
   ]
 

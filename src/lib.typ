@@ -25,6 +25,12 @@
   }
 }
 
+#let set_(elem, ..fields) = {
+  assert(type(elem) != function, message: "Specify the element's dictionary, not the constructor function (e.g. wibble-e, which contains 'func' and other properties, rather than the wibble function).")
+
+  (elem.set_)(..fields)
+}
+
 // Create an element with the given name and constructor.
 #let element(name, constructor, prefix: "") = {
   let eid = prefix + "_" + name

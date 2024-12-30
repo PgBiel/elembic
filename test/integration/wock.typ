@@ -10,14 +10,14 @@
 #wock()
 
 #[
-  #show: (wock-e.set_)(color: blue)
+  #show: e.set_(wock-e, color: blue)
 
   #wock()
 
   #(wock-e.get)(v => assert.eq(v.at("color"), blue))
 
   #[
-    #show: (wock-e.set_)(inner: [Buh bye!])
+    #show: e.set_(wock-e, inner: [Buh bye!])
 
     #(wock-e.get)(v => assert.eq(v.at("inner"), [Buh bye!]))
     #(wock-e.get)(v => v)
@@ -26,7 +26,7 @@
   ]
 
   #[
-    #show: (wock-e.set_)(color: green)
+    #show: e.set_(wock-e, color: green)
     #(wock-e.get)(v => assert.eq(v.at("color"), green))
   ]
 
