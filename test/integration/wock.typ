@@ -65,10 +65,10 @@
 
 #[
   #show selector.or(rect, wock-e.sel): it => {
-    let (body, fields) = (wock-e.show_)(it)
-    if fields == none and it.func() == rect {
+    let (body, fields, func) = (wock-e.show_)(it)
+    if func == rect {
       [*We have a rect:* #body]
-    } else if fields != none {
+    } else if func == wock {
       [We have a wock of color #fields.at("color"), inner #fields.at("inner"), and body #body]
     } else {
       panic("Bad")

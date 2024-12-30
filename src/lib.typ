@@ -1,7 +1,8 @@
 // Create an element with the given name and constructor.
 #let element(name, constructor, prefix: "") = {
   let eid = prefix + "_" + name
-  let lbl-show = label("__custom_element_shown_" + eid)
+  let lbl-show-head = "__custom_element_shown_"
+  let lbl-show = label(lbl-show-head + eid)
   let lbl-get = label("__custom_element_get_" + eid)
   let lbl-where(n) = label("__custom_element_where_" + str(n) + eid)
 
@@ -24,7 +25,7 @@
 
     let args = arguments(..defaults.args, ..args)
     let body = constructor(..args)
-    let tag = [#metadata((body: body, fields: args))]
+    let tag = [#metadata((body: body, fields: args, func: modified-constructor))]
 
     [#[#body#tag]#lbl-show]
   }#lbl-get]
@@ -56,13 +57,21 @@
   // is not an element of this kind, however still allow
   // just returning '.body' to keep the element unchanged.
   let show-rule = it => {
-    if it.at("label", default: none) == lbl-show and it.has("children") {
+    if type(it) != content {
+      // TODO: switch to dict
+      (body: it, fields: arguments(), func: none)
+    } else if it.at("label", default: none) == lbl-show and it.has("children") {
       let data = it.children.at(1, default: (:)).at("value", default: (:))
+
+      // TODO: switch fields to dict
       let body = data.at("body", default: it)
-      let fields = data.at("fields", default: none)
-      (body: body, fields: fields)
+      let fields = data.at("fields", default: arguments())
+      let func = data.at("func", default: it.func())
+
+      (body: body, fields: fields, func: func)
     } else {
-      (body: it, fields: none)
+      // TODO: switch to dict
+      (body: it, fields: arguments(..it.fields()), func: it.func())
     }
   }
 

@@ -68,14 +68,14 @@
 
 #[
   #show selector.or(rect, wibble-e.sel, wobble-e.sel): it => {
-    let (body, fields) = (wibble-e.show_)(it)
-    if fields == none and it.func() == rect {
+    let (body, fields, func) = (wibble-e.show_)(it)
+    if func == rect {
       [*We have a rect:* #body]
-    } else if fields != none {
+    } else if func == wibble {
       [We have a wibble of color #fields.at("color"), inner #fields.at("inner"), and body #body]
     } else {
-      let (body, fields) = (wobble-e.show_)(it)
-      if fields != none {
+      let (body, fields, func) = (wobble-e.show_)(it)
+      if func == wobble {
         [We have a wobble of fill #fields.at("fill"), inner #fields.at("inner") and body #body]
       } else {
         panic("Unknown element")
