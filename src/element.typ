@@ -1,4 +1,4 @@
-#import "field-internals.typ"
+#import "fields.typ" as field-internals
 
 // Prefix for the labels added to shown elements.
 #let lbl-show-head = "__custom_element_shown_"
