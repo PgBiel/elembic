@@ -1,13 +1,13 @@
 #import "/src/lib.typ": element
 
-#let (wibble, set-wibble, get-wibble, show-wibble, wibble-sel) = element(
+#let (wibble, wibble-e) = element(
   "wibble",
   (color: red, inner: [Wibble!]) => {
     text(color)[#inner]
   }
 )
 
-#let (wobble, set-wobble, get-wobble, show-wobble, wobble-sel) = element(
+#let (wobble, wobble-e) = element(
   "wobble",
   (fill: orange, inner: [Wobble...]) => {
     rect(fill: fill, inner)
@@ -18,29 +18,29 @@
 #wobble()
 
 #[
-  #show: set-wibble(color: blue)
+  #show: (wibble-e.set_)(color: blue)
 
   #wibble()
   #wobble()
 
-  #show: set-wobble(fill: yellow)
+  #show: (wobble-e.set_)(fill: yellow)
 
   #wibble()
   #wobble()
 
-  #get-wibble(v => assert.eq(v.at("color"), blue))
-  #get-wobble(v => assert.eq(v.at("fill"), yellow))
+  #(wibble-e.get)(v => assert.eq(v.at("color"), blue))
+  #(wobble-e.get)(v => assert.eq(v.at("fill"), yellow))
 
   #[
-    #show: set-wibble(inner: [Buh bye!])
+    #show: (wibble-e.set_)(inner: [Buh bye!])
 
-    #get-wibble(v => assert.eq(v.at("inner"), [Buh bye!]))
-    #get-wibble(v => v)
+    #(wibble-e.get)(v => assert.eq(v.at("inner"), [Buh bye!]))
+    #(wibble-e.get)(v => v)
 
     #[
-      #show: set-wobble(inner: [Dance!])
-      #get-wobble(v => assert.eq(v.at("inner"), [Dance!]))
-      #get-wobble(v => v)
+      #show: (wobble-e.set_)(inner: [Dance!])
+      #(wobble-e.get)(v => assert.eq(v.at("inner"), [Dance!]))
+      #(wobble-e.get)(v => v)
 
       #wobble()
     ]
@@ -49,11 +49,11 @@
   ]
 
   #[
-    #show: set-wibble(color: green)
-    #get-wibble(v => assert.eq(v.at("color"), green))
+    #show: (wibble-e.set_)(color: green)
+    #(wibble-e.get)(v => assert.eq(v.at("color"), green))
   ]
 
-  #get-wibble(v => assert.eq(v.at("color"), blue))
+  #(wibble-e.get)(v => assert.eq(v.at("color"), blue))
   #wibble()
 
   #wibble(color: yellow)
@@ -67,14 +67,14 @@
 ---
 
 #[
-  #show selector.or(rect, wibble-sel, wobble-sel): it => {
-    let (body, fields) = show-wibble(it)
+  #show selector.or(rect, wibble-e.sel, wobble-e.sel): it => {
+    let (body, fields) = (wibble-e.show_)(it)
     if fields == none and it.func() == rect {
       [*We have a rect:* #body]
     } else if fields != none {
       [We have a wibble of color #fields.at("color"), inner #fields.at("inner"), and body #body]
     } else {
-      let (body, fields) = show-wobble(it)
+      let (body, fields) = (wobble-e.show_)(it)
       if fields != none {
         [We have a wobble of fill #fields.at("fill"), inner #fields.at("inner") and body #body]
       } else {
@@ -98,13 +98,63 @@
 *Querying:*
 
 #context {
-  let wibbles = query(wibble-sel).map(show-wibble)
+  let wibbles = query(wibble-e.sel).map(wibble-e.show_)
   let colors = wibbles.map(e => e.fields.at("color", default: none)).dedup()
   [There are #wibbles.len() wibbles. We have #colors.len() colors: #colors]
 }
 
 #context {
-  let wobbles = query(wobble-sel).map(show-wobble)
+  let wobbles = query(wobble-e.sel).map(wobble-e.show_)
   let fills = wobbles.map(e => e.fields.at("fill", default: none)).dedup()
   [There are #wobbles.len() wobbles. We have #fills.len() colors: #fills]
 }
+
+#pagebreak(weak: true)
+
+= Show-set
+
+#set text(11pt)
+
+#wibble()
+#wobble()
+
+#[
+  #show wibble-e.sel: set text(2em)
+  Normal
+  #wibble(inner: [Big])
+  #wobble(inner: [Normal])
+]
+
+#[
+  #show wobble-e.sel: set text(2em)
+  Normal
+  #wibble(inner: [Normal])
+  #wobble(inner: [Big])
+]
+
+#wibble()
+#wobble()
+
+#(wibble-e.where)(color: green, green-wibble => (wibble-e.where)(color: blue, blue-wibble => (wobble-e.where)(fill: green, green-wobble => [
+  #show green-wibble: set text(6pt)
+  #show blue-wibble: set text(22pt)
+  #show green-wobble: set text(32pt)
+
+  #wibble()
+
+  #wibble(color: green)
+  #wibble(color: blue)
+  #wobble(fill: green)
+
+  #wibble(color: green, inner: context { assert.eq(text.size, 6pt) })
+  #wibble(color: blue, inner: context { assert.eq(text.size, 22pt) })
+  #wobble(fill: green, inner: context { assert.eq(text.size, 32pt) })
+])))
+
+#wibble(color: green)
+#wibble(color: blue)
+#wobble(fill: green)
+
+#wibble(color: green, inner: context { assert.eq(text.size, 11pt) })
+#wibble(color: blue, inner: context { assert.eq(text.size, 11pt) })
+#wobble(fill: green, inner: context { assert.eq(text.size, 11pt) })

@@ -1,6 +1,6 @@
 #import "/src/lib.typ": element
 
-#let (wock, set-wock, get-wock, show-wock, wock-sel) = element(
+#let (wock, wock-e) = element(
   "wock",
   (color: red, inner: [Hello!]) => {
     text(color)[#inner]
@@ -10,27 +10,27 @@
 #wock()
 
 #[
-  #show: set-wock(color: blue)
+  #show: (wock-e.set_)(color: blue)
 
   #wock()
 
-  #get-wock(v => assert.eq(v.at("color"), blue))
+  #(wock-e.get)(v => assert.eq(v.at("color"), blue))
 
   #[
-    #show: set-wock(inner: [Buh bye!])
+    #show: (wock-e.set_)(inner: [Buh bye!])
 
-    #get-wock(v => assert.eq(v.at("inner"), [Buh bye!]))
-    #get-wock(v => v)
+    #(wock-e.get)(v => assert.eq(v.at("inner"), [Buh bye!]))
+    #(wock-e.get)(v => v)
 
     #wock()
   ]
 
   #[
-    #show: set-wock(color: green)
-    #get-wock(v => assert.eq(v.at("color"), green))
+    #show: (wock-e.set_)(color: green)
+    #(wock-e.get)(v => assert.eq(v.at("color"), green))
   ]
 
-  #get-wock(v => assert.eq(v.at("color"), blue))
+  #(wock-e.get)(v => assert.eq(v.at("color"), blue))
   #wock()
 
   #wock(color: yellow)
@@ -47,8 +47,8 @@
 #wock()
 
 #[
-  #show wock-sel: it => {
-    let (body, fields) = show-wock(it)
+  #show wock-e.sel: it => {
+    let (body, fields) = (wock-e.show_)(it)
     [The color is #fields.at("color")]
 
     assert(fields.at("color") in (red, blue))
@@ -64,8 +64,8 @@
 ---
 
 #[
-  #show selector.or(rect, wock-sel): it => {
-    let (body, fields) = show-wock(it)
+  #show selector.or(rect, wock-e.sel): it => {
+    let (body, fields) = (wock-e.show_)(it)
     if fields == none and it.func() == rect {
       [*We have a rect:* #body]
     } else if fields != none {
@@ -87,7 +87,42 @@
 *Querying:*
 
 #context {
-  let wocks = query(wock-sel).map(show-wock)
+  let wocks = query(wock-e.sel).map(wock-e.show_)
   let colors = wocks.map(e => e.fields.at("color", default: none)).dedup()
   [There are #wocks.len() wocks. We have #colors.len() colors: #colors]
 }
+
+#pagebreak(weak: true)
+
+= Show-set
+
+#set text(11pt)
+
+#wock()
+
+#[
+  #show wock-e.sel: set text(2em)
+  Normal
+  #wock(inner: [Big])
+]
+
+#wock()
+
+#(wock-e.where)(color: green, green-wock => (wock-e.where)(color: blue, blue-wock => [
+  #show green-wock: set text(6pt)
+  #show blue-wock: set text(22pt)
+
+  #wock()
+
+  #wock(color: green)
+  #wock(color: blue)
+
+  #wock(color: green, inner: context { assert.eq(text.size, 6pt) })
+  #wock(color: blue, inner: context { assert.eq(text.size, 22pt) })
+]))
+
+#wock(color: green)
+#wock(color: blue)
+
+#wock(color: green, inner: context { assert.eq(text.size, 11pt) })
+#wock(color: blue, inner: context { assert.eq(text.size, 11pt) })
