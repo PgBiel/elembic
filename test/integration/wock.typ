@@ -1,10 +1,15 @@
-#import "/src/lib.typ" as e: element
+#import "/src/lib.typ" as e: element, fields
+#import fields: field
 
 #let (wock, wock-e) = element(
   "wock",
-  (color: red, inner: [Hello!]) => {
-    text(color)[#inner]
-  }
+  it => {
+    text(it.color)[#it.inner]
+  },
+  fields: (
+    field("color", color, default: red),
+    field("inner", content, default: [Hello!])
+  )
 )
 
 #wock()

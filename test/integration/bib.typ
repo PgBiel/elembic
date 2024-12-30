@@ -1,13 +1,18 @@
-#import "/src/lib.typ" as e: element
+#import "/src/lib.typ" as e: element, fields
+#import fields: field
 
 #set bibliography(title: [Custom Title])
 
 #let (wock, wock-e) = element(
   "wock",
-  (color: red, inner: [Hello!]) => {
+  it => {
     context assert.eq(bibliography.title, [Custom Title])
-    text(color)[#inner]
-  }
+    text(it.color)[#it.inner]
+  },
+  fields: (
+    field("color", color, default: red),
+    field("inner", content, default: [Hello!])
+  )
 )
 
 #[

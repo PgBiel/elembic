@@ -1,17 +1,26 @@
-#import "/src/lib.typ" as e: element
+#import "/src/lib.typ" as e: element, fields
+#import fields: field
 
 #let (wibble, wibble-e) = element(
   "wibble",
-  (color: red, inner: [Wibble!]) => {
-    text(color)[#inner]
-  }
+  it => {
+    text(it.color)[#it.inner]
+  },
+  fields: (
+    field("color", color, default: red),
+    field("inner", content, default: [Wibble!])
+  )
 )
 
 #let (wobble, wobble-e) = element(
   "wobble",
-  (fill: orange, inner: [Wobble...]) => {
-    rect(fill: fill, inner)
-  }
+  it => {
+    rect(fill: it.fill, it.inner)
+  },
+  fields: (
+    field("fill", color, default: orange),
+    field("inner", content, default: [Wobble...])
+  )
 )
 
 #wibble()
