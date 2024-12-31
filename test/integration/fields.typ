@@ -1,5 +1,4 @@
-#import "/src/lib.typ" as e: element, fields
-#import fields: field
+#import "/src/lib.typ" as e: element, field, types
 
 #let (door, door-e) = element(
   "door",
@@ -9,13 +8,21 @@
   fields: (
     field("color", color, required: true),
     field("backcolor", color, required: true),
-    field("extracolor", fields.option(color), named: false),
-    field("sign", fields.smart(content)),
-    field("name", fields.option(content)),
-    field("family", fields.union(int, str), default: 5),
+    field("extracolor", types.option(color), named: false),
+    field("sign", types.smart(content)),
+    field("name", types.option(content)),
+    field("family", types.union(int, str), default: 5),
     field("cool", bool, required: true, named: true),
     field("sad", bool, required: true, named: true),
-    field("verysad", fields.union(bool), named: true, default: true),
+    field("verysad", types.union(bool), named: true, default: true),
+    field("fruit", types.union(types.literal("bana"), types.literal("nana")), default: "nana"),
+    field("real-quantity", types.union(float, content), default: 5.5),
+    field("quantity", types.exact(types.union(float, content)), default: 5.5),
+    field("quantity-lit", types.exact(types.literal(10)), default: 10),
+    field("anything", types.exact(types.any), default: 50),
+    field("nothing", types.option(types.never), default: none),
+    field("somethings", array, default: (5, 4)),
+    field("matype", type, default: int),
   )
 )
 
@@ -33,3 +40,9 @@
   door(red, blue, cool: true, sad: false)
   door(red, blue, green, cool: true, sad: true)
 })
+
+// Test casting
+#door(red, blue, cool: true, sad: false, real-quantity: 5)
+#door(red, blue, cool: true, sad: false, real-quantity: "abc")
+#door(red, blue, cool: true, sad: false, quantity: 5.5)
+#door(red, blue, cool: true, sad: false, anything: (a: 5))

@@ -1,2 +1,3 @@
 #import "element.typ": set_, show_, element
-#import "pub/fields.typ"
+#import "fields.typ": field
+#import "pub/types.typ"

@@ -1,3 +1,4 @@
+#import "types/types.typ"
 #import "fields.typ" as field-internals
 
 // Prefix for the labels added to shown elements.
@@ -74,7 +75,7 @@
     for (value, pos-field) in pos.zip(if include-required { required-pos-fields } else { optional-pos-fields }) {
       result.insert(
         pos-field.name,
-        field-internals.unwrap-type-accept(value, pos-field.typeinfo, error-prefix: "field '" + pos-field.name + "' of element '" + name + "': ")
+        types.force-cast(value, pos-field.typeinfo, error-prefix: "field '" + pos-field.name + "' of element '" + name + "': ")
       )
     }
 
@@ -84,7 +85,7 @@
       for (value, optional-pos-field) in pos.slice(required-pos-fields-amount).zip(optional-pos-fields) {
         result.insert(
           optional-pos-field.name,
-          field-internals.unwrap-type-accept(value, optional-pos-field.typeinfo, error-prefix: "field '" + optional-pos-field.name + "' of element '" + name + "': ")
+          types.force-cast(value, optional-pos-field.typeinfo, error-prefix: "field '" + optional-pos-field.name + "' of element '" + name + "': ")
         )
       }
     }
@@ -105,7 +106,7 @@
 
       result.insert(
         field-name,
-        field-internals.unwrap-type-accept(value, field.typeinfo, error-prefix: "field '" + field-name + "' of element '" + name + "': ")
+        types.force-cast(value, field.typeinfo, error-prefix: "field '" + field-name + "' of element '" + name + "': ")
       )
     }
 
