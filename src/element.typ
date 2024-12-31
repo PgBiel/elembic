@@ -10,21 +10,15 @@
 // When this is not a custom element, 'body' will be the given value,
 // 'fields' will be 'body.fields()' and 'func' will be 'body.func()'
 #let show_(it) = {
-    if type(it) != content {
-    // TODO: switch to dict
-    (body: it, fields: arguments(), func: none)
-  } else if str(it.at("label", default: "")).starts-with(lbl-show-head) and it.has("children") {
-    let data = it.children.at(1, default: (:)).at("value", default: (:))
-
-    // TODO: switch fields to dict
-    let body = data.at("body", default: it)
-    let fields = data.at("fields", default: arguments())
-    let func = data.at("func", default: it.func())
-
-    (body: body, fields: fields, func: func)
+  if type(it) != content {
+    (body: it, fields: (:), func: none)
+  } else if (
+    it.has("label")
+    and str(it.label).starts-with(lbl-show-head)
+  ) {
+    it.at("children", default: ()).at(1, default: (:)).at("value", default: (body: it, fields: (:), func: none))
   } else {
-    // TODO: switch to dict
-    (body: it, fields: arguments(..it.fields()), func: it.func())
+    (body: it, fields: it.fields(), func: it.func())
   }
 }
 
