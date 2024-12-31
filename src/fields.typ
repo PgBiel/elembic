@@ -54,79 +54,179 @@
   )
 }
 
+// ARG PARSING CODE GENERATION
+// Assuming 'pos' are positional args and 'named' are named args
+// {n} is field number
+// t{n} has field typeinfo and f{n} has field name
+
+// How to retrieve a required named field?
+#let required-named-field-template = ```typ
+
+  value = named.remove(f{n})
+  result.insert(f{n}, force-cast(value, t{n}, error-prefix: "field '" + f{n} + "' of element '" + name + "': "))
+```.text
+
+// How to retrieve an optional named field?
+#let optional-named-field-template = ```typ
+
+  if f{n} in named {
+    value = named.remove(f{n})
+    result.insert(f{n}, force-cast(value, t{n}, error-prefix: "field '" + f{n} + "' of element '" + name + "': "))
+  }
+```.text
+
+// How to retrieve a required positional field?
+#let required-pos-field-template = ```typ
+
+  value = pos.pop()
+  result.insert(f{n}, force-cast(value, t{n}, error-prefix: "field '" + f{n} + "' of element '" + name + "': "))
+```.text
+
+// How to retrieve an optional positional field?
+#let optional-pos-field-template = ```typ
+
+  if pos.len() != 0 {
+    value = pos.pop()
+    result.insert(f{n}, force-cast(value, t{n}, error-prefix: "field '" + f{n} + "' of element '" + name + "': "))
+  }
+```.text
+
+// Prologue for 'parse-args-required' function
+// This function receives arguments which are then parsed into a 'result'
+// dictionary containing fields. Required fields are enforced and must be
+// present. This is used for an element's constructor.
+#let parse-args-required-prologue = ```typc
+let parse-args-required(args) = {
+  let pos = args.pos().rev()
+  let named = args.named()
+  let value = none
+  let result = (:)
+
+  if pos.len() < {required} {
+    // Plural
+    let s = if {required} - pos.len() == 1 { "" } else { "s" }
+
+    assert(false, message: "element '" + name + "': missing positional field" + s + " " + required-pos-names.slice(pos.len()).map(f => "'" + f + "'").join(", "))
+  }
+
+  if pos.len() > {total} {
+    assert(false, message: "element '" + name + "': too many positional arguments, expected {total}")
+  }
+
+```.text
+
+#let parse-args-required-epilogue = ```typc
+
+  if named != (:) {
+    let field-name = named.keys().first()
+
+    assert(false, message: "element '" + name + "': unknown named field '" + field-name + "'")
+  }
+
+  result
+}
+
+parse-args-required
+```.text
+
+#let parse-args-not-required-prologue = ```typc
+let parse-args-not-required(args) = {
+  let pos = args.pos().rev()
+  let named = args.named()
+  let value = none
+  let result = (:)
+
+  if pos.len() > {optional} {
+    assert(false, message: "element '" + name + "': too many positional arguments, expected {optional}\nhint: only optional fields are accepted here")
+  }
+```.text
+
+#let parse-args-not-required-epilogue = ```typc
+
+  if named != (:) {
+    let field-name = named.keys().first()
+
+    assert(false, message: "element '" + name + "': unknown named field '" + field-name + "'")
+  }
+
+  result
+}
+
+parse-args-not-required
+```.text
+
+#let check-for-missing-required-names-template = ```typc
+
+  if {condition} {
+    let missing-fields = required-named-names.filter(f => f not in named)
+    let s = if missing-fields.len() == 1 { "" } else { "s" }
+
+    assert(false, message: "element '" + name + "': missing required named field" + s + " " + missing-fields.map(f => "'" + f + "'").join(", "))
+  }
+```.text
+
+#let check-for-present-required-names-template = ```typc
+
+  if {condition} {
+    let present-fields = required-named-names.filter(f => f in named)
+    let s = if present-fields.len() == 1 { "" } else { "s" }
+    let are = if present-fields.len() == 1 { "is" } else { "are" }
+
+    assert(false, message: "element '" + name + "': the field" + s + " " + present-fields.map(f => "'" + f + "'").join(", ") + " " + are + " required and cannot be specified here")
+  }
+```.text
+
+#let generate-parser-for-field(required, named, n) = {
+  let n = str(n)
+  if required {
+    if named {
+      required-named-field-template.replace("{n}", n)
+    } else {
+      required-pos-field-template.replace("{n}", n)
+    }
+  } else if named {
+    optional-named-field-template.replace("{n}", n)
+  } else {
+    optional-pos-field-template.replace("{n}", n)
+  }
+}
+
 #let parse-fields(fields, name: "") = {
   let required-pos-fields = ()
   let optional-pos-fields = ()
   let required-named-fields = ()
+  let required-named-field-indices = ()
   let all-fields = (:)
 
-  let parse-required-pos-fields = ""
-  let parse-optional-pos-fields-with-required = ""
-  let parse-optional-pos-fields-without-required = ""
-  let parse-required-named-fields-with-required = ""
-  let parse-required-named-fields-without-required = ""
-  let parse-non-required-named-fields = ""
-
-  let escaped-required-names = ()
+  let field-parsers-with-required = ""
+  let field-parsers-without-required = ""
 
   let function-scope = (name: name)
-  let i = 0
-  let j = 0
   let n = 0
   for field in fields {
     assert(type(field) == dictionary and field.at(field-key, default: none) == true, message: "element.fields: Invalid field received, please use the 'e.fields.field' constructor.")
     assert(field.named or not field.required or optional-pos-fields == (), message: "element.fields: field '" + field.name + "' cannot be positional and required and appear after other positional but optional fields. Ensure there are only optional fields after the first positional optional field.")
     assert(field.name not in all-fields, message: "element.fields: duplicate field name '" + field.name + "'")
 
-    let escaped-name = repr(field.name).trim("\"", repeat: false)
     if field.required {
       if field.named {
+        required-named-field-indices.push(str(n))
         required-named-fields.push(field)
-
-        escaped-required-names.push("\"" + escaped-name + "\"")
-
-        // No need for an 'if', we will check for all required names at once first
-        parse-required-named-fields-with-required += "\n" + ```typ
-    value = named.remove("{f}")
-    result.insert("{f}", force-cast(value, typeinfo{n}, error-prefix: "field '{f}' of element '" + name + "': "))
-```.text.replace("{n}", str(n)).replace("{f}", escaped-name)
-
-        parse-required-named-fields-without-required += "\n" + ```typ
-    if "{f}" in named {
-      assert(false, message: "element '" + name + "': field '{f}' cannot be specified here\nhint: only optional fields are accepted here")
-    }
-```.text.replace("{f}", escaped-name)
       } else {
-        parse-required-pos-fields += "\n" + ```typ
-    value = pos.pop()
-    result.insert("{f}", force-cast(value, typeinfo{n}, error-prefix: "field '{f}' of element '" + name + "': "))
-```.text.replace("{n}", str(n)).replace("{f}", escaped-name)
         required-pos-fields.push(field)
-        i += 1
       }
     } else if not field.named {
-      let index = i + j
       optional-pos-fields.push(field)
-      let get-field-code = "\n" + ```typ
-    if pos.len() != 0 {
-      value = pos.pop()
-      result.insert("{f}", force-cast(value, typeinfo{n}, error-prefix: "field '{f}' of element '" + name + "': "))
-    }
-```.text.replace("{n}", str(n)).replace("{f}", escaped-name)
-
-      parse-optional-pos-fields-with-required += get-field-code
-      parse-optional-pos-fields-without-required += get-field-code
-      j += 1
-    } else {
-      parse-non-required-named-fields += "\n" + ```typ
-    if "{f}" in named {
-      value = named.remove("{f}")
-      result.insert("{f}", force-cast(value, typeinfo{n}, error-prefix: "field '{f}' of element '" + name + "': "))
-    }
-```.text.replace("{n}", str(n)).replace("{f}", escaped-name)
     }
 
-    function-scope.insert("typeinfo" + str(n), field.typeinfo)
+    let field-parser = generate-parser-for-field(field.required, field.named, n)
+    field-parsers-with-required += field-parser
+    if not field.required {
+      field-parsers-without-required += field-parser
+    }
+
+    function-scope.insert("t" + str(n), field.typeinfo)
+    function-scope.insert("f" + str(n), field.name)
     all-fields.insert(field.name, field)
 
     n += 1
@@ -135,100 +235,33 @@
   let check-for-missing-required-names = ""
   let check-for-present-required-names = ""
 
-  if escaped-required-names != () {
+  if required-named-field-indices != () {
     // "field1" not in named or "field2" not in named
-    let conditional-escaped-required-names-not-present = escaped-required-names.map(f => f + " not in named").join(" or ")
+    let conditional-escaped-required-names-not-present = required-named-field-indices.map(f => "f" + f + " not in named").join(" or ")
     // "field1" in named or "field2" in named
-    let conditional-escaped-required-names-present = escaped-required-names.map(f => f + " in named").join(" or ")
+    let conditional-escaped-required-names-present = required-named-field-indices.map(f => "f" + f + " in named").join(" or ")
 
-    check-for-missing-required-names = ```typ
-      if {condition} {
-        let missing-fields = required-named-names.filter(f => f not in named)
-        let s = if missing-fields.len() == 1 { "" } else { "s" }
+    check-for-missing-required-names = check-for-missing-required-names-template.replace("{condition}", conditional-escaped-required-names-not-present)
 
-        assert(false, message: "element '" + name + "': missing required named field" + s + " " + missing-fields.map(f => "'" + f + "'").join(", "))
-      }
-  ```.text.replace("{condition}", conditional-escaped-required-names-not-present)
-
-    check-for-present-required-names = ```typ
-    if {condition} {
-      let present-fields = required-named-names.filter(f => f in named)
-      let s = if present-fields.len() == 1 { "" } else { "s" }
-      let are = if present-fields.len() == 1 { "is" } else { "are" }
-
-      assert(false, message: "element '" + name + "': the field" + s + " " + present-fields.map(f => "'" + f + "'").join(", ") + " " + are + " required and cannot be specified here")
-    }
-```.text.replace("{condition}", conditional-escaped-required-names-present)
+    check-for-present-required-names = check-for-present-required-names-template.replace("{condition}", conditional-escaped-required-names-present)
   }
 
   let required-pos-fields-amount = required-pos-fields.len()
   let optional-pos-fields-amount = optional-pos-fields.len()
   let total-pos-fields-amount = required-pos-fields-amount + optional-pos-fields-amount
-  let parse-function-required = ```typ
-  (args) => {
-    let pos = args.pos().rev()
-    let named = args.named()
-    let value = none
-    let result = (:)
+  let parse-args-required-src = (
+    parse-args-required-prologue.replace("{required}", str(required-pos-fields-amount)).replace("{total}", str(total-pos-fields-amount))
+    + check-for-missing-required-names
+    + field-parsers-with-required
+    + parse-args-required-epilogue
+  )
 
-    if pos.len() < {required} {
-      // Plural
-      let s = if {required} - pos.len() == 1 { "" } else { "s" }
-
-      assert(false, message: "element '" + name + "': missing positional field" + s + " " + required-pos-names.slice(pos.len()).map(f => "'" + f + "'").join(", "))
-    }
-
-    if pos.len() > {total} {
-      assert(false, message: "element '" + name + "': too many positional arguments, expected {total}")
-    }
-```.text.replace("{required}", str(required-pos-fields-amount)).replace("{total}", str(total-pos-fields-amount))
-
-  parse-function-required += "\n" + check-for-missing-required-names
-  parse-function-required += "\n" + parse-required-pos-fields
-  parse-function-required += "\n" + parse-optional-pos-fields-with-required
-  parse-function-required += "\n" + parse-required-named-fields-with-required
-  parse-function-required += "\n" + parse-non-required-named-fields
-
-  parse-function-required += "\n" + ```typ
-    if named != (:) {
-      let field-name = named.keys().first()
-
-      assert(false, message: "element '" + name + "': unknown named field '" + field-name + "'")
-    }
-
-    result
-  }
-```.text
-
-
-  let parse-function-not-required = ```typ
-  (args) => {
-    let pos = args.pos().rev()
-    let named = args.named()
-    let value = none
-    let result = (:)
-
-    if pos.len() > {optional} {
-      assert(false, message: "element '" + name + "': too many positional arguments, expected {optional}\nhint: only optional fields are accepted here")
-    }
-```.text.replace("{optional}", str(optional-pos-fields-amount))
-
-  parse-function-not-required += "\n" + check-for-present-required-names
-  parse-function-not-required += "\n" + parse-optional-pos-fields-without-required
-  // Not needed: we check all at once
-  // parse-function-not-required += "\n" + parse-required-named-fields-without-required
-  parse-function-not-required += "\n" + parse-non-required-named-fields
-
-  parse-function-not-required += "\n" + ```typ
-    if named != (:) {
-      let field-name = named.keys().first()
-
-      assert(false, message: "element '" + name + "': unknown named field '" + field-name + "'")
-    }
-
-    result
-  }
-```.text
+  let parse-args-not-required-src = (
+    parse-args-not-required-prologue.replace("{optional}", str(optional-pos-fields-amount))
+    + check-for-present-required-names
+    + field-parsers-without-required
+    + parse-args-not-required-epilogue
+  )
 
   // assert(false,  message: parse-function-required)
   // assert(false,  message: parse-function-not-required)
@@ -239,8 +272,8 @@
     force-cast: types.force-cast,
   )
 
-  let parse-args-required = eval(parse-function-required, scope: function-scope)
-  let parse-args-not-required = eval(parse-function-not-required, scope: function-scope)
+  let parse-args-required = eval(parse-args-required-src, scope: function-scope)
+  let parse-args-not-required = eval(parse-args-not-required-src, scope: function-scope)
 
   (
     (fields-key): true,
