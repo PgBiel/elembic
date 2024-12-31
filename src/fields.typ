@@ -231,7 +231,7 @@
 #let parse-fields(fields) = {
   let required-pos-fields = ()
   let optional-pos-fields = ()
-  let named-fields = ()
+  let required-named-fields = ()
   let all-fields = (:)
 
   for field in fields {
@@ -239,11 +239,13 @@
     assert(field.named or not field.required or optional-pos-fields == (), message: "element.fields: field '" + field.name + "' cannot be positional and required and appear after other positional but optional fields. Ensure there are only optional fields after the first positional optional field.")
     assert(field.name not in all-fields, message: "element.fields: duplicate field name '" + field.name + "'")
 
-    if field.named {
-      named-fields.push(field)
-    } else if field.required {
-      required-pos-fields.push(field)
-    } else {
+    if field.required {
+      if field.named {
+        required-named-fields.push(field)
+      } else {
+        required-pos-fields.push(field)
+      }
+    } else if not field.named {
       optional-pos-fields.push(field)
     }
 
@@ -255,7 +257,7 @@
     version: current-field-version,
     required-pos-fields: required-pos-fields,
     optional-pos-fields: optional-pos-fields,
-    named-fields: named-fields,
+    required-named-fields: required-named-fields,
     all-fields: all-fields
   )
 }
