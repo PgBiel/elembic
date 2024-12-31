@@ -43,10 +43,11 @@
   let lbl-get = label("__custom_element_get_" + eid)
   let lbl-where(n) = label("__custom_element_where_" + str(n) + eid)
 
-  let fields = field-internals.parse-fields(fields)
-  let (required-pos-fields, optional-pos-fields, required-named-fields, all-fields) = fields
+  let fields = field-internals.parse-fields(fields, name: name)
+  let (required-pos-fields, optional-pos-fields, required-named-fields, all-fields, parse-args-required, parse-args-not-required) = fields
   let required-pos-fields-amount = required-pos-fields.len()
   let optional-pos-fields-amount = optional-pos-fields.len()
+  let total-pos-fields-amount = optional-pos-fields-amount + required-pos-fields-amount
 
   let default-fields = fields.all-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
 
@@ -54,39 +55,45 @@
   // By default, include required arguments and error if they are missing.
   // Setting 'include-required' to false will error if they are present
   // instead.
-  let parse-args(args, include-required: true) = {
+  let old-parse-args-required(args) = {
     let result = (:)
 
     let pos = args.pos()
-    if include-required and pos.len() < required-pos-fields-amount {
+    if pos.len() < required-pos-fields-amount {
       // Plural
       let s = if required-pos-fields-amount - pos.len() == 1 { "" } else { "s" }
 
       assert(false, message: "element '" + name + "': missing positional field" + s + " " + fields.required-pos-fields.slice(pos.len()).map(f => "'" + f.name + "'").join(", "))
     }
 
-    let expected-arg-amount = optional-pos-fields-amount + if include-required { required-pos-fields-amount } else { 0 }
-
-    if pos.len() > expected-arg-amount {
-      let excluding-required-hint = if include-required { "" } else { "\nhint: only optional fields are accepted here" }
-      assert(false, message: "element '" + name + "': too many positional arguments, expected " + str(expected-arg-amount) + excluding-required-hint)
+    if pos.len() > total-pos-fields-amount {
+      assert(false, message: "element '" + name + "': too many positional arguments, expected " + str(total-pos-fields-amount))
     }
 
-    for (value, pos-field) in pos.zip(if include-required { required-pos-fields } else { optional-pos-fields }) {
-      result.insert(
-        pos-field.name,
-        types.force-cast(value, pos-field.typeinfo, error-prefix: "field '" + pos-field.name + "' of element '" + name + "': ")
-      )
-    }
+    let i = 0
+    for value in pos {
+      let pos-field = if i >= required-pos-fields-amount { optional-pos-fields } else { required-pos-fields }.at(i)
 
-    if include-required {
-      // Within pos fields:
-      // Included all required fields, now parse remaining optional fields
-      for (value, optional-pos-field) in pos.slice(required-pos-fields-amount).zip(optional-pos-fields) {
+      if (pos-field.typeinfo.castable)(value) {
         result.insert(
-          optional-pos-field.name,
-          types.force-cast(value, optional-pos-field.typeinfo, error-prefix: "field '" + optional-pos-field.name + "' of element '" + name + "': ")
+          pos-field.name,
+          (pos-field.typeinfo.cast)(value)
         )
+      } else {
+        result.insert(
+          pos-field.name,
+          types.force-cast(
+            value,
+            pos-field.typeinfo,
+            error-prefix: "field '" + pos-field.name + "' of element '" + name + "': "
+          )
+        )
+      }
+      i += 1
+
+      if i == required-pos-fields-amount {
+        // Now, indices for the optional pos args
+        i = 0
       }
     }
 
@@ -100,7 +107,62 @@
         assert(false, message: "element '" + name + "': unknown named field '" + field-name + "'" + expected-pos-hint)
       }
 
-      if not include-required and field.required {
+      if (field.typeinfo.castable)(value) {
+        result.insert(
+          field-name,
+          (field.typeinfo.cast)(value)
+        )
+      } else {
+        result.insert(
+          field-name,
+          types.force-cast(value, field.typeinfo, error-prefix: "field '" + field-name + "' of element '" + name + "': ")
+        )
+      }
+    }
+
+    let missing-fields = required-named-fields.filter(f => f.name not in named-args)
+    if missing-fields != () {
+      let s = if missing-fields.len() == 1 { "" } else { "s" }
+
+      assert(false, message: "element '" + name + "': missing required named field" + s + " " + missing-fields.map(f => "'" + f.name + "'").join(", "))
+    }
+
+    result
+  }
+  let old-parse-args-not-required(args, include-required: true) = {
+    let result = (:)
+
+    let pos = args.pos()
+    if pos.len() > optional-pos-fields-amount {
+      assert(false, message: "element '" + name + "': too many positional arguments, expected " + str(expected-arg-amount) + "\nhint: only optional fields are accepted here")
+    }
+
+    let i = 0
+    for value in pos {
+      let pos-field = optional-pos-fields.at(i)
+
+      result.insert(
+        pos-field.name,
+        types.force-cast(
+          value,
+          pos-field.typeinfo,
+          error-prefix: "field '" + pos-field.name + "' of element '" + name + "': "
+        )
+      )
+      i += 1
+    }
+
+    let named-args = args.named()
+
+    for (field-name, value) in named-args {
+      let field = all-fields.at(field-name, default: none)
+      if field == none or not field.named {
+        let expected-pos-hint = if field == none or field.named { "" } else { "\nhint: this field must be specified positionally" }
+
+        assert(false, message: "element '" + name + "': unknown named field '" + field-name + "'" + expected-pos-hint)
+      }
+
+      if field.required {
         assert(false, message: "element '" + name + "': field '" + field-name + "' cannot be specified here\nhint: only optional fields are accepted here")
       }
 
@@ -108,15 +170,6 @@
         field-name,
         types.force-cast(value, field.typeinfo, error-prefix: "field '" + field-name + "' of element '" + name + "': ")
       )
-    }
-
-    if include-required {
-      let missing-fields = required-named-fields.filter(f => f.name not in named-args)
-      if missing-fields != () {
-        let s = if missing-fields.len() == 1 { "" } else { "s" }
-
-        assert(false, message: "element '" + name + "': missing required named field" + s + " " + missing-fields.map(f => "'" + f.name + "'").join(", "))
-      }
     }
 
     result
@@ -134,30 +187,30 @@
   )
 
   let modified-constructor(..args) = {
-    let args = parse-args(args, include-required: true)
+    let args = parse-args-required(args)
     context {
       let previous-bib-title = bibliography.title
       [#context {
         set bibliography(title: previous-bib-title)
-  
+
         let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
-    
+
         let constructed-fields = default-fields + defaults.args.sum(default: (:)) + args
         let body = constructor(constructed-fields)
         let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor))]
-    
+
         [#[#body#tag]#lbl-show]
       }#lbl-get]
     }
   }
 
   let set-rule(..args) = {
-    let args = parse-args(args, include-required: false)
+    let args = parse-args-not-required(args)
     doc => context {
       let previous-bib-title = bibliography.title
       [#context {
         let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
-  
+
         set bibliography(title: previous-bib-title)
         show lbl-get: set bibliography(title: [#metadata((..defaults, args: (..defaults.args, args)))#lbl-get])
         doc
@@ -195,16 +248,16 @@
       let previous-bib-title = bibliography.title
       [#context {
         let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
-    
+
         // Amount of 'where rules' so far, so we can
         // assign a unique number to each query
         let rule-counter = defaults.where-rule-count
         let matching-label = lbl-where(rule-counter)
-    
+
         // Add unique matching label to all found elements
         show lbl-show: it => {
           let (fields,) = show_(it)
-    
+
           // Check if all positional and named arguments match
           if type(fields) == dictionary and args.pairs().all(((k, v)) => k in fields and fields.at(k) == v) {
             [#[#it#[]]#matching-label]
@@ -212,15 +265,15 @@
             it
           }
         }
-    
+
         // Increase where rule counter for further where rules
         set bibliography(title: previous-bib-title)
         show lbl-get: set bibliography(title: [#metadata((..defaults, where-rule-count: rule-counter + 1))#lbl-get])
-    
+
         // Pass usable selector to the callback
         // This selector will only match elements with
         // the correct fields
-        receiver(matching-label)    
+        receiver(matching-label)
       }#lbl-get]
     }
   }
