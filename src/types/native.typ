@@ -1,6 +1,11 @@
 // Typst-native types.
 #import "base.typ": type-key, base-typeinfo, ok, err
 
+#let native-base = (
+  ..base-typeinfo,
+  (type-key): "native"
+)
+
 // Generic typeinfo for a native type.
 // PROPERTY: if type key is native, then output has the native type,
 // and input has a list of native types that can be cast to it.
@@ -8,8 +13,7 @@
   assert(type(native-type) == type(str), message: "internal error: not a type")
 
   (
-    ..base-typeinfo,
-    (type-key): "native",
+    ..native-base,
     name: str(native-type),
     input: (native-type,),
     output: (native-type,),
@@ -18,117 +22,209 @@
   )
 }
 
-// For native types which can be cast from others.
-#let generic-typeinfo-multiple(native-type, cast: none, ..others) = {
-  assert(others.named() == (:), message: "internal error: unexpected named arguments")
-  assert(others.pos().all(x => type(x) == type(str)), message: "internal error: all other types should be types")
-  assert(cast != none, message: "internal error: expected cast override")
+// Castable types
 
-  let others = others.pos()
-  (
-    ..generic-typeinfo(native-type),
-    input: (native-type, ..others),
-    castable: x => type(x) == native-type or type(x) in others,
-    cast: cast
-  )
-}
-
-#let content_ = generic-typeinfo-multiple(
-  content,
-  str,
-  cast: x => [#x]
+#let content_ = (
+  ..native-base,
+  name: str(content),
+  input: (content, str),
+  output: (content,),
+  castable: x => type(x) == str or type(x) == content,
+  cast: x => [#x],
 )
-
-#let float_ = generic-typeinfo-multiple(
-  float,
-  int,
+#let float_ = (
+  ..native-base,
+  name: str(float),
+  input: (float, int),
+  output: (float,),
+  castable: x => type(x) == float or type(x) == int,
   cast: float,
 )
 
-#let str_ = generic-typeinfo(str)
-#let bool_ = generic-typeinfo(bool)
-#let array_ = generic-typeinfo(array)
-#let dict_ = generic-typeinfo(dictionary)
-#let int_ = generic-typeinfo(int)
-#let color_ = generic-typeinfo(color)
-#let gradient_ = generic-typeinfo(gradient)
-#let datetime_ = generic-typeinfo(datetime)
-#let duration_ = generic-typeinfo(duration)
-#let function_ = generic-typeinfo(function)
-#let type_ = generic-typeinfo(type)
-#let none_ = generic-typeinfo(type(none))
-#let auto_ = generic-typeinfo(type(auto))
+// Simples types (no casting)
+
+#let str_ = (
+  ..native-base,
+  name: str(str),
+  input: (str,),
+  output: (str,),
+  castable: x => type(x) == str,
+  cast: x => x,
+)
+#let bool_ = (
+  ..native-base,
+  name: str(bool),
+  input: (bool,),
+  output: (bool,),
+  castable: x => type(x) == bool,
+  cast: x => x,
+)
+#let array_ = (
+  ..native-base,
+  name: str(array),
+  input: (array,),
+  output: (array,),
+  castable: x => type(x) == array,
+  cast: x => x,
+)
+#let dict_ = (
+  ..native-base,
+  name: str(dictionary),
+  input: (dictionary,),
+  output: (dictionary,),
+  castable: x => type(x) == dictionary,
+  cast: x => x,
+)
+#let int_ = (
+  ..native-base,
+  name: str(int),
+  input: (int,),
+  output: (int,),
+  castable: x => type(x) == int,
+  cast: x => x,
+)
+#let color_ = (
+  ..native-base,
+  name: str(color),
+  input: (color,),
+  output: (color,),
+  castable: x => type(x) == color,
+  cast: x => x,
+)
+#let gradient_ = (
+  ..native-base,
+  name: str(gradient),
+  input: (gradient,),
+  output: (gradient,),
+  castable: x => type(x) == gradient,
+  cast: x => x,
+)
+#let datetime_ = (
+  ..native-base,
+  name: str(datetime),
+  input: (datetime,),
+  output: (datetime,),
+  castable: x => type(x) == datetime,
+  cast: x => x,
+)
+#let duration_ = (
+  ..native-base,
+  name: str(duration),
+  input: (duration,),
+  output: (duration,),
+  castable: x => type(x) == duration,
+  cast: x => x,
+)
+#let function_ = (
+  ..native-base,
+  name: str(function),
+  input: (function,),
+  output: (function,),
+  castable: x => type(x) == function,
+  cast: x => x,
+)
+#let type_ = (
+  ..native-base,
+  name: str(type),
+  input: (type,),
+  output: (type,),
+  castable: x => type(x) == type,
+  cast: x => x,
+)
+
+// None / auto
+
+#let none_ = (
+  ..native-base,
+  name: "none",
+  input: (type(none),),
+  output: (type(none),),
+  castable: x => x == none,
+  cast: x => x,
+)
+#let auto_ = (
+  ..native-base,
+  name: "auto",
+  input: (type(auto),),
+  output: (type(auto),),
+  castable: x => x == auto,
+  cast: x => x,
+)
 
 // Return the typeinfo for a native type.
 #let typeinfo(t) = {
-  if t == content {
-    ok(content_)
+  let out = if t == content {
+    content_
   } else if t == int {
-    ok(int_)
+    int_
   } else if t == bool {
-    ok(bool_)
+    bool_
   } else if t == float {
-    ok(float_)
+    float_
   } else if t == type(none) {
-    ok(none_)
+    none_
   } else if t == type(auto) {
-    ok(auto_)
+    auto_
   } else if t == dictionary {
-    ok(dict_)
+    dict_
   } else if t == array {
-    ok(array_)
+    array_
   } else if t == str {
-    ok(str_)
+    str_
   } else if t == color {
-    ok(color_)
+    color_
   } else if t == gradient {
-    ok(gradient_)
+    gradient_
   } else if t == datetime {
-    ok(datetime_)
+    datetime_
   } else if t == duration {
-    ok(duration_)
+    duration_
   } else if t == function {
-    ok(function_)
+    function_
   } else if t == type {
-    ok(type_)
+    type_
   } else {
-    err("no preexisting typeinfo definition for type '" + str(t) + "', please use 'types.exact(type here)' instead to indicate it cannot be cast to.")
+    return (false, "no preexisting typeinfo definition for type '" + str(t) + "', please use 'types.exact(type here)' instead to indicate it cannot be cast to.")
   }
+
+  (true, out)
 }
 
 // Return the default for a native type.
 #let default(t) = {
-  if t == type(0) {
-    ok(0)
+  let out = if t == type(0) {
+    0
   } else if t == type("") {
-    ok("")
+    ""
   } else if t == type(1pt + black) {
-    ok(1pt + black)
+    1pt + black
   } else if t == type(0pt) {
-    ok(0pt)
+    0pt
   } else if t == type(0pt + 0%) {
-    ok(0pt + 0%)
+    0pt + 0%
   } else if t == type(0%) {
-    ok(0%)
+    0%
   } else if t == type(none) {
-    ok(none)
+    none
   } else if t == type(auto) {
-    ok(auto)
+    auto
   } else if t == type(0.0) {
-    ok(0.0)
+    0.0
   } else if t == type(()) {
-    ok(())
+    ()
   } else if t == type((:)) {
-    ok((:))
+    (:)
   } else if t == arguments {
-    ok(arguments())
+    arguments()
   } else if t == bytes {
-    ok(bytes(()))
+    bytes(())
   } else if t == version {
-    ok(version(0, 0, 0))
+    version(0, 0, 0)
   } else if t == type([]) {
-    ok([])
+    []
   } else {
-    err("native type '" + str(t) + "' has no known default, please specify an explicit 'default: value' or set 'required: true' for the field.")
+    return (false, "native type '" + str(t) + "' has no known default, please specify an explicit 'default: value' or set 'required: true' for the field.")
   }
+
+  (true, out)
 }
