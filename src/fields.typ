@@ -1,3 +1,4 @@
+#import "types/base.typ"
 #import "types/types.typ"
 
 #let field-key = "__field"
@@ -63,7 +64,8 @@
 #let required-named-field-template = ```typ
 
   value = named.remove(f{n})
-  result.insert(f{n}, force-cast(value, t{n}, error-prefix: "field '" + f{n} + "' of element '" + name + "': "))
+  casted = {cast}
+  result.insert(f{n}, casted)
 ```.text
 
 // How to retrieve an optional named field?
@@ -71,7 +73,8 @@
 
   if f{n} in named {
     value = named.remove(f{n})
-    result.insert(f{n}, force-cast(value, t{n}, error-prefix: "field '" + f{n} + "' of element '" + name + "': "))
+    casted = {cast}
+    result.insert(f{n}, casted)
   }
 ```.text
 
@@ -79,7 +82,8 @@
 #let required-pos-field-template = ```typ
 
   value = pos.pop()
-  result.insert(f{n}, force-cast(value, t{n}, error-prefix: "field '" + f{n} + "' of element '" + name + "': "))
+  casted = {cast}
+  result.insert(f{n}, casted)
 ```.text
 
 // How to retrieve an optional positional field?
@@ -87,7 +91,8 @@
 
   if pos.len() != 0 {
     value = pos.pop()
-    result.insert(f{n}, force-cast(value, t{n}, error-prefix: "field '" + f{n} + "' of element '" + name + "': "))
+    casted = {cast}
+    result.insert(f{n}, casted)
   }
 ```.text
 
@@ -100,6 +105,7 @@ let parse-args-required(args) = {
   let pos = args.pos().rev()
   let named = args.named()
   let value = none
+  let casted = none
   let result = (:)
 
   if pos.len() < {required} {
@@ -134,6 +140,7 @@ let parse-args-not-required(args) = {
   let pos = args.pos().rev()
   let named = args.named()
   let value = none
+  let casted = none
   let result = (:)
 
   if pos.len() > {optional} {
@@ -176,19 +183,43 @@ parse-args-not-required
   }
 ```.text
 
-#let generate-parser-for-field(required, named, n) = {
-  let n = str(n)
+#let force-cast-template = `force-cast(value, t{n}, error-prefix: "field '" + f{n} + "' of element '" + name + "': ")`.text
+
+#let native-typecast-template = ```typc
+if type(value) not in t{n}.input {
+    assert(false, message: "field '" + f{n} + "' of element '" + name + "': expected " + t{n}.name + ", found " + str(type(value)))
+  } else {
+    {value}
+  }
+```.text
+
+#let generate-parser-for-field(required, named, typeinfo, n) = {
+  let casted = if typeinfo.at(base.type-key) == "native" {
+    native-typecast-template.replace("{value}", if typeinfo.input.len() > 1 {
+      let native-type = typeinfo.output.first()
+      if native-type == content {
+        "[#value]"
+      } else {
+        "(t{n}.cast)(value)"
+      }
+    } else {
+      "value"
+    })
+  } else {
+    force-cast-template
+  }
+
   if required {
     if named {
-      required-named-field-template.replace("{n}", n)
+      required-named-field-template
     } else {
-      required-pos-field-template.replace("{n}", n)
+      required-pos-field-template
     }
   } else if named {
-    optional-named-field-template.replace("{n}", n)
+    optional-named-field-template
   } else {
-    optional-pos-field-template.replace("{n}", n)
-  }
+    optional-pos-field-template
+  }.replace("{cast}", casted).replace("{n}", str(n))
 }
 
 #let parse-fields(fields, name: "") = {
@@ -219,7 +250,7 @@ parse-args-not-required
       optional-pos-fields.push(field)
     }
 
-    let field-parser = generate-parser-for-field(field.required, field.named, n)
+    let field-parser = generate-parser-for-field(field.required, field.named, field.typeinfo, n)
     field-parsers-with-required += field-parser
     if not field.required {
       field-parsers-without-required += field-parser
@@ -263,8 +294,8 @@ parse-args-not-required
     + parse-args-not-required-epilogue
   )
 
-  // assert(false,  message: parse-function-required)
-  // assert(false,  message: parse-function-not-required)
+  // assert(false,  message: parse-args-required-src)
+  // assert(false,  message: parse-args-not-required-src)
 
   function-scope += (
     required-pos-names: required-pos-fields.map(f => f.name),
