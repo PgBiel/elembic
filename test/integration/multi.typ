@@ -1,5 +1,4 @@
-#import "/src/lib.typ" as e: element, fields
-#import fields: field
+#import "/src/lib.typ" as e: element, field
 
 #let (wibble, wibble-e) = element(
   "wibble",
