@@ -173,7 +173,7 @@
         let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
         let element-data = data.at(eid, default: default-data)
 
-        let constructed-fields = default-fields + default-data.chain.sum(default: (:)) + args
+        let constructed-fields = default-fields + element-data.chain.sum(default: (:)) + args
         let body = constructor(constructed-fields)
         let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor))]
 
