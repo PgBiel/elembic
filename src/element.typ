@@ -1,3 +1,4 @@
+#import "types/base.typ": type-key
 #import "types/types.typ"
 #import "fields.typ" as field-internals
 
@@ -41,6 +42,8 @@
   let (required-pos-fields, optional-pos-fields, required-named-fields, all-fields) = fields
   let required-pos-fields-amount = required-pos-fields.len()
   let optional-pos-fields-amount = optional-pos-fields.len()
+  let total-pos-fields-amount = required-pos-fields-amount + optional-pos-fields-amount
+  let all-pos-fields = required-pos-fields + optional-pos-fields
 
   let default-fields = fields.all-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
 
@@ -59,29 +62,42 @@
       assert(false, message: "element '" + name + "': missing positional field" + s + " " + fields.required-pos-fields.slice(pos.len()).map(f => "'" + f.name + "'").join(", "))
     }
 
-    let expected-arg-amount = optional-pos-fields-amount + if include-required { required-pos-fields-amount } else { 0 }
+    let expected-arg-amount = if include-required { total-pos-fields-amount } else { optional-pos-fields-amount }
 
     if pos.len() > expected-arg-amount {
       let excluding-required-hint = if include-required { "" } else { "\nhint: only optional fields are accepted here" }
       assert(false, message: "element '" + name + "': too many positional arguments, expected " + str(expected-arg-amount) + excluding-required-hint)
     }
 
-    for (value, pos-field) in pos.zip(if include-required { required-pos-fields } else { optional-pos-fields }) {
+    let pos-fields = if include-required { all-pos-fields } else { optional-pos-fields }
+    let i = 0
+    for value in pos {
+      let pos-field = pos-fields.at(i)
+      let typeinfo = pos-field.typeinfo
+      let kind = typeinfo.at(type-key)
+
       result.insert(
         pos-field.name,
-        types.force-cast(value, pos-field.typeinfo, error-prefix: "field '" + pos-field.name + "' of element '" + name + "': ")
+        if kind == "any" {
+          value
+        } else if kind == "native" and type(value) in typeinfo.input {
+          if typeinfo.input.len() == 1 {
+            value
+          } else if typeinfo.output.first() == content {
+            [#value]
+          } else {
+            (typeinfo.cast)(value)
+          }
+        } else if kind == "literal" and value == typeinfo.output.first() {
+          value
+        } else if (typeinfo.castable)(value) {
+          (typeinfo.cast)(value)
+        } else {
+          types.force-cast(value, typeinfo, error-prefix: "field '" + pos-field.name + "' of element '" + name + "': ")
+        }
       )
-    }
 
-    if include-required {
-      // Within pos fields:
-      // Included all required fields, now parse remaining optional fields
-      for (value, optional-pos-field) in pos.slice(required-pos-fields-amount).zip(optional-pos-fields) {
-        result.insert(
-          optional-pos-field.name,
-          types.force-cast(value, optional-pos-field.typeinfo, error-prefix: "field '" + optional-pos-field.name + "' of element '" + name + "': ")
-        )
-      }
+      i += 1
     }
 
     let named-args = args.named()
@@ -98,9 +114,27 @@
         assert(false, message: "element '" + name + "': field '" + field-name + "' cannot be specified here\nhint: only optional fields are accepted here")
       }
 
+      let typeinfo = field.typeinfo
+      let kind = typeinfo.at(type-key)
       result.insert(
         field-name,
-        types.force-cast(value, field.typeinfo, error-prefix: "field '" + field-name + "' of element '" + name + "': ")
+        if kind == "any" {
+          value
+        } else if kind == "native" and type(value) in typeinfo.input {
+          if typeinfo.input.len() == 1 {
+            value
+          } else if typeinfo.output.first() == content {
+            [#value]
+          } else {
+            (typeinfo.cast)(value)
+          }
+        } else if kind == "literal" and value == typeinfo.output.first() {
+          value
+        } else if (typeinfo.castable)(value) {
+          (typeinfo.cast)(value)
+        } else {
+          types.force-cast(value, typeinfo, error-prefix: "field '" + field-name + "' of element '" + name + "': ")
+        }
       )
     }
 

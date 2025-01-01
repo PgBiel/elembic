@@ -3,7 +3,8 @@
 
 #let native-base = (
   ..base-typeinfo,
-  (type-key): "native"
+  (type-key): "native",
+  cast: x => x,
 )
 
 // Generic typeinfo for a native type.
@@ -18,7 +19,6 @@
     input: (native-type,),
     output: (native-type,),
     castable: x => type(x) == native-type,
-    cast: x => x,
   )
 }
 
@@ -49,7 +49,6 @@
   input: (str,),
   output: (str,),
   castable: x => type(x) == str,
-  cast: x => x,
 )
 #let bool_ = (
   ..native-base,
@@ -57,7 +56,6 @@
   input: (bool,),
   output: (bool,),
   castable: x => type(x) == bool,
-  cast: x => x,
 )
 #let array_ = (
   ..native-base,
@@ -65,7 +63,6 @@
   input: (array,),
   output: (array,),
   castable: x => type(x) == array,
-  cast: x => x,
 )
 #let dict_ = (
   ..native-base,
@@ -73,7 +70,6 @@
   input: (dictionary,),
   output: (dictionary,),
   castable: x => type(x) == dictionary,
-  cast: x => x,
 )
 #let int_ = (
   ..native-base,
@@ -81,7 +77,6 @@
   input: (int,),
   output: (int,),
   castable: x => type(x) == int,
-  cast: x => x,
 )
 #let color_ = (
   ..native-base,
@@ -89,7 +84,6 @@
   input: (color,),
   output: (color,),
   castable: x => type(x) == color,
-  cast: x => x,
 )
 #let gradient_ = (
   ..native-base,
@@ -97,7 +91,6 @@
   input: (gradient,),
   output: (gradient,),
   castable: x => type(x) == gradient,
-  cast: x => x,
 )
 #let datetime_ = (
   ..native-base,
@@ -105,7 +98,6 @@
   input: (datetime,),
   output: (datetime,),
   castable: x => type(x) == datetime,
-  cast: x => x,
 )
 #let duration_ = (
   ..native-base,
@@ -113,7 +105,6 @@
   input: (duration,),
   output: (duration,),
   castable: x => type(x) == duration,
-  cast: x => x,
 )
 #let function_ = (
   ..native-base,
@@ -121,7 +112,6 @@
   input: (function,),
   output: (function,),
   castable: x => type(x) == function,
-  cast: x => x,
 )
 #let type_ = (
   ..native-base,
@@ -129,7 +119,6 @@
   input: (type,),
   output: (type,),
   castable: x => type(x) == type,
-  cast: x => x,
 )
 
 // None / auto
@@ -140,7 +129,6 @@
   input: (type(none),),
   output: (type(none),),
   castable: x => x == none,
-  cast: x => x,
 )
 #let auto_ = (
   ..native-base,
@@ -148,7 +136,6 @@
   input: (type(auto),),
   output: (type(auto),),
   castable: x => x == auto,
-  cast: x => x,
 )
 
 // Return the typeinfo for a native type.

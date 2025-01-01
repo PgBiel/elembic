@@ -38,6 +38,7 @@
 
 // Literal type
 // Only accepted if value is equal to the literal.
+// Input and output are equal to the value.
 #let literal(value) = {
   let represented = "'" + if type(value) == str { value } else { repr(value) } + "'"
 
@@ -45,8 +46,8 @@
     ..base-typeinfo,
     (type-key): "literal",
     name: "literal " + represented,
-    input: (represented,),
-    output: (represented,),
+    input: (value,),
+    output: (value,),
     castable: x => x == value,
     cast: x => x,
   )
