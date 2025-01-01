@@ -170,8 +170,11 @@
     function_
   } else if t == type {
     type_
-  } else {
+  } else if t in (stroke, align) {
+    // Stroke and align would have fold, which we didn't implement yet
     return (false, "no preexisting typeinfo definition for type '" + str(t) + "', please use 'types.exact(type here)' instead to indicate it cannot be cast to.")
+  } else {
+    generic-typeinfo(t)
   }
 
   (true, out)
