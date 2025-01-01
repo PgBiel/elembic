@@ -37,7 +37,12 @@
     // This value should be ignored in that case
     auto
   } else {
-    types.force-cast(default, typeinfo, error-prefix: error-prefix, hint: "given default for field had an incompatible type")
+    let (success, value) = types.cast(default, typeinfo)
+    if not success {
+      assert(false, message: error-prefix + value + "\n  hint: given default for field had an incompatible type")
+    }
+
+    value
   }
 
   if named == auto {

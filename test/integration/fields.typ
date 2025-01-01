@@ -1,5 +1,9 @@
 #import "/src/lib.typ" as e: element, field, types
 
+#let bool-or-pos-float = types.union(bool, float)
+#(bool-or-pos-float.check = x => if type(x) == bool { true } else { x >= 0.0 })
+#(bool-or-pos-float.error = _ => "float must be positive or zero")
+
 #let (door, door-e) = element(
   "door",
   it => {
@@ -23,6 +27,11 @@
     field("nothing", types.option(types.never), default: none),
     field("somethings", array, default: (5, 4)),
     field("matype", type, default: int),
+    field("float-or-content", types.union(color, float, content), default: red),
+    field("just-float", types.union(color, float), default: red),
+    field("just-content", types.union(color, content),  default: red),
+    field("just-true", types.literal(true), default: true),
+    field("bool-or-pos-float", bool-or-pos-float, default: 5.0)
   )
 )
 
@@ -46,3 +55,13 @@
 #door(red, blue, cool: true, sad: false, real-quantity: "abc")
 #door(red, blue, cool: true, sad: false, quantity: 5.5)
 #door(red, blue, cool: true, sad: false, anything: (a: 5))
+
+#[
+  #show: e.set_(door-e, just-true: true, float-or-content: 50, just-float: 5, just-content: "abc", bool-or-pos-float: false)
+
+  #(door-e.get)(v => {
+    assert(type(v.float-or-content) == float and v.float-or-content == 50.0)
+    assert(type(v.just-float) == float and v.just-float == 5)
+    assert(v.just-content == [abc])
+  })
+]

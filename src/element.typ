@@ -1,4 +1,4 @@
-#import "types/base.typ": type-key
+#import "types/base.typ": custom-type-key, type-key
 #import "types/types.typ"
 #import "fields.typ" as field-internals
 
@@ -126,27 +126,36 @@
       let pos-field = pos-fields.at(i)
       let typeinfo = pos-field.typeinfo
       let kind = typeinfo.at(type-key)
+      let casted = value
 
-      result.insert(
-        pos-field.name,
-        if kind == "any" {
-          value
-        } else if kind == "native" and type(value) in typeinfo.input {
-          if typeinfo.input.len() == 1 {
-            value
-          } else if typeinfo.output.first() == content {
-            [#value]
-          } else {
-            (typeinfo.cast)(value)
+      if kind != "any" {
+        if kind == "literal" {
+          if value != typeinfo.data {
+            assert(false, message: "field '" + pos-field.name + "' of element '" + name + "': " + types.generate-cast-error(value, typeinfo))
           }
-        } else if kind == "literal" and value == typeinfo.output.first() {
-          value
-        } else if (typeinfo.castable)(value) {
-          (typeinfo.cast)(value)
         } else {
-          types.force-cast(value, typeinfo, error-prefix: "field '" + pos-field.name + "' of element '" + name + "': ")
+          let value-type = type(value)
+          if value-type == dictionary and custom-type-key in value {
+            value-type = value.at(custom-type-key)
+          }
+          if (
+            value-type not in typeinfo.input
+            or typeinfo.check != none and not (typeinfo.check)(value)
+          ) {
+            assert(false, message: "field '" + pos-field.name + "' of element '" + name + "': " + types.generate-cast-error(value, typeinfo))
+          }
+
+          if typeinfo.cast != none {
+            casted = if kind == "native" and typeinfo.data == content {
+              [#value]
+            } else {
+              (typeinfo.cast)(value)
+            }
+          }
         }
-      )
+      }
+
+      result.insert(pos-field.name, casted)
 
       i += 1
     }
@@ -167,26 +176,36 @@
 
       let typeinfo = field.typeinfo
       let kind = typeinfo.at(type-key)
-      result.insert(
-        field-name,
-        if kind == "any" {
-          value
-        } else if kind == "native" and type(value) in typeinfo.input {
-          if typeinfo.input.len() == 1 {
-            value
-          } else if typeinfo.output.first() == content {
-            [#value]
-          } else {
-            (typeinfo.cast)(value)
+      let casted = value
+
+      if kind != "any" {
+        if kind == "literal" {
+          if value != typeinfo.data {
+            assert(false, message: "field '" + field-name + "' of element '" + name + "': " + types.generate-cast-error(value, typeinfo))
           }
-        } else if kind == "literal" and value == typeinfo.output.first() {
-          value
-        } else if (typeinfo.castable)(value) {
-          (typeinfo.cast)(value)
         } else {
-          types.force-cast(value, typeinfo, error-prefix: "field '" + field-name + "' of element '" + name + "': ")
+          let value-type = type(value)
+          if value-type == dictionary and custom-type-key in value {
+            value-type = value.at(custom-type-key)
+          }
+          if (
+            value-type not in typeinfo.input
+            or typeinfo.check != none and not (typeinfo.check)(value)
+          ) {
+            assert(false, message: "field '" + field-name + "' of element '" + name + "': " + types.generate-cast-error(value, typeinfo))
+          }
+
+          if typeinfo.cast != none {
+            casted = if kind == "native" and typeinfo.data == content {
+              [#value]
+            } else {
+              (typeinfo.cast)(value)
+            }
+          }
         }
-      )
+      }
+
+      result.insert(field-name, casted)
     }
 
     if include-required {
