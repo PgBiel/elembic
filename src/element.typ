@@ -5,6 +5,9 @@
 // Prefix for the labels added to shown elements.
 #let lbl-show-head = "__custom_element_shown_"
 
+// Label for context blocks which have access to the virtual stylechain.
+#let lbl-get = label("__custom_element_get")
+
 // Convert a custom element into a dictionary with (body, fields, func),
 // allowing you to access its fields and information when given content.
 //
@@ -35,7 +38,6 @@
 
   let eid = prefix + "_" + name
   let lbl-show = label(lbl-show-head + eid)
-  let lbl-get = label("__custom_element_get_" + eid)
   let lbl-where(n) = label("__custom_element_where_" + str(n) + eid)
 
   let fields = field-internals.parse-fields(fields)
@@ -157,8 +159,8 @@
     // this 'counter' by one each time.
     where-rule-count: 0,
 
-    // The current accumulated styles (default arguments) for the element.
-    args: (),
+    // The current accumulated styles (overridden values for arguments) for the element.
+    chain: (),
   )
 
   let modified-constructor(..args) = {
@@ -168,9 +170,10 @@
       [#context {
         set bibliography(title: previous-bib-title)
 
-        let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
+        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
+        let element-data = data.at(eid, default: default-data)
 
-        let constructed-fields = default-fields + defaults.args.sum(default: (:)) + args
+        let constructed-fields = default-fields + default-data.chain.sum(default: (:)) + args
         let body = constructor(constructed-fields)
         let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor))]
 
@@ -184,10 +187,15 @@
     doc => context {
       let previous-bib-title = bibliography.title
       [#context {
-        let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
+        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
+        if eid in data {
+          data.at(eid).chain.push(args)
+        } else {
+          data.insert(eid, (..default-data, chain: (args,)))
+        }
 
         set bibliography(title: previous-bib-title)
-        show lbl-get: set bibliography(title: [#metadata((..defaults, args: (..defaults.args, args)))#lbl-get])
+        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
         doc
       }#lbl-get]
     }
@@ -196,10 +204,12 @@
   let get-rule(receiver) = context {
     let previous-bib-title = bibliography.title
     [#context {
-      let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
+      let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
       set bibliography(title: previous-bib-title)
-      receiver(defaults.args.sum(default: (:)))
+      receiver(
+        data.at(eid, default: default-data).chain.sum(default: (:))
+      )
     }#lbl-get]
   }
 
@@ -222,11 +232,12 @@
     context {
       let previous-bib-title = bibliography.title
       [#context {
-        let defaults = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { default-data }
+        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
+        let element-data = data.at(eid, default: default-data)
 
         // Amount of 'where rules' so far, so we can
         // assign a unique number to each query
-        let rule-counter = defaults.where-rule-count
+        let rule-counter = element-data.where-rule-count
         let matching-label = lbl-where(rule-counter)
 
         // Add unique matching label to all found elements
@@ -241,9 +252,16 @@
           }
         }
 
+        if eid in data {
+          data.at(eid).where-rule-count += 1
+        } else {
+          element-data.where-rule-count += 1
+          data.insert(eid, element-data)
+        }
+
         // Increase where rule counter for further where rules
         set bibliography(title: previous-bib-title)
-        show lbl-get: set bibliography(title: [#metadata((..defaults, where-rule-count: rule-counter + 1))#lbl-get])
+        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
 
         // Pass usable selector to the callback
         // This selector will only match elements with
