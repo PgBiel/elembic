@@ -5,13 +5,15 @@
 
 #let current-field-version = 1
 
+#let _missing() = {}
+
 // Specifies an element field's properties.
 #let field(
   name,
   type_,
   required: false,
   named: auto,
-  default: auto,
+  default: _missing,
 ) = {
   assert(type(name) == str, message: "field: Field name must be a string, not " + str(type(name)))
 
@@ -24,7 +26,7 @@
     value
   }
 
-  if not required and default == auto {
+  if not required and default == _missing {
     let (res, value) = types.default(typeinfo)
     assert(res, message: if not res { error-prefix + value } else { "" })
 
