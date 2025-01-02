@@ -1,4 +1,4 @@
-#import "../src/lib.typ" as e: element, field, types
+#import "/src/lib.typ" as e: element, field, types
 
 #let (wock, wock-e) = element(
   "wock",
