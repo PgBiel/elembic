@@ -13,6 +13,9 @@
 // Label for metadata indicating an element's initial properties post-construction.
 #let lbl-tag = label("__custom_element_tag")
 
+// Label for metadata indicating a rule's parameters.
+#let lbl-rule-tag = label("__custom_element_rule")
+
 // Special dictionary key to indicate this is a prepared rule.
 #let prepared-rule-key = "__prepared-rule"
 
@@ -53,31 +56,63 @@
 #let prepare-rule(rule) = {
   let rules = if rule.kind == "apply" { rule.rules } else { (rule,) }
 
-  doc => [#context {
-    let previous-bib-title = bibliography.title
-    [#context {
-      let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
+  doc => {
+    let rule = rule
+    let rules = rules
 
-      for rule in rules {
-        let kind = rule.kind
-        if kind == "set" {
-          let (element, args) = rule
-          let (eid, default-data) = element
-          if eid in data {
-            data.at(eid).chain.push(args)
-          } else {
-            data.insert(eid, (..default-data, chain: (args,)))
-          }
+    // If there are two 'show:' in a row, flatten into a single set of rules
+    // instead of running this function multiple times, reducing the
+    // probability of accidental nested function limit errors.
+    //
+    // Note that all rules replace the document with
+    // [#context { ... doc .. }#metadata(doc: doc, rule: rule)]
+    // We get the second child to extract the original rule information.
+    if [#doc].func() == sequence and doc.children.len() == 2 {
+      let last = doc.children.last()
+      if last.at("label", default: none) == lbl-rule-tag {
+        let inner-rule = last.value.rule
+
+        // Process all rules below us together with this one
+        if inner-rule.kind == "apply" {
+          rules += inner-rule.rules
         } else {
-          assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
+          rules.push(inner-rule)
         }
-      }
 
-      set bibliography(title: previous-bib-title)
-      show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
-      doc
-    }#lbl-get]
-  }#metadata(rule)]
+        // Convert this into an 'apply' rule
+        rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules)
+
+        // Place what's inside, don't place the context block that would run our code again
+        doc = last.value.doc
+      }
+    }
+
+    [#context {
+      let previous-bib-title = bibliography.title
+      [#context {
+        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
+
+        for rule in rules {
+          let kind = rule.kind
+          if kind == "set" {
+            let (element, args) = rule
+            let (eid, default-data) = element
+            if eid in data {
+              data.at(eid).chain.push(args)
+            } else {
+              data.insert(eid, (..default-data, chain: (args,)))
+            }
+          } else {
+            assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
+          }
+        }
+
+        set bibliography(title: previous-bib-title)
+        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+        doc
+      }#lbl-get]
+    }#metadata((doc: doc, rule: rule))#lbl-rule-tag]
+  }
 }
 
 // Apply a set rule to a custom element.
@@ -111,7 +146,8 @@
       // Call it as if it we were in a show rule.
       // It will have some trailing metadata indicating its arguments.
       let inner = rule([])
-      let rule-data = inner.children.last().value
+      let rule-data = inner.children.last().value.rule
+
       if rule-data.kind == "apply" {
         // Flatten 'apply'
         rule-data.rules
