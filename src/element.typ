@@ -47,13 +47,61 @@
   }
 }
 
-#let set_(elem, ..fields) = {
-  assert(type(elem) != function, message: "element.set_: specify the element's dictionary, not the constructor function (e.g. wibble-e, which contains 'func' and other properties, rather than the wibble function)")
+// Prepare rule(s), returning a function `doc => ...` to be used in
+// `#show: rule`. The rule is attached as metadata to the returned
+// content so it can still be accessed outside of a show rule.
+#let prepare-rule(rule) = {
+  let rules = if rule.kind == "apply" { rule.rules } else { (rule,) }
 
-  (elem.set_)(..fields)
+  doc => [#context {
+    let previous-bib-title = bibliography.title
+    [#context {
+      let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
+
+      for rule in rules {
+        let kind = rule.kind
+        if kind == "set" {
+          let (element, args) = rule
+          let (eid, default-data) = element
+          if eid in data {
+            data.at(eid).chain.push(args)
+          } else {
+            data.insert(eid, (..default-data, chain: (args,)))
+          }
+        } else {
+          assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
+        }
+      }
+
+      set bibliography(title: previous-bib-title)
+      show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+      doc
+    }#lbl-get]
+  }#metadata(rule)]
 }
 
-// Apply multiple set rules at once.
+// Apply a set rule to a custom element.
+//
+// USAGE:
+// #show: set_(elem, fields)
+//
+// When applying many set rules at once, please use 'apply' instead.
+#let set_(elem, ..fields) = {
+  assert(type(elem) != function, message: "element.set_: specify the element's dictionary, not the constructor function (e.g. wibble-e, which contains 'func' and other properties, rather than the wibble function)")
+  let args = (elem.parse-args)(fields, include-required: false)
+
+  prepare-rule(
+    ((prepared-rule-key): true, version: element-version, kind: "set", element: (eid: elem.eid, default-data: elem.default-data), args: args)
+  )
+}
+
+// Apply multiple rules (set rules, etc.) at once.
+//
+// USAGE:
+// #show: apply(
+//   set_(elem, fields),
+//   set_(elem, fields)
+// )
 #let apply(..args) = {
   assert(args.named() == (:), message: "element.apply: unexpected named arguments")
   let rules = args.pos().map(
@@ -64,7 +112,7 @@
       // It will have some trailing metadata indicating its arguments.
       let inner = rule([])
       let rule-data = inner.children.last().value
-      if rule-data.at(prepared-rule-key) == "apply" {
+      if rule-data.kind == "apply" {
         // Flatten 'apply'
         rule-data.rules
       } else {
@@ -73,30 +121,7 @@
     }
   ).sum(default: ())
 
-  doc => [#context {
-    let previous-bib-title = bibliography.title
-    [#context {
-      let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
-
-      for rule in rules {
-        if rule.at(prepared-rule-key) == "set" {
-          let (element, args) = rule
-          let (eid, default-data) = element
-          if eid in data {
-            data.at(eid).chain.push(args)
-          } else {
-            data.insert(eid, (..default-data, chain: (args,)))
-          }
-        } else {
-          assert(false, message: "element.apply: invalid rule kind '" + rule.at(prepared-rule-key) + "'")
-        }
-      }
-
-      set bibliography(title: previous-bib-title)
-      show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
-      doc
-    }#lbl-get]
-  }#metadata(((prepared-rule-key): "apply", rules: rules))]
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules))
 }
 
 // Create an element with the given name and constructor.
@@ -270,24 +295,7 @@
     inner + [#metadata((body: inner, fields: args, func: modified-constructor, eid: eid))#lbl-tag]
   }
 
-  let set-rule(..args) = {
-    let args = parse-args(args, include-required: false)
-    doc => [#context {
-      let previous-bib-title = bibliography.title
-      [#context {
-        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
-        if eid in data {
-          data.at(eid).chain.push(args)
-        } else {
-          data.insert(eid, (..default-data, chain: (args,)))
-        }
-
-        set bibliography(title: previous-bib-title)
-        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
-        doc
-      }#lbl-get]
-    }#metadata(((prepared-rule-key): "set", element: (eid: eid, default-data: default-data), args: args))]
-  }
+  let set-rule = set_.with((parse-args: parse-args, eid: eid, default-data: default-data))
 
   let get-rule(receiver) = context {
     let previous-bib-title = bibliography.title
@@ -373,6 +381,7 @@
       parse-args: parse-args,
       default-data: default-data,
       default-fields: default-fields,
+      all-fields: all-fields,
     )
   )
 }
