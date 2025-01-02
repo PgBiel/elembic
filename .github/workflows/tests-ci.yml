@@ -37,8 +37,12 @@ jobs:
 
       - name: 🛠️ Compile integration tests
         run: |
+          ANSI_GREEN=$'\e[32m'
+          ANSI_BLUE=$'\e[34m'
+          ANSI_END=$'\e[0m'
           for doc in test/integration/*.typ
           do
-            echo "Compiling $doc..."
-            typst compile "$doc" --root .
+            echo "Compiling ${ANSI_BLUE}$doc${ANSI_END}..."
+            typst compile "$doc" --root . --timings "t-$doc.json"
+            echo "Compiled ${ANSI_BLUE}$doc${ANSI_END} in ${ANSI_GREEN}$(jq '.[-1]?.ts / 1000' <t-$doc.json) ms${ANSI_END}"
           done
