@@ -20,8 +20,35 @@
 #let prepared-rule-key = "__prepared-rule"
 
 #let element-key = "__custom_element"
+#let element-data-key = "__custom_element_data"
 
 #let sequence = [].func()
+
+// Default per-element data.
+#let default-data = (
+  (element-data-key): true,
+
+  version: element-version,
+
+  // How many 'where rules' have been applied so far to this
+  // element. This is needed as, for each 'where rule', we have
+  // to apply a unique label to matching elements, so we increase
+  // this 'counter' by one each time.
+  where-rule-count: 0,
+
+  // The current accumulated styles (overridden values for arguments) for the element.
+  chain: (),
+
+  // Maps each style in the chain to some data.
+  // This is used to assign names to styles, so they can be revoked later.
+  data-chain: (),
+
+  // All known names, so we can be aware of invalid revoke rules.
+  names: (:),
+
+  // Revoked rules by name.
+  revokes: (:),
+)
 
 // Convert a custom element into a dictionary with (body, fields, func),
 // allowing you to access its fields and information when given content.
@@ -102,6 +129,20 @@
             } else {
               data.insert(eid, (..default-data, chain: (args,)))
             }
+
+            if rule.name != none {
+              let element-data = data.at(eid)
+              let index = element-data.chain.len() - 1
+
+              // Lazily fill the data chain with 'none'
+              data.at(eid).data-chain += (none,) * (element-data.data-chain.len() - index)
+              data.at(eid).data-chain.push((kind: "set", name: rule.name))
+              data.at(eid).names.insert(rule.name, true)
+            }
+          } else if kind == "revoke" {
+            for (name, _) in data {
+              data.at(name).revokes.insert(rule.revoking, true)
+            }
           } else {
             assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
           }
@@ -126,7 +167,7 @@
   let args = (elem.parse-args)(fields, include-required: false)
 
   prepare-rule(
-    ((prepared-rule-key): true, version: element-version, kind: "set", element: (eid: elem.eid, default-data: elem.default-data), args: args)
+    ((prepared-rule-key): true, version: element-version, kind: "set", name: none, element: (eid: elem.eid, default-data: elem.default-data), args: args)
   )
 }
 
@@ -158,6 +199,44 @@
   ).sum(default: ())
 
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules))
+}
+
+// Name a certain rule. Use 'apply' to name a group of rules.
+#let named(name, rule) = {
+  assert(type(name) == str, message: "element.named: rule name must be a string, not " + str(type(name)))
+  assert(name != "", message: "element.named: name must not be empty")
+  assert(type(rule) == function, message: "element.named: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
+
+  let rule = rule([]).children.last().value.rule
+  if rule.kind == "apply" {
+    let i = 0
+    while i < rule.rules.len() {
+      let inner-rule = rule.rules.at(i)
+      assert(inner-rule.kind == "set", message: "element.named: can only name set rules at this moment, not '" + inner-rule.kind + "'")
+
+      rule.rules.at(i).insert("name", name)
+
+      i += 1
+    }
+  } else {
+    assert(rule.kind == "set", message: "element.named: can only name set rules at this moment, not '" + rule.kind + "'")
+    rule.insert("name", name)
+  }
+
+  // Re-prepare the rule
+  prepare-rule(rule)
+}
+
+// Revoke all rules with a certain name.
+//
+// USAGE:
+//
+// #show: named("name", set_(element, fields))
+// #show: revoke("name")
+#let revoke(name) = {
+  assert(type(name) == str, message: "element.revoke: rule name must be a string, not " + str(type(name)))
+
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "revoke", revoking: name, name: none))
 }
 
 // Create an element with the given name and constructor.
@@ -299,17 +378,6 @@
     result
   }
 
-  let default-data = (
-    // How many 'where rules' have been applied so far to this
-    // element. This is needed as, for each 'where rule', we have
-    // to apply a unique label to matching elements, so we increase
-    // this 'counter' by one each time.
-    where-rule-count: 0,
-
-    // The current accumulated styles (overridden values for arguments) for the element.
-    chain: (),
-  )
-
   let modified-constructor(..args) = {
     let args = parse-args(args, include-required: true)
     let inner = context {
@@ -320,7 +388,23 @@
         let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
         let element-data = data.at(eid, default: default-data)
 
-        let constructed-fields = default-fields + element-data.chain.sum(default: (:)) + args
+        let chain = if element-data.revokes == default-data.revokes or element-data.revokes.keys().all(r => r not in element-data.names) {
+          element-data.chain
+        } else {
+          let (data-chain, revokes) = element-data
+          element-data.chain.enumerate().map(((i, c)) => {
+            let data = data-chain.at(i, default: none)
+            if data == none or data.name not in revokes {
+              c
+            } else {
+              // Nullify changes at this stage
+              (:)
+            }
+          })
+        }
+
+        let constructed-fields = default-fields + chain.sum(default: (:)) + args
+
         let body = constructor(constructed-fields)
         let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor, eid: eid))]
 
@@ -338,9 +422,25 @@
     [#context {
       let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
+      let element-data = data.at(eid, default: default-data)
+      let chain = if element-data.revokes == default-data.revokes or element-data.revokes.keys().all(r => r not in element-data.names) {
+        element-data.chain
+      } else {
+        let (data-chain, revokes) = element-data
+        element-data.chain.enumerate().map(((i, c)) => {
+          let data = data-chain.at(i, default: none)
+          if data == none or data.name not in revokes {
+            c
+          } else {
+            // Nullify changes at this stage
+            (:)
+          }
+        })
+      }
+
       set bibliography(title: previous-bib-title)
       receiver(
-        default-fields + data.at(eid, default: default-data).chain.sum(default: (:))
+        default-fields + chain.sum(default: (:))
       )
     }#lbl-get]
   }
