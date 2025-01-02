@@ -18,6 +18,8 @@
 
 #let element-key = "__custom_element"
 
+#let sequence = [].func()
+
 // Convert a custom element into a dictionary with (body, fields, func),
 // allowing you to access its fields and information when given content.
 //
@@ -32,7 +34,7 @@
   ) {
     // Decomposing an element inside a show rule
     it.children.at(1).value
-  } else if it.has("children") {
+  } else if it.func() == sequence and it.children != () {
     let last = it.children.last()
     if last.at("label", default: none) == lbl-tag {
       // Decomposing a recently-constructed (but not placed) element

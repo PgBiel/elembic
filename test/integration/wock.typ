@@ -11,6 +11,8 @@
   )
 )
 
+#e.decompose([])
+
 #wock()
 
 #let w = wock(color: blue)
