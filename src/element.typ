@@ -2,30 +2,46 @@
 #import "types/types.typ"
 #import "fields.typ" as field-internals
 
+#let element-version = 1
+
 // Prefix for the labels added to shown elements.
 #let lbl-show-head = "__custom_element_shown_"
 
 // Label for context blocks which have access to the virtual stylechain.
 #let lbl-get = label("__custom_element_get")
 
+// Label for metadata indicating an element's initial properties post-construction.
+#let lbl-tag = label("__custom_element_tag")
+
 // Special dictionary key to indicate this is a prepared rule.
 #let prepared-rule-key = "__prepared-rule"
+
+#let element-key = "__custom_element"
 
 // Convert a custom element into a dictionary with (body, fields, func),
 // allowing you to access its fields and information when given content.
 //
 // When this is not a custom element, 'body' will be the given value,
 // 'fields' will be 'body.fields()' and 'func' will be 'body.func()'
-#let show_(it) = {
+#let decompose(it) = {
   if type(it) != content {
-    (body: it, fields: (:), func: none)
+    (body: it, fields: (:), func: none, eid: none)
   } else if (
     it.has("label")
     and str(it.label).starts-with(lbl-show-head)
   ) {
-    it.at("children", default: ()).at(1, default: (:)).at("value", default: (body: it, fields: (:), func: none))
+    // Decomposing an element inside a show rule
+    it.children.at(1).value
+  } else if it.has("children") {
+    let last = it.children.last()
+    if last.at("label", default: none) == lbl-tag {
+      // Decomposing a recently-constructed (but not placed) element
+      last.value
+    } else {
+      (body: it, fields: it.fields(), func: it.func(), eid: none)
+    }
   } else {
-    (body: it, fields: it.fields(), func: it.func())
+    (body: it, fields: it.fields(), func: it.func(), eid: none)
   }
 }
 
@@ -36,7 +52,7 @@
 }
 
 // Apply multiple set rules at once.
-#let apply_(..args) = {
+#let apply(..args) = {
   assert(args.named() == (:), message: "element.apply: unexpected named arguments")
   let rules = args.pos().map(
     rule => {
@@ -233,7 +249,7 @@
 
   let modified-constructor(..args) = {
     let args = parse-args(args, include-required: true)
-    context {
+    let inner = context {
       let previous-bib-title = bibliography.title
       [#context {
         set bibliography(title: previous-bib-title)
@@ -243,11 +259,13 @@
 
         let constructed-fields = default-fields + element-data.chain.sum(default: (:)) + args
         let body = constructor(constructed-fields)
-        let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor))]
+        let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor, eid: eid))]
 
         [#[#body#tag]#lbl-show]
       }#lbl-get]
     }
+
+    inner + [#metadata((body: inner, fields: args, func: modified-constructor, eid: eid))#lbl-tag]
   }
 
   let set-rule(..args) = {
@@ -310,7 +328,7 @@
 
         // Add unique matching label to all found elements
         show lbl-show: it => {
-          let (fields,) = show_(it)
+          let (fields,) = decompose(it)
 
           // Check if all positional and named arguments match
           if type(fields) == dictionary and args.pairs().all(((k, v)) => k in fields and fields.at(k) == v) {
@@ -342,12 +360,17 @@
   (
     modified-constructor,
     (
+      (element-key): true,
+      version: 1,
+      eid: eid,
       func: modified-constructor,
       set_: set-rule,
       get: get-rule,
       where: where-rule,
       sel: lbl-show,
       parse-args: parse-args,
+      default-data: default-data,
+      default-fields: default-fields,
     )
   )
 }

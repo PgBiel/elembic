@@ -21,9 +21,9 @@
 )
 
 // Flatten nested applications
-#show: e.apply_(
-  e.apply_(
-    e.apply_(
+#show: e.apply(
+  e.apply(
+    e.apply(
       ..rules
     )
   )

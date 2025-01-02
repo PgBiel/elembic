@@ -20,7 +20,7 @@
   e.set_(wock-e, inner: []),
 ) * 5000
 
-#let application = e.apply_(
+#let application = e.apply(
   ..all-rules
 )
 
