@@ -340,7 +340,7 @@
 
       set bibliography(title: previous-bib-title)
       receiver(
-        data.at(eid, default: default-data).chain.sum(default: (:))
+        default-fields + data.at(eid, default: default-data).chain.sum(default: (:))
       )
     }#lbl-get]
   }

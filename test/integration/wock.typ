@@ -23,7 +23,8 @@
 
   #wock()
 
-  #(wock-e.get)(v => assert.eq(v.at("color"), blue))
+  #(wock-e.get)(v => assert.eq(v.color, blue))
+  #(wock-e.get)(v => assert.eq(v.inner, [Hello!]))
 
   #[
     #show: e.set_(wock-e, inner: [Buh bye!])
