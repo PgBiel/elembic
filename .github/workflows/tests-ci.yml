@@ -43,6 +43,6 @@ jobs:
           for doc in test/integration/*.typ
           do
             echo "Compiling ${ANSI_BLUE}$doc${ANSI_END}..."
-            typst compile "$doc" --root . --timings "t-$doc.json"
-            echo "Compiled ${ANSI_BLUE}$doc${ANSI_END} in ${ANSI_GREEN}$(jq '.[-1]?.ts / 1000' <t-$doc.json) ms${ANSI_END}"
+            typst compile "$doc" --root . --timings "$doc.t.json"
+            echo "Compiled ${ANSI_BLUE}$doc${ANSI_END} in ${ANSI_GREEN}$(jq '.[-1]?.ts / 1000' <$doc.t.json) ms${ANSI_END}"
           done
