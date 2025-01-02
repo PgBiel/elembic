@@ -8,3 +8,6 @@ title = "The Elemmic Handbook"
 [output.html]
 git-repository-url = "https://github.com/PgBiel/elemmic"
 edit-url-template = "https://github.com/PgBiel/elemmic/edit/main/docs/book/{path}"
+
+[preprocessor.replace-pkg-version]
+command = "./bin/replace-pkg-version.sh"
