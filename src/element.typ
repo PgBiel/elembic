@@ -77,7 +77,7 @@
   }
 }
 
-#let prepare-rule-inner(rules, data) = {
+#let prepare-rule-inner(rules, data, tag-data) = {
   let data = data
   for rule in rules {
     let (name, kind) = rule
@@ -179,22 +179,24 @@
       }
     }
 
+    let should-check-tag-data = rules.any(r => r.kind == "revoke")
+
     // Inner must run later
     rules = rules.rev()
     {
       show lbl-get: it => {
 
         let tag-data = none
-        if it.func() == sequence and it.children.len() == 2 {
+        if should-check-tag-data and it.func() == sequence and it.children.len() == 2 {
           let last = it.children.last()
-          if last.at("label", default: none) == lbl-tag {
-            tag-data = last.value
+          if last.at("label", default: none) == lbl-tag and "eid" in last.value {
+            tag-data = (eid: last.value.eid)
           }
         }
 
         let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
-        let data = prepare-rule-inner(rules, data)
+        let data = prepare-rule-inner(rules, data, tag-data)
 
         set bibliography(title: [#metadata(data)#lbl-get])
         it
