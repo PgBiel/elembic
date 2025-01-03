@@ -118,12 +118,23 @@
     rules = rules.rev()
     {
       show lbl-get: it => {
+
+        let tag-data = none
+        if it.func() == sequence and it.children.len() == 2 {
+          let last = it.children.last()
+          if last.at("label", default: none) == lbl-tag {
+            tag-data = last.value
+          }
+        }
+
         let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
         for rule in rules {
           let (name, kind) = rule
           if kind == "set" {
-
+            // if name == "coolness" {
+            //   panic(data)
+            // }
             let (element, args) = rule
             let (eid, default-data) = element
             if eid in data {
@@ -144,11 +155,22 @@
               let index = element-data.chain.len() - 1
 
               // Lazily fill the data chain with 'none'
-              data.at(eid).data-chain += (none,) * (element-data.data-chain.len() - index)
+              data.at(eid).data-chain += (none,) * (index - element-data.data-chain.len())
               data.at(eid).data-chain.push((kind: "set", name: rule.name))
               data.at(eid).names.insert(rule.name, true)
+              let _ = data.at(eid)
             }
           } else if kind == "revoke" {
+            let tag-eid = if type(tag-data) == dictionary {
+              tag-data.at("eid", default: none)
+            } else {
+              none
+            }
+
+            if tag-eid != none and tag-eid not in data {
+              data.insert(tag-eid, default-data)
+            }
+
             if name == none {
               for (eid, _) in data {
                 // Can't revoke this revoke rule!
@@ -402,23 +424,28 @@
     let args = parse-args(args, include-required: true)
     let inner = context {
       let previous-bib-title = bibliography.title
-      [#context {
-        set bibliography(title: previous-bib-title)
+      [#{
+        let receiver = context {
+          set bibliography(title: previous-bib-title)
 
-        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
-        let element-data = data.at(eid, default: default-data)
+          let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
-        // Data is appended in reverse order.
-        // We don't need to handle revokes as this is done automatically as a
-        // consequence.
-        let chain = element-data.chain.rev()
+          let element-data = data.at(eid, default: default-data)
 
-        let constructed-fields = default-fields + chain.sum(default: (:)) + args
+          // Data is appended in reverse order.
+          // We don't need to handle revokes as this is done automatically as a
+          // consequence.
+          let chain = element-data.chain.rev()
 
-        let body = constructor(constructed-fields)
-        let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor, eid: eid))]
+          let constructed-fields = default-fields + chain.sum(default: (:)) + args
 
-        [#[#body#tag]#lbl-show]
+          let body = constructor(constructed-fields)
+          let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor, eid: eid))]
+
+          [#[#body#tag]#lbl-show]
+        }
+        receiver
+        [#metadata((body: receiver, fields: args, func: modified-constructor, eid: eid))#lbl-tag]
       }#lbl-get]
     }
 
@@ -429,18 +456,21 @@
 
   let get-rule(receiver) = context {
     let previous-bib-title = bibliography.title
-    [#context {
-      let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
+    [#{
+      context {
+        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
-      let element-data = data.at(eid, default: default-data)
+        let element-data = data.at(eid, default: default-data)
 
-      // Data is appended in reverse order.
-      let chain = element-data.chain.rev()
+        // Data is appended in reverse order.
+        let chain = element-data.chain.rev()
 
-      set bibliography(title: previous-bib-title)
-      receiver(
-        default-fields + chain.sum(default: (:))
-      )
+        // set bibliography(title: previous-bib-title)
+        receiver(
+          default-fields + chain.sum(default: (:))
+        )
+      }
+      [#metadata((eid: eid))#lbl-tag]
     }#lbl-get]
   }
 
