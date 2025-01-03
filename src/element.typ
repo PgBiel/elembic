@@ -77,6 +77,71 @@
   }
 }
 
+#let prepare-rule-inner(rules, data) = {
+  let data = data
+  for rule in rules {
+    let (name, kind) = rule
+    if kind == "set" {
+      // if name == "coolness" {
+      //   panic(data)
+      // }
+      let (element, args) = rule
+      let (eid, default-data) = element
+      if eid in data {
+        if name != none and name in data.at(eid).revokes {
+          // Some inner, un-revoked rule is revoking us, abort.
+          continue
+        }
+
+        // NOTE: This will insert in reverse
+        // Each element will have to reverse later.
+        data.at(eid).chain.push(args)
+      } else {
+        data.insert(eid, (..default-data, chain: (args,)))
+      }
+
+      if name != none {
+        let element-data = data.at(eid)
+        let index = element-data.chain.len() - 1
+
+        // Lazily fill the data chain with 'none'
+        data.at(eid).data-chain += (none,) * (index - element-data.data-chain.len())
+        data.at(eid).data-chain.push((kind: "set", name: rule.name))
+        data.at(eid).names.insert(rule.name, true)
+        // let _ = data.at(eid)
+      }
+    } else if kind == "revoke" {
+      let tag-eid = if type(tag-data) == dictionary {
+        tag-data.at("eid", default: none)
+      } else {
+        none
+      }
+
+      if tag-eid != none and tag-eid not in data {
+        data.insert(tag-eid, default-data)
+      }
+
+      if name == none {
+        for (eid, _) in data {
+          // Can't revoke this revoke rule!
+          data.at(eid).revokes.insert(rule.revoking, true)
+        }
+      } else {
+        for (eid, _) in data {
+          if name not in data.at(eid).revokes {
+            // Only revoke if this revoke rule wasn't, itself, revoked.
+            data.at(eid).revokes.insert(rule.revoking, true)
+          }
+        }
+      }
+    } else {
+      assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
+    }
+  }
+
+  data
+}
+
 // Prepare rule(s), returning a function `doc => ...` to be used in
 // `#show: rule`. The rule is attached as metadata to the returned
 // content so it can still be accessed outside of a show rule.
@@ -129,65 +194,7 @@
 
         let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
-        for rule in rules {
-          let (name, kind) = rule
-          if kind == "set" {
-            // if name == "coolness" {
-            //   panic(data)
-            // }
-            let (element, args) = rule
-            let (eid, default-data) = element
-            if eid in data {
-              if name != none and name in data.at(eid).revokes {
-                // Some inner, un-revoked rule is revoking us, abort.
-                continue
-              }
-
-              // NOTE: This will insert in reverse
-              // Each element will have to reverse later.
-              data.at(eid).chain.push(args)
-            } else {
-              data.insert(eid, (..default-data, chain: (args,)))
-            }
-
-            if name != none {
-              let element-data = data.at(eid)
-              let index = element-data.chain.len() - 1
-
-              // Lazily fill the data chain with 'none'
-              data.at(eid).data-chain += (none,) * (index - element-data.data-chain.len())
-              data.at(eid).data-chain.push((kind: "set", name: rule.name))
-              data.at(eid).names.insert(rule.name, true)
-              let _ = data.at(eid)
-            }
-          } else if kind == "revoke" {
-            let tag-eid = if type(tag-data) == dictionary {
-              tag-data.at("eid", default: none)
-            } else {
-              none
-            }
-
-            if tag-eid != none and tag-eid not in data {
-              data.insert(tag-eid, default-data)
-            }
-
-            if name == none {
-              for (eid, _) in data {
-                // Can't revoke this revoke rule!
-                data.at(eid).revokes.insert(rule.revoking, true)
-              }
-            } else {
-              for (eid, _) in data {
-                if name not in data.at(eid).revokes {
-                  // Only revoke if this revoke rule wasn't, itself, revoked.
-                  data.at(eid).revokes.insert(rule.revoking, true)
-                }
-              }
-            }
-          } else {
-            assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
-          }
-        }
+        let data = prepare-rule-inner(rules, data)
 
         set bibliography(title: [#metadata(data)#lbl-get])
         it
