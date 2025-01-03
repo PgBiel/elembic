@@ -46,8 +46,9 @@
   // All known names, so we can be aware of invalid revoke rules.
   names: (:),
 
-  // Revoked rules by name.
-  revokes: (:),
+  // List of active revokes, of the form:
+  // (index: last-chain-index, revoking: name-revoked, name: none / name of the revoke itself)
+  revoke-chain: ()
 )
 
 // Convert a custom element into a dictionary with (body, fields, func),
@@ -141,7 +142,13 @@
             }
           } else if kind == "revoke" {
             for (name, _) in data {
-              data.at(name).revokes.insert(rule.revoking, true)
+              // Can only revoke what's before us.
+              // If this element has no rules with this name, there is nothing to revoke;
+              // we shouldn't revoke names that come after us (inner rules).
+              // Note that this potentially includes named revokes as well.
+              if rule.revoking in data.at(name).names {
+                data.at(name).revoke-chain.push((name: none, index: data.at(name).chain.len(), revoking: rule.revoking))
+              }
             }
           } else {
             assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
@@ -237,6 +244,68 @@
   assert(type(name) == str, message: "element.revoke: rule name must be a string, not " + str(type(name)))
 
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "revoke", revoking: name, name: none))
+}
+
+// Apply revokes and other modifications to the chain and generate a final set
+// of fields.
+#let fold-chain(chain, data-chain, revoke-chain) = {
+  // Map name -> up to which index (exclusive) it is revoked.
+  //
+  // Importantly, a revoke at index B will apply to
+  // all rules with the revoked name before that index.
+  // If that revoke rule is, itself, revoked, that either
+  // completely eliminates the name from being revoked,
+  // or it simply leads the name to be revoked up to
+  // an index A < B. That, or it was also being revoked
+  // by another unrevoked revoke rule at index C > B,
+  // in which case the name is still revoked up to C.
+  // In all cases, the name is always revoked from the
+  // start until some end index. Otherwise, it isn't
+  // revoked at all (end index 0).
+  let active-revokes = (:)
+
+  // Revoke revoked revokes by analyzing revokes in reverse
+  // order: a revoke that came later always takes priority.
+  for revoke in revoke-chain.rev() {
+    // This revoke will revoke rules named 'revoking' up to 'index' in the chain, which
+    // automatically revokes revoke rules before it as well, since they were added when
+    // the chain length was smaller (or the same), and 'index' is always the chain length
+    // at the moment the revoke rule was added.
+    //
+    // We don't explicitly add revoke rules to the chain as their order in the revoke-chain
+    // list is enough to know which revoke rules can revoke others, and the index indicates
+    // which set rules are revoked.
+    //
+    // Regarding the first part of the AND, note that, if a name is already revoked up to
+    // index C from a later revoke (since we're going in reverse, so this one appears earlier
+    // than the previous ones), then revoking it up to index B <= C for this revoke is
+    // unnecessary since the index interval [0, B) is already contained in [0, C).
+    //
+    // In other words, only the last revoke for a particular name matters, which is the
+    // first one we find in this loop.
+    //
+    // (As you can see, we assume above that, if revoke 1 comes before revoke 2 in the revoke-chain
+    // (before reversing), with revoke 1 applying up to chain index B and revoke 2 up to index C,
+    // then B <= C. This is enforced in 'prepare-rules' as we analyze revokes and push their
+    // information to the chain in order (outer to inner / earlier to later).)
+    if revoke.revoking not in active-revokes and (revoke.name == none or revoke.name not in active-revokes) {
+      active-revokes.insert(revoke.revoking, revoke.index)
+    }
+  }
+
+  // Use map to filter and transform at the same time before joining.
+  chain
+    .enumerate()
+    .map(((i, c)) => {
+      let data = data-chain.at(i, default: none)
+      if data == none or data.name not in active-revokes or i >= active-revokes.at(data.name) {
+        c
+      } else {
+        // Nullify changes at this stage
+        (:)
+      }
+    })
+    .sum(default: (:))
 }
 
 // Create an element with the given name and constructor.
@@ -388,22 +457,17 @@
         let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
         let element-data = data.at(eid, default: default-data)
 
-        let chain = if element-data.revokes == default-data.revokes or element-data.revokes.keys().all(r => r not in element-data.names) {
-          element-data.chain
+        let folded-chain = if element-data.revoke-chain == default-data.revoke-chain {
+          // Sum the chain of dictionaries so that the latest value specified for
+          // each property wins.
+          element-data.chain.sum(default: (:))
         } else {
-          let (data-chain, revokes) = element-data
-          element-data.chain.enumerate().map(((i, c)) => {
-            let data = data-chain.at(i, default: none)
-            if data == none or data.name not in revokes {
-              c
-            } else {
-              // Nullify changes at this stage
-              (:)
-            }
-          })
+          // We can't just sum, we need to filter first.
+          // Memoize this operation through a function.
+          fold-chain(element-data.chain, element-data.data-chain, element-data.revoke-chain)
         }
 
-        let constructed-fields = default-fields + chain.sum(default: (:)) + args
+        let constructed-fields = default-fields + folded-chain + args
 
         let body = constructor(constructed-fields)
         let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor, eid: eid))]
@@ -423,24 +487,15 @@
       let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
       let element-data = data.at(eid, default: default-data)
-      let chain = if element-data.revokes == default-data.revokes or element-data.revokes.keys().all(r => r not in element-data.names) {
-        element-data.chain
+      let folded-chain = if element-data.revoke-chain == default-data.revoke-chain {
+        element-data.chain.sum(default: (:))
       } else {
-        let (data-chain, revokes) = element-data
-        element-data.chain.enumerate().map(((i, c)) => {
-          let data = data-chain.at(i, default: none)
-          if data == none or data.name not in revokes {
-            c
-          } else {
-            // Nullify changes at this stage
-            (:)
-          }
-        })
+        fold-chain(element-data.chain, element-data.data-chain, element-data.revoke-chain)
       }
 
       set bibliography(title: previous-bib-title)
       receiver(
-        default-fields + chain.sum(default: (:))
+        default-fields + folded-chain
       )
     }#lbl-get]
   }
