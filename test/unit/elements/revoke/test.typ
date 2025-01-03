@@ -40,12 +40,21 @@
 
   #wock()
 
-  #show: e.revoke("datums")
+  #[
+    #show: e.revoke("datums")
 
-  // Both color change and other changes revoked
+    // Both color change and other changes revoked
+    #(wock-e.get)(d => assert.ne(d.color, cool-color))
+    #(wock-e.get)(d => assert.ne(d.border, blue + 2pt))
+    #(wock-e.get)(d => assert.ne(d.size, 300))
+
+    #wock()
+  ]
+
+  // 'datums' no longer revoked
   #(wock-e.get)(d => assert.ne(d.color, cool-color))
-  #(wock-e.get)(d => assert.ne(d.border, blue + 2pt))
-  #(wock-e.get)(d => assert.ne(d.size, 300))
+  #(wock-e.get)(d => assert.eq(d.border, blue + 2pt))
+  #(wock-e.get)(d => assert.eq(d.size, 300))
 
   #wock()
 ]
