@@ -9,3 +9,6 @@ categories = ["scripting", "utility"]
 license = "MIT OR Apache-2.0"
 description = "Custom elements and types in pure Typst"
 keywords = ["element", "type", "validation", "styling"]
+
+[tool.typst-test]
+tests = "test/unit"

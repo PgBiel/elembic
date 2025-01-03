@@ -1,0 +1,2 @@
+test/unit/**/out
+test/unit/**/diff
