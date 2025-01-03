@@ -74,7 +74,7 @@ jobs:
         with:
           name: artifacts
           path: |
-            tests/**/diff/*.png
-            tests/**/out/*.png
-            tests/**/ref/*.png
+            test/unit/**/diff/*.png
+            test/unit/**/out/*.png
+            test/unit/**/ref/*.png
           retention-days: 3
