@@ -65,8 +65,8 @@ jobs:
             fi
           done
 
-      - name: ⚠️ Skip incompatible unit tests
-        if: ${{ matrix.typst-version == 'v0.11.0' }}
+      - name: ⚠️ Skip incompatible unit tests (Typst v0.11)
+        if: ${{ matrix.typst-version == 'v0.11.0' || matrix.typst-version == 'v0.11.1' }}
         run: rm -rf test/unit/elements/show-body-order
 
       - name: 🛠️ Run unit tests
