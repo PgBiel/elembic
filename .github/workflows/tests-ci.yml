@@ -29,6 +29,19 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - name: 📁 Prepare cargo cache
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: cargo
+          version: 1.0
+
+      - name: 📥 Install typst-test from GitHub
+        uses: baptiste0928/cargo-install@v3.0.0
+        with:
+          crate: typst-test
+          git: https://github.com/tingerrr/typst-test.git
+          tag: ci-semi-stable
+
       - name: 📥 Setup Typst
         uses: typst-community/setup-typst@v3
         id: setup-typst
@@ -51,3 +64,17 @@ jobs:
               echo "Failed to compile ${ANSI_RED}$doc${ANSI_END}"
             fi
           done
+
+      - name: 🛠️ Run unit tests
+        run: typst-test run
+
+      - name: 📤 Archive test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: artifacts
+          path: |
+            tests/**/diff/*.png
+            tests/**/out/*.png
+            tests/**/ref/*.png
+          retention-days: 3
