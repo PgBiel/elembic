@@ -72,7 +72,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: artifacts
+          name: artifacts-typst-${{ matrix.typst-version }}
           path: |
             test/unit/**/diff/*.png
             test/unit/**/out/*.png
