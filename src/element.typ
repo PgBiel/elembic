@@ -114,23 +114,32 @@
       }
     }
 
-    [#context {
-      let previous-bib-title = bibliography.title
-      [#context {
+    // Inner must run later
+    rules = rules.rev()
+    {
+      show lbl-get: it => {
         let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
         for rule in rules {
-          let kind = rule.kind
+          let (name, kind) = rule
           if kind == "set" {
+
             let (element, args) = rule
             let (eid, default-data) = element
             if eid in data {
+              if name != none and name in data.at(eid).revokes {
+                // Some inner, un-revoked rule is revoking us, abort.
+                continue
+              }
+
+              // NOTE: This will insert in reverse
+              // Each element will have to reverse later.
               data.at(eid).chain.push(args)
             } else {
               data.insert(eid, (..default-data, chain: (args,)))
             }
 
-            if rule.name != none {
+            if name != none {
               let element-data = data.at(eid)
               let index = element-data.chain.len() - 1
 
@@ -140,19 +149,30 @@
               data.at(eid).names.insert(rule.name, true)
             }
           } else if kind == "revoke" {
-            for (name, _) in data {
-              data.at(name).revokes.insert(rule.revoking, true)
+            if name == none {
+              for (eid, _) in data {
+                // Can't revoke this revoke rule!
+                data.at(eid).revokes.insert(rule.revoking, true)
+              }
+            } else {
+              for (eid, _) in data {
+                if name not in data.at(eid).revokes {
+                  // Only revoke if this revoke rule wasn't, itself, revoked.
+                  data.at(eid).revokes.insert(rule.revoking, true)
+                }
+              }
             }
           } else {
             assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
           }
         }
 
-        set bibliography(title: previous-bib-title)
-        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
-        doc
-      }#lbl-get]
-    }#metadata((doc: doc, rule: rule))#lbl-rule-tag]
+        set bibliography(title: [#metadata(data)#lbl-get])
+        it
+      }
+      doc
+    }
+    [#metadata((doc: doc, rule: rule))#lbl-rule-tag]
   }
 }
 
@@ -212,14 +232,14 @@
     let i = 0
     while i < rule.rules.len() {
       let inner-rule = rule.rules.at(i)
-      assert(inner-rule.kind == "set", message: "element.named: can only name set rules at this moment, not '" + inner-rule.kind + "'")
+      assert(inner-rule.kind == "set" or inner-rule.kind == "revoke", message: "element.named: can only name set and revoke rules at this moment, not '" + inner-rule.kind + "'\n  hint: move the 'named' call inside the 'apply', applying only to rules which can be named")
 
       rule.rules.at(i).insert("name", name)
 
       i += 1
     }
   } else {
-    assert(rule.kind == "set", message: "element.named: can only name set rules at this moment, not '" + rule.kind + "'")
+    assert(rule.kind == "set" or rule.kind == "revoke", message: "element.named: can only name set and revoke rules at this moment, not '" + rule.kind + "'")
     rule.insert("name", name)
   }
 
@@ -388,20 +408,10 @@
         let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
         let element-data = data.at(eid, default: default-data)
 
-        let chain = if element-data.revokes == default-data.revokes or element-data.revokes.keys().all(r => r not in element-data.names) {
-          element-data.chain
-        } else {
-          let (data-chain, revokes) = element-data
-          element-data.chain.enumerate().map(((i, c)) => {
-            let data = data-chain.at(i, default: none)
-            if data == none or data.name not in revokes {
-              c
-            } else {
-              // Nullify changes at this stage
-              (:)
-            }
-          })
-        }
+        // Data is appended in reverse order.
+        // We don't need to handle revokes as this is done automatically as a
+        // consequence.
+        let chain = element-data.chain.rev()
 
         let constructed-fields = default-fields + chain.sum(default: (:)) + args
 
@@ -423,20 +433,9 @@
       let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
 
       let element-data = data.at(eid, default: default-data)
-      let chain = if element-data.revokes == default-data.revokes or element-data.revokes.keys().all(r => r not in element-data.names) {
-        element-data.chain
-      } else {
-        let (data-chain, revokes) = element-data
-        element-data.chain.enumerate().map(((i, c)) => {
-          let data = data-chain.at(i, default: none)
-          if data == none or data.name not in revokes {
-            c
-          } else {
-            // Nullify changes at this stage
-            (:)
-          }
-        })
-      }
+
+      // Data is appended in reverse order.
+      let chain = element-data.chain.rev()
 
       set bibliography(title: previous-bib-title)
       receiver(
