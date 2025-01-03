@@ -182,7 +182,7 @@
   assert(args.named() == (:), message: "element.apply: unexpected named arguments")
   let rules = args.pos().map(
     rule => {
-      assert(type(rule) == function, message: "element.apply: invalid rule of type " + type(rule) + ", please use 'set_' or some other function from this library to generate it")
+      assert(type(rule) == function, message: "element.apply: invalid rule of type " + str(type(rule)) + ", please use 'set_' or some other function from this library to generate it")
 
       // Call it as if it we were in a show rule.
       // It will have some trailing metadata indicating its arguments.
