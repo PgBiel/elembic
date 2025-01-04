@@ -351,6 +351,11 @@
           chain.last()
         }
 
+        assert(
+          data.stateful,
+          message: "element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
+        )
+
         data.elements = apply-rules(data.elements, rules)
 
         chain.push(data)
@@ -451,6 +456,8 @@
       light
     } else if mode == style-modes.stateful {
       stateful
+    } else {
+      panic("element rule: unknown mode: " + repr(mode))
     }
 
     // Add the rule tag after each rule application.
