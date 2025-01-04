@@ -599,19 +599,18 @@
     }
   }
 
+  let i = 0
+  for data in data-chain {
+    if data != none and data.name in active-revokes and i < active-revokes.at(data.name) {
+      // Nullify changes at this stage
+      chain.at(i) = (:)
+    }
+
+    i += 1
+  }
+
   // Use map to filter and transform at the same time before joining.
-  chain
-    .enumerate()
-    .map(((i, c)) => {
-      let data = data-chain.at(i, default: none)
-      if data == none or data.name not in active-revokes or i >= active-revokes.at(data.name) {
-        c
-      } else {
-        // Nullify changes at this stage
-        (:)
-      }
-    })
-    .sum(default: (:))
+  chain.sum(default: (:))
 }
 
 // Create an element with the given name and constructor.
