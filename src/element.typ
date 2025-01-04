@@ -253,7 +253,21 @@
         // we shouldn't revoke names that come after us (inner rules).
         // Note that this potentially includes named revokes as well.
         if rule.revoking in data.at(name).names {
-          data.at(name).revoke-chain.push((name: rule.name, index: data.at(name).chain.len(), revoking: rule.revoking))
+          data.at(name).revoke-chain.push((kind: "revoke", name: rule.name, index: data.at(name).chain.len(), revoking: rule.revoking))
+
+          if rule.name != none {
+            data.at(name).names.insert(rule.name, true)
+          }
+        }
+      }
+    } else if kind == "reset" {
+      // Whether the list of elements that this reset applies to is restricted.
+      let filtering = rule.eids != ()
+      for (name, element-data) in data {
+        // Can only revoke what's before us.
+        // If this element has no rules, no need to add a reset.
+        if (not filtering or name in rule.eids) and element-data.chain != () {
+          data.at(name).revoke-chain.push((kind: "reset", name: rule.name, index: element-data.chain.len()))
 
           if rule.name != none {
             data.at(name).names.insert(rule.name, true)
@@ -517,14 +531,14 @@
     let i = 0
     while i < rule.rules.len() {
       let inner-rule = rule.rules.at(i)
-      assert(inner-rule.kind == "set" or inner-rule.kind == "revoke", message: "element.named: can only name set and revoke rules at this moment, not '" + inner-rule.kind + "'")
+      assert(inner-rule.kind in ("set", "revoke", "reset"), message: "element.named: can only name set, revoke and reset rules at this moment, not '" + inner-rule.kind + "'")
 
       rule.rules.at(i).insert("name", name)
 
       i += 1
     }
   } else {
-    assert(rule.kind == "set" or rule.kind == "revoke", message: "element.named: can only name set and revoke rules at this moment, not '" + rule.kind + "'")
+    assert(rule.kind in ("set", "revoke", "reset"), message: "element.named: can only name set, revoke and reset rules at this moment, not '" + rule.kind + "'")
     rule.insert("name", name)
   }
 
@@ -545,16 +559,28 @@
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "revoke", revoking: name, name: none, mode: mode))
 }
 
+// Revoke all rules for certain elements (or even all elements).
+//
+// USAGE:
+//
+// #show: set_(element, fields)
+// #show: reset(element)
+// (Rules no longer apply here)
+#let reset(..args, mode: auto) = {
+  assert(args.named() == (:), message: "element.reset: unexpected named arguments")
+  assert(mode == auto or mode == style-modes.normal or mode == style-modes.light or mode == style-modes.stateful, message: "element.reset: invalid mode, must be auto or e.style-modes.(normal / light / stateful)")
+  assert(args.pos().all(x => type(x) == dictionary and "eid" in x), message: "element.reset: invalid arguments, please provide element data with at least an 'eid'")
+
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "reset", eids: args.pos().map(x => x.eid), name: none, mode: mode))
+}
+
 // Stateful variants
 #let stateful-set(..args) = {
   apply(set_(..args), mode: style-modes.stateful)
 }
-#let stateful-apply(..args) = {
-  apply(..args, mode: style-modes.stateful)
-}
-#let stateful-revoke(..args) = {
-  revoke(..args, mode: style-modes.stateful)
-}
+#let stateful-apply = apply.with(mode: style-modes.stateful)
+#let stateful-revoke = revoke.with(mode: style-modes.stateful)
+#let stateful-reset = reset.with(mode: style-modes.stateful)
 
 // Apply revokes and other modifications to the chain and generate a final set
 // of fields.
@@ -573,6 +599,8 @@
   // start until some end index. Otherwise, it isn't
   // revoked at all (end index 0).
   let active-revokes = (:)
+
+  let first-active-index = 0
 
   // Revoke revoked revokes by analyzing revokes in reverse
   // order: a revoke that came later always takes priority.
@@ -598,12 +626,29 @@
     // (before reversing), with revoke 1 applying up to chain index B and revoke 2 up to index C,
     // then B <= C. This is enforced in 'prepare-rules' as we analyze revokes and push their
     // information to the chain in order (outer to inner / earlier to later).)
-    if revoke.revoking not in active-revokes and (revoke.name == none or revoke.name not in active-revokes) {
+    if revoke.kind == "revoke" and revoke.revoking not in active-revokes and (revoke.name == none or revoke.name not in active-revokes) {
       active-revokes.insert(revoke.revoking, revoke.index)
+    } else if revoke.kind == "reset" and (revoke.name == none or revoke.name not in active-revokes) {
+      first-active-index = revoke.index
+
+      chain = if chain.len() <= first-active-index {
+        ()
+      } else {
+        chain.slice(first-active-index)
+      }
+
+      data-chain = if data-chain.len() <= first-active-index {
+        ()
+      } else {
+        data-chain.slice(first-active-index)
+      }
+
+      // No need to analyze any further revoke rules since everything was reset.
+      break
     }
   }
 
-  let i = 0
+  let i = first-active-index
   for data in data-chain {
     if data != none and data.name in active-revokes and i < active-revokes.at(data.name) {
       // Nullify changes at this stage
