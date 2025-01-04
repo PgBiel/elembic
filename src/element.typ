@@ -17,7 +17,6 @@
 #let lbl-rule-tag = label("__custom_element_rule")
 
 #let lbl-stateful-mode = <__custom_element_stateful_mode>
-#let lbl-light-mode = <__custom_element_light_mode>
 #let lbl-normal-mode = <__custom_element_normal_mode>
 #let lbl-auto-mode = <__custom_element_auto_mode>
 
@@ -192,16 +191,15 @@
         // Notify both modes about it (non-stateful and stateful)
         data.stateful = enable
 
-        let (show-normal, show-light, show-stateful) = if enable {
+        let (show-normal, show-stateful) = if enable {
           // TODO: Have a way to keep track of previous toggles and undo them
-          (none, none, it => it.value.body)
+          (none, it => it.value.body)
         } else {
-          (it => it.value.body, none, none)
+          (it => it.value.body, none)
         }
 
         show lbl-auto-mode: none
         show lbl-normal-mode: show-normal
-        show lbl-light-mode: show-light
         show lbl-stateful-mode: show-stateful
 
         // Sync data with style chain for non-stateful modes
@@ -406,9 +404,16 @@
       }#lbl-get]
     }
 
-    // Light mode: only one context, but bibliography title is permanently clobbered.
-    // TODO: Save the old value.
-    let light = (
+    let body = if mode == auto {
+      // Allow user to pick the mode through show rules.
+      // Note: picking light mode has no effect on show rule depth, so we don't allow choosing
+      // it globally. For it to make a difference, it must be explicitly chosen.
+      [#metadata((body: stateful))#lbl-stateful-mode]
+      [#metadata((body: normal))#lbl-normal-mode]
+      [#normal#lbl-auto-mode]
+    } else if mode == style-modes.normal {
+      normal
+    } else if mode == style-modes.light {
       [#context {
         let data = if (
           type(bibliography.title) == content
@@ -442,18 +447,6 @@
         show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
         doc
       }#lbl-get]
-    )
-
-    let body = if mode == auto {
-      // Allow user to pick the mode through show rules.
-      [#metadata((body: stateful))#lbl-stateful-mode]
-      [#metadata((body: light))#lbl-light-mode]
-      [#metadata((body: normal))#lbl-normal-mode]
-      [#normal#lbl-auto-mode]
-    } else if mode == style-modes.normal {
-      normal
-    } else if mode == style-modes.light {
-      light
     } else if mode == style-modes.stateful {
       stateful
     } else {
