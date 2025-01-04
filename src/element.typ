@@ -16,6 +16,11 @@
 // Label for metadata indicating a rule's parameters.
 #let lbl-rule-tag = label("__custom_element_rule")
 
+#let lbl-stateful-mode = <__custom_element_stateful_mode>
+#let lbl-light-mode = <__custom_element_light_mode>
+#let lbl-normal-mode = <__custom_element_normal_mode>
+#let lbl-auto-mode = <__custom_element_auto_mode>
+
 // Special dictionary key to indicate this is a prepared rule.
 #let prepared-rule-key = "__prepared-rule"
 
@@ -187,6 +192,18 @@
         // Notify both modes about it (non-stateful and stateful)
         data.stateful = enable
 
+        let (show-normal, show-light, show-stateful) = if enable {
+          // TODO: Have a way to keep track of previous toggles and undo them
+          (none, none, it => it.value.body)
+        } else {
+          (it => it.value.body, none, none)
+        }
+
+        show lbl-auto-mode: none
+        show lbl-normal-mode: show-normal
+        show lbl-light-mode: show-light
+        show lbl-stateful-mode: show-stateful
+
         // Sync data with style chain for non-stateful modes
         show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
 
@@ -291,10 +308,11 @@
       // 'apply', we expect it to automatically pass its mode to its children.
       rule.mode
     } else {
-      rules.fold(style-modes.normal, (mode, rule) => {
+      rules.fold(auto, (mode, rule) => {
         if (
           rule.mode == style-modes.stateful
           or mode != style-modes.stateful and rule.mode == style-modes.light
+          or mode != auto
         ) {
           // Prioritize more explicit modes:
           // stateful > light > normal
@@ -305,33 +323,32 @@
       })
     }
 
-    let body = if mode == style-modes.normal {
-      // Normal mode: two nested contexts: one retrieves the current bibliography title,
-      // and the other retrieves the title with metadata and restores the current title.
-      context {
-        let previous-bib-title = bibliography.title
-        [#context {
-          let data = if (
-            type(bibliography.title) == content
-            and bibliography.title.func() == metadata
-            and bibliography.title.at("label", default: none) == lbl-get
-          ) {
-            bibliography.title.value
-          } else {
-            default-global-data
-          }
+    // Stateful mode: no context, just push in a state at the start of the scope
+    // and pop to previous data at the end.
+    let stateful = {
+      style-state.update(chain => {
+        let data = if chain == () {
+          default-global-data
+        } else {
+          chain.last()
+        }
 
-          // TODO: Read from and update to state in global stateful mode.
-          data.elements = apply-rules(data.elements, rules)
+        data.elements = apply-rules(data.elements, rules)
 
-          set bibliography(title: previous-bib-title)
-          show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
-          doc
-        }#lbl-get]
-      }
-    } else if mode == style-modes.light {
-      // Light mode: only one context, but bibliography title is permanently clobbered.
-      // TODO: Save the old value.
+        chain.push(data)
+        chain
+      })
+      doc
+      style-state.update(chain => {
+        _ = chain.pop()
+        chain
+      })
+    }
+
+    // Normal mode: two nested contexts: one retrieves the current bibliography title,
+    // and the other retrieves the title with metadata and restores the current title.
+    let normal = context {
+      let previous-bib-title = bibliography.title
       [#context {
         let data = if (
           type(bibliography.title) == content
@@ -343,6 +360,57 @@
           default-global-data
         }
 
+        if data.stateful {
+          if mode == auto {
+            // User chose something else.
+            // Don't even place anything.
+            return none
+          } else {
+            // Use state instead!
+            return {
+              set bibliography(title: previous-bib-title)
+              stateful
+            }
+          }
+        }
+
+        // TODO: Read from and update to state in global stateful mode.
+        data.elements = apply-rules(data.elements, rules)
+
+        set bibliography(title: previous-bib-title)
+        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+        doc
+      }#lbl-get]
+    }
+
+    // Light mode: only one context, but bibliography title is permanently clobbered.
+    // TODO: Save the old value.
+    let light = (
+      [#context {
+        let data = if (
+          type(bibliography.title) == content
+          and bibliography.title.func() == metadata
+          and bibliography.title.at("label", default: none) == lbl-get
+        ) {
+          bibliography.title.value
+        } else {
+          default-global-data
+        }
+
+        if data.stateful {
+          if mode == auto {
+            // User chose something else.
+            // Don't even place anything.
+            return none
+          } else {
+            // Use state instead!
+            return {
+              set bibliography(title: auto)
+              stateful
+            }
+          }
+        }
+
         // TODO: Read from and update to state in global stateful mode.
         data.elements = apply-rules(data.elements, rules)
 
@@ -351,24 +419,20 @@
         show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
         doc
       }#lbl-get]
-    } else {
-      // Stateful mode: no context, just push in a state at the start of the scope
-      // and pop to previous data at the end.
-      [#style-state.update(chain => {
-        let data = if chain == () {
-          default-global-data
-        } else {
-          chain.last()
-        }
+    )
 
-        data.elements = apply-rules(data.elements, rules)
-
-        chain.push(data)
-        chain
-      })#doc#style-state.update(chain => {
-        _ = chain.pop()
-        chain
-      })]
+    let body = if mode == auto {
+      // Allow user to pick the mode through show rules.
+      [#metadata((body: stateful))#lbl-stateful-mode]
+      [#metadata((body: light))#lbl-light-mode]
+      [#metadata((body: normal))#lbl-normal-mode]
+      [#normal#lbl-auto-mode]
+    } else if mode == style-modes.normal {
+      normal
+    } else if mode == style-modes.light {
+      light
+    } else if mode == style-modes.stateful {
+      stateful
     }
 
     // Add the rule tag after each rule application.
