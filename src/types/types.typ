@@ -134,6 +134,6 @@
     // TODO: Custom types / elements and the sort
     type_
   } else {
-    panic("unexpected type '" + type(type_) + "', please provide an actual type")
+    panic("unexpected type '" + str(type(type_)) + "', please provide an actual type")
   }
 }
