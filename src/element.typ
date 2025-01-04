@@ -144,6 +144,9 @@
 }
 
 // Changes stateful mode settings within a certain scope.
+// This function will sync all data between all modes (data from normal mode
+// goes to state and data from stateful mode goes to normal mode).
+//
 // Setting it to 'true' tells all set rules to update the state, and also ensures
 // getters retrieve the value from the state, even if not explicitly aware of
 // stateful mode.
@@ -168,20 +171,28 @@
       set bibliography(title: previous-bib-title)
 
       if data.stateful != enable or force {
-        // Notify both modes about it (non-stateful and stateful)
-        data.stateful = enable
-        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
-
-        // Push in this scope, pop at the end
-        [#style-state.update(chain => {
-          let data = if chain == () {
+        if not enable {
+          // Enabling stateful mode => use data from the style chain
+          //
+          // Disabling stateful mode => need to sync stateful with non-stateful,
+          // so we use data from the state
+          let chain = style-state.get()
+          data = if chain == () {
             default-global-data
           } else {
             chain.last()
           }
+        }
 
-          data.stateful = enable
+        // Notify both modes about it (non-stateful and stateful)
+        data.stateful = enable
 
+        // Sync data with style chain for non-stateful modes
+        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+
+        // Sync data with state for stateful mode
+        // Push at the start of the scope, pop at the end
+        [#style-state.update(chain => {
           chain.push(data)
           chain
         })#doc#style-state.update(chain => {
