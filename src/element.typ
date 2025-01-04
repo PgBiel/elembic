@@ -871,7 +871,12 @@
         }
 
         if data.stateful {
-          panic("TODO")
+          let chain = style-state.get()
+          data = if chain == () {
+            default-global-data
+          } else {
+            chain.last()
+          }
         }
 
         let element-data = data.elements.at(eid, default: default-data)
@@ -900,14 +905,30 @@
           data.elements.insert(eid, element-data)
         }
 
-        // Increase where rule counter for further where rules
         set bibliography(title: previous-bib-title)
-        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
 
         // Pass usable selector to the callback
         // This selector will only match elements with
         // the correct fields
-        receiver(matching-label)
+        let body = receiver(matching-label)
+
+        // Increase where rule counter for further where rules
+        if data.stateful {
+          style-state.update(chain => {
+            chain.push(data)
+            chain
+          })
+
+          body
+
+          style-state.update(chain => {
+            _ = chain.pop()
+            chain
+          })
+        } else {
+          show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+          body
+        }
       }#lbl-get]
     }
   }
