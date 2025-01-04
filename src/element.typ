@@ -253,7 +253,11 @@
         // we shouldn't revoke names that come after us (inner rules).
         // Note that this potentially includes named revokes as well.
         if rule.revoking in data.at(name).names {
-          data.at(name).revoke-chain.push((name: none, index: data.at(name).chain.len(), revoking: rule.revoking))
+          data.at(name).revoke-chain.push((name: rule.name, index: data.at(name).chain.len(), revoking: rule.revoking))
+
+          if rule.name != none {
+            data.at(name).names.insert(rule.name, true)
+          }
         }
       }
     } else {
@@ -513,14 +517,14 @@
     let i = 0
     while i < rule.rules.len() {
       let inner-rule = rule.rules.at(i)
-      assert(inner-rule.kind == "set", message: "element.named: can only name set rules at this moment, not '" + inner-rule.kind + "'")
+      assert(inner-rule.kind == "set" or inner-rule.kind == "revoke", message: "element.named: can only name set and revoke rules at this moment, not '" + inner-rule.kind + "'")
 
       rule.rules.at(i).insert("name", name)
 
       i += 1
     }
   } else {
-    assert(rule.kind == "set", message: "element.named: can only name set rules at this moment, not '" + rule.kind + "'")
+    assert(rule.kind == "set" or rule.kind == "revoke", message: "element.named: can only name set and revoke rules at this moment, not '" + rule.kind + "'")
     rule.insert("name", name)
   }
 
