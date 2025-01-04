@@ -678,135 +678,15 @@
   let lbl-where(n) = label("__custom_element_where_" + str(n) + eid)
 
   let fields = field-internals.parse-fields(fields)
-  let (required-pos-fields, optional-pos-fields, required-named-fields, all-fields) = fields
-  let required-pos-fields-amount = required-pos-fields.len()
-  let optional-pos-fields-amount = optional-pos-fields.len()
-  let total-pos-fields-amount = required-pos-fields-amount + optional-pos-fields-amount
-  let all-pos-fields = required-pos-fields + optional-pos-fields
+  let (all-fields,) = fields
+
+  let parse-args = field-internals.generate-arg-parser(
+    fields: fields,
+    general-error-prefix: "element '" + name + "': ",
+    field-error-prefix: field-name => "field '" + field-name + "' of element '" + name + "': "
+  )
 
   let default-fields = fields.all-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
-
-  // Parse arguments into a dictionary of fields and their casted values.
-  // By default, include required arguments and error if they are missing.
-  // Setting 'include-required' to false will error if they are present
-  // instead.
-  let parse-args(args, include-required: true) = {
-    let result = (:)
-
-    let pos = args.pos()
-    if include-required and pos.len() < required-pos-fields-amount {
-      // Plural
-      let s = if required-pos-fields-amount - pos.len() == 1 { "" } else { "s" }
-
-      assert(false, message: "element '" + name + "': missing positional field" + s + " " + fields.required-pos-fields.slice(pos.len()).map(f => "'" + f.name + "'").join(", "))
-    }
-
-    let expected-arg-amount = if include-required { total-pos-fields-amount } else { optional-pos-fields-amount }
-
-    if pos.len() > expected-arg-amount {
-      let excluding-required-hint = if include-required { "" } else { "\nhint: only optional fields are accepted here" }
-      assert(false, message: "element '" + name + "': too many positional arguments, expected " + str(expected-arg-amount) + excluding-required-hint)
-    }
-
-    let pos-fields = if include-required { all-pos-fields } else { optional-pos-fields }
-    let i = 0
-    for value in pos {
-      let pos-field = pos-fields.at(i)
-      let typeinfo = pos-field.typeinfo
-      let kind = typeinfo.at(type-key)
-      let casted = value
-
-      if kind != "any" {
-        if kind == "literal" {
-          if value != typeinfo.data {
-            assert(false, message: "field '" + pos-field.name + "' of element '" + name + "': " + types.generate-cast-error(value, typeinfo))
-          }
-        } else {
-          let value-type = type(value)
-          if value-type == dictionary and custom-type-key in value {
-            value-type = value.at(custom-type-key)
-          }
-          if (
-            value-type not in typeinfo.input
-            or typeinfo.check != none and not (typeinfo.check)(value)
-          ) {
-            assert(false, message: "field '" + pos-field.name + "' of element '" + name + "': " + types.generate-cast-error(value, typeinfo))
-          }
-
-          if typeinfo.cast != none {
-            casted = if kind == "native" and typeinfo.data == content {
-              [#value]
-            } else {
-              (typeinfo.cast)(value)
-            }
-          }
-        }
-      }
-
-      result.insert(pos-field.name, casted)
-
-      i += 1
-    }
-
-    let named-args = args.named()
-
-    for (field-name, value) in named-args {
-      let field = all-fields.at(field-name, default: none)
-      if field == none or not field.named {
-        let expected-pos-hint = if field == none or field.named { "" } else { "\nhint: this field must be specified positionally" }
-
-        assert(false, message: "element '" + name + "': unknown named field '" + field-name + "'" + expected-pos-hint)
-      }
-
-      if not include-required and field.required {
-        assert(false, message: "element '" + name + "': field '" + field-name + "' cannot be specified here\nhint: only optional fields are accepted here")
-      }
-
-      let typeinfo = field.typeinfo
-      let kind = typeinfo.at(type-key)
-      let casted = value
-
-      if kind != "any" {
-        if kind == "literal" {
-          if value != typeinfo.data {
-            assert(false, message: "field '" + field-name + "' of element '" + name + "': " + types.generate-cast-error(value, typeinfo))
-          }
-        } else {
-          let value-type = type(value)
-          if value-type == dictionary and custom-type-key in value {
-            value-type = value.at(custom-type-key)
-          }
-          if (
-            value-type not in typeinfo.input
-            or typeinfo.check != none and not (typeinfo.check)(value)
-          ) {
-            assert(false, message: "field '" + field-name + "' of element '" + name + "': " + types.generate-cast-error(value, typeinfo))
-          }
-
-          if typeinfo.cast != none {
-            casted = if kind == "native" and typeinfo.data == content {
-              [#value]
-            } else {
-              (typeinfo.cast)(value)
-            }
-          }
-        }
-      }
-
-      result.insert(field-name, casted)
-    }
-
-    if include-required {
-      let missing-fields = required-named-fields.filter(f => f.name not in named-args)
-      if missing-fields != () {
-        let s = if missing-fields.len() == 1 { "" } else { "s" }
-
-        assert(false, message: "element '" + name + "': missing required named field" + s + " " + missing-fields.map(f => "'" + f.name + "'").join(", "))
-      }
-    }
-
-    result
-  }
 
   let modified-constructor(..args) = {
     let args = parse-args(args, include-required: true)
