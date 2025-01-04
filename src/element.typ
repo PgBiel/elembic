@@ -21,8 +21,73 @@
 
 #let element-key = "__custom_element"
 #let element-data-key = "__custom_element_data"
+#let global-data-key = "__custom_element_global_data"
 
 #let sequence = [].func()
+
+// Potential modes for configuration of styles.
+// This defines how we declare a set rule (or similar)
+// within a certain scope.
+#let style-modes = (
+  // Normal mode: we store metadata in a bibliography.title set rule.
+  //
+  // Before doing so, we retrieve the original value for bibliography.title,
+  // allowing us to restore it later. The effect is that the library is
+  // fully hygienic, that is, the change to bibliography.title is not perceptible.
+  //
+  // The downside is that retrieving the original value for bibliography.title costs
+  // an additional nested context { } call, of which there is a limit of 64. This means
+  // that, in this mode, you can have up to 32 non-consecutive set rules.
+  normal: 0,
+
+  // Light mode: similar to normal mode, but we don't try to preserve the value of bibliography.title
+  // after applying our changes to the document. This doubles the limit to up to 64 non-consecutive
+  // set rules since we no longer have an extra step to retrieve the old value, but, as a downside,
+  // we lose the original value of bibliography.title. While, in a future change, we might be able to
+  // preserve the FIRST known value, we can't generally preserve its value at later points, so the
+  // value of bibliography.title is effectively frozen before the first custom set rule.
+  //
+  // This mode should be used by package authors which know there won't be a bibliography (or, really,
+  // any custom user input) at some point to avoid consuming the set rule cost. End users can also use
+  // this mode if they hit a "max show rule depth exceeded" error.
+  //
+  // Note that this mode can only be enabled on individual set rules.
+  light: 1,
+
+  // Stateful mode: this is entirely different from the other modes and should only be set by the end
+  // user (not by packages). This stores the style chain - and, thus, set rules' updated fields - in
+  // a 'state()'. This is more likely to be slower and lead to trouble as it triggers at least one
+  // document relayout. However, **this mode does not have a set rule limit.** Therefore, it can be
+  // used as a last resort by the end user if they can't fix the "max show rule depth exceeded error".
+  //
+  // Enabling this mode is as simple as using `#show: e.stateful.toggle(true)` at the beginning of the
+  // document. This will trigger a compatibility behavior where existing set rules will push to the
+  // state, even if they're not in the stateful mode. It will also push existing set rule data into
+  // the style 'state()'. Therefore, existing set rules are compatible with stateful mode, but this
+  // only effectively fixes the error if the set rules are individually switched to stateful mode
+  // with `e.stateful.set_` instead of `e.set_`.
+  stateful: 2
+)
+
+// When on stateful mode, this state holds the sequence of 'data' for each scope.
+// The last element on the list is the "current" data.
+#let style-state = state("__custom_element_state", ())
+
+// Default library-wide data.
+#let default-global-data = (
+  (global-data-key): true,
+
+  // Keep track of versions in case we need some backwards-compatibility behavior
+  // in the future.
+  version: element-version,
+
+  // If the style state should be read by set rules as the user has
+  // enabled stateful mode with `#shoW: e.stateful.toggle(true)`.
+  stateful: false,
+
+  // Per-element data (set rules and other style chain info).
+  elements: (:)
+)
 
 // Default per-element data.
 #let default-data = (
@@ -78,6 +143,99 @@
   }
 }
 
+// Changes stateful mode settings within a certain scope.
+// Setting it to 'true' tells all set rules to update the state, and also ensures
+// getters retrieve the value from the state, even if not explicitly aware of
+// stateful mode.
+//
+// By default, this function will not trigger any changes if one attempts to
+// change the stateful mode to its current value. This behavior can be disabled
+// with 'force: true', though that is not expected to make a difference in any way.
+#let toggle-stateful-mode(enable, force: false) = doc => {
+  context {
+    let previous-bib-title = bibliography.title
+    [#context {
+      let data = if (
+        type(bibliography.title) == content
+        and bibliography.title.func() == metadata
+        and bibliography.title.at("label", default: none) == lbl-get
+      ) {
+        bibliography.title.value
+      } else {
+        default-global-data
+      }
+
+      set bibliography(title: previous-bib-title)
+
+      if data.stateful != enable or force {
+        // Notify both modes about it (non-stateful and stateful)
+        data.stateful = enable
+        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+
+        // Push in this scope, pop at the end
+        [#style-state.update(chain => {
+          let data = if chain == () {
+            default-global-data
+          } else {
+            chain.last()
+          }
+
+          data.stateful = enable
+
+          chain.push(data)
+          chain
+        })#doc#style-state.update(chain => {
+          _ = chain.pop()
+          chain
+        })]
+      } else {
+        // Nothing to do: it is already toggled to this value
+        doc
+      }
+    }#lbl-get]
+  }
+}
+
+// Apply set and revoke rules to the current per-element data.
+#let apply-rules(data, rules) = {
+  for rule in rules {
+    let kind = rule.kind
+    if kind == "set" {
+      let (element, args) = rule
+      let (eid, default-data) = element
+      if eid in data {
+        data.at(eid).chain.push(args)
+      } else {
+        data.insert(eid, (..default-data, chain: (args,)))
+      }
+
+      if rule.name != none {
+        let element-data = data.at(eid)
+        let index = element-data.chain.len() - 1
+
+        // Lazily fill the data chain with 'none'
+        data.at(eid).data-chain += (none,) * (index - element-data.data-chain.len())
+        data.at(eid).data-chain.push((kind: "set", name: rule.name))
+        data.at(eid).names.insert(rule.name, true)
+      }
+    } else if kind == "revoke" {
+      for (name, _) in data {
+        // Can only revoke what's before us.
+        // If this element has no rules with this name, there is nothing to revoke;
+        // we shouldn't revoke names that come after us (inner rules).
+        // Note that this potentially includes named revokes as well.
+        if rule.revoking in data.at(name).names {
+          data.at(name).revoke-chain.push((name: none, index: data.at(name).chain.len(), revoking: rule.revoking))
+        }
+      }
+    } else {
+      assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
+    }
+  }
+
+  data
+}
+
 // Prepare rule(s), returning a function `doc => ...` to be used in
 // `#show: rule`. The rule is attached as metadata to the returned
 // content so it can still be accessed outside of a show rule.
@@ -102,64 +260,111 @@
 
         // Process all rules below us together with this one
         if inner-rule.kind == "apply" {
+          // Note: apply should automatically distribute modes across its children,
+          // so it's okay if we don't inherit its own mode here.
           rules += inner-rule.rules
         } else {
           rules.push(inner-rule)
         }
 
         // Convert this into an 'apply' rule
-        rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules)
+        rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: auto)
 
         // Place what's inside, don't place the context block that would run our code again
         doc = last.value.doc
       }
     }
 
-    [#context {
-      let previous-bib-title = bibliography.title
-      [#context {
-        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
+    let mode = if rule.mode != auto {
+      // This is more of an optimization, but, to prevent problems when flattening
+      // 'apply', we expect it to automatically pass its mode to its children.
+      rule.mode
+    } else {
+      rules.fold(style-modes.normal, (mode, rule) => {
+        if (
+          rule.mode == style-modes.stateful
+          or mode != style-modes.stateful and rule.mode == style-modes.light
+        ) {
+          // Prioritize more explicit modes:
+          // stateful > light > normal
+          rule.mode
+        } else {
+          mode
+        }
+      })
+    }
 
-        for rule in rules {
-          let kind = rule.kind
-          if kind == "set" {
-            let (element, args) = rule
-            let (eid, default-data) = element
-            if eid in data {
-              data.at(eid).chain.push(args)
-            } else {
-              data.insert(eid, (..default-data, chain: (args,)))
-            }
-
-            if rule.name != none {
-              let element-data = data.at(eid)
-              let index = element-data.chain.len() - 1
-
-              // Lazily fill the data chain with 'none'
-              data.at(eid).data-chain += (none,) * (element-data.data-chain.len() - index)
-              data.at(eid).data-chain.push((kind: "set", name: rule.name))
-              data.at(eid).names.insert(rule.name, true)
-            }
-          } else if kind == "revoke" {
-            for (name, _) in data {
-              // Can only revoke what's before us.
-              // If this element has no rules with this name, there is nothing to revoke;
-              // we shouldn't revoke names that come after us (inner rules).
-              // Note that this potentially includes named revokes as well.
-              if rule.revoking in data.at(name).names {
-                data.at(name).revoke-chain.push((name: none, index: data.at(name).chain.len(), revoking: rule.revoking))
-              }
-            }
+    let body = if mode == style-modes.normal {
+      // Normal mode: two nested contexts: one retrieves the current bibliography title,
+      // and the other retrieves the title with metadata and restores the current title.
+      context {
+        let previous-bib-title = bibliography.title
+        [#context {
+          let data = if (
+            type(bibliography.title) == content
+            and bibliography.title.func() == metadata
+            and bibliography.title.at("label", default: none) == lbl-get
+          ) {
+            bibliography.title.value
           } else {
-            assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
+            default-global-data
           }
+
+          // TODO: Read from and update to state in global stateful mode.
+          data.elements = apply-rules(data.elements, rules)
+
+          set bibliography(title: previous-bib-title)
+          show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+          doc
+        }#lbl-get]
+      }
+    } else if mode == style-modes.light {
+      // Light mode: only one context, but bibliography title is permanently clobbered.
+      // TODO: Save the old value.
+      [#context {
+        let data = if (
+          type(bibliography.title) == content
+          and bibliography.title.func() == metadata
+          and bibliography.title.at("label", default: none) == lbl-get
+        ) {
+          bibliography.title.value
+        } else {
+          default-global-data
         }
 
-        set bibliography(title: previous-bib-title)
+        // TODO: Read from and update to state in global stateful mode.
+        data.elements = apply-rules(data.elements, rules)
+
+        // TODO: keep track of first seen bibliography title
+        set bibliography(title: auto)
         show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
         doc
       }#lbl-get]
-    }#metadata((doc: doc, rule: rule))#lbl-rule-tag]
+    } else {
+      // Stateful mode: no context, just push in a state at the start of the scope
+      // and pop to previous data at the end.
+      [#style-state.update(chain => {
+        let data = if chain == () {
+          default-global-data
+        } else {
+          chain.last()
+        }
+
+        data.elements = apply-rules(data.elements, rules)
+
+        chain.push(data)
+        chain
+      })#doc#style-state.update(chain => {
+        _ = chain.pop()
+        chain
+      })]
+    }
+
+    // Add the rule tag after each rule application.
+    // This allows extracting information about the rule before it is applied.
+    // It also allows combining the rule with an outer rule before application,
+    // as we do earlier.
+    [#body#metadata((doc: doc, rule: rule))#lbl-rule-tag]
   }
 }
 
@@ -174,7 +379,7 @@
   let args = (elem.parse-args)(fields, include-required: false)
 
   prepare-rule(
-    ((prepared-rule-key): true, version: element-version, kind: "set", name: none, element: (eid: elem.eid, default-data: elem.default-data), args: args)
+    ((prepared-rule-key): true, version: element-version, kind: "set", name: none, mode: auto, element: (eid: elem.eid, default-data: elem.default-data), args: args)
   )
 }
 
@@ -185,8 +390,10 @@
 //   set_(elem, fields),
 //   set_(elem, fields)
 // )
-#let apply(..args) = {
+#let apply(mode: auto, ..args) = {
   assert(args.named() == (:), message: "element.apply: unexpected named arguments")
+  assert(mode == auto or mode == style-modes.normal or mode == style-modes.light or mode == style-modes.stateful, message: "element.apply: invalid mode, must be auto or e.style-modes.(normal / light / stateful)")
+
   let rules = args.pos().map(
     rule => {
       assert(type(rule) == function, message: "element.apply: invalid rule of type " + type(rule) + ", please use 'set_' or some other function from this library to generate it")
@@ -198,14 +405,26 @@
 
       if rule-data.kind == "apply" {
         // Flatten 'apply'
-        rule-data.rules
+        if mode == auto {
+          // Don't touch its own rules
+          rule-data.rules
+        } else {
+          // Override rule modes
+          rule-data.rules.map(r => { if r.mode != mode { r.mode = mode }; r })
+        }
+      } else if mode == auto or rule-data.mode == mode {
+        (rule-data,)
       } else {
+        // Forcefully change children's modes if requested
+        rule-data.mode = mode
         (rule-data,)
       }
     }
   ).sum(default: ())
 
-  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules))
+  // Set this apply rule's mode as an optimization, but note that we have forcefully altered
+  // its children's modes above.
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: mode))
 }
 
 // Name a certain rule. Use 'apply' to name a group of rules.
@@ -240,10 +459,22 @@
 //
 // #show: named("name", set_(element, fields))
 // #show: revoke("name")
-#let revoke(name) = {
+#let revoke(name, mode: auto) = {
   assert(type(name) == str, message: "element.revoke: rule name must be a string, not " + str(type(name)))
+  assert(mode == auto or mode == style-modes.normal or mode == style-modes.light or mode == style-modes.stateful, message: "element.revoke: invalid mode, must be auto or e.style-modes.(normal / light / stateful)")
 
-  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "revoke", revoking: name, name: none))
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "revoke", revoking: name, name: none, mode: mode))
+}
+
+// Stateful variants
+#let stateful-set(..args) = {
+  apply(set_(..args), mode: style-modes.stateful)
+}
+#let stateful-apply(..args) = {
+  apply(..args, mode: style-modes.stateful)
+}
+#let stateful-revoke(..args) = {
+  revoke(..args, mode: style-modes.stateful)
 }
 
 // Apply revokes and other modifications to the chain and generate a final set
@@ -454,8 +685,26 @@
       [#context {
         set bibliography(title: previous-bib-title)
 
-        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
-        let element-data = data.at(eid, default: default-data)
+        let data = if (
+          type(bibliography.title) == content
+          and bibliography.title.func() == metadata
+          and bibliography.title.at("label", default: none) == lbl-get
+        ) {
+          bibliography.title.value
+        } else {
+          default-global-data
+        }
+
+        if data.stateful {
+          let chain = style-state.get()
+          data = if chain == () {
+            default-global-data
+          } else {
+            chain.last()
+          }
+        }
+
+        let element-data = data.elements.at(eid, default: default-data)
 
         let folded-chain = if element-data.revoke-chain == default-data.revoke-chain {
           // Sum the chain of dictionaries so that the latest value specified for
@@ -484,9 +733,26 @@
   let get-rule(receiver) = context {
     let previous-bib-title = bibliography.title
     [#context {
-      let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
+      let data = if (
+        type(bibliography.title) == content
+        and bibliography.title.func() == metadata
+        and bibliography.title.at("label", default: none) == lbl-get
+      ) {
+        bibliography.title.value
+      } else {
+        default-global-data
+      }
 
-      let element-data = data.at(eid, default: default-data)
+      if data.stateful {
+        let chain = style-state.get()
+        data = if chain == () {
+          default-global-data
+        } else {
+          chain.last()
+        }
+      }
+
+      let element-data = data.elements.at(eid, default: default-data)
       let folded-chain = if element-data.revoke-chain == default-data.revoke-chain {
         element-data.chain.sum(default: (:))
       } else {
@@ -519,8 +785,21 @@
     context {
       let previous-bib-title = bibliography.title
       [#context {
-        let data = if type(bibliography.title) == content and bibliography.title.func() == metadata and bibliography.title.at("label", default: none) == lbl-get { bibliography.title.value } else { (:) }
-        let element-data = data.at(eid, default: default-data)
+        let data = if (
+          type(bibliography.title) == content
+          and bibliography.title.func() == metadata
+          and bibliography.title.at("label", default: none) == lbl-get
+        ) {
+          bibliography.title.value
+        } else {
+          default-global-data
+        }
+
+        if data.stateful {
+          panic("TODO")
+        }
+
+        let element-data = data.elements.at(eid, default: default-data)
 
         // Amount of 'where rules' so far, so we can
         // assign a unique number to each query
@@ -540,10 +819,10 @@
         }
 
         if eid in data {
-          data.at(eid).where-rule-count += 1
+          data.elements.at(eid).where-rule-count += 1
         } else {
           element-data.where-rule-count += 1
-          data.insert(eid, element-data)
+          data.elements.insert(eid, element-data)
         }
 
         // Increase where rule counter for further where rules
@@ -571,6 +850,7 @@
       sel: lbl-show,
       parse-args: parse-args,
       default-data: default-data,
+      default-global-data: default-global-data,
       default-fields: default-fields,
       all-fields: all-fields,
     )
