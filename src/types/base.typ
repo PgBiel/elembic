@@ -231,6 +231,27 @@
   type(result) == array and result.len() == 2 and result.first() == true
 }
 
+// Wrap a typeinfo with some other data.
+// Mostly unchecked variant of 'types.wrap'.
+#let wrap(typeinfo, overrides) = {
+  (
+    (..typeinfo, name: "wrapped", data: (base: typeinfo))
+    + for (key, default) in base-typeinfo {
+      if key in (type-key, "name", "data") {
+        continue
+      }
+
+      if key in overrides {
+        let override = overrides.at(key)
+        if type(override) == function {
+          override = override(typeinfo.at(key, default: default))
+        }
+        ((key): override)
+      }
+    }
+  )
+}
+
 // A particular collection of types.
 #let collection(name, base, parameters, check: none, cast: none, error: none, ..args) = {
   if check == none {

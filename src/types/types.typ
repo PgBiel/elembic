@@ -105,6 +105,48 @@
   }
 }
 
+// Expected types for each typeinfo key.
+#let overridable-typeinfo-types = (
+  input: (check: a => type(a) == array and a.all(x => x == "any" or type(x) == type or (type(x) == dictionary and "tid" in x)), error: "array of 'any', type, or custom type id (tid: ...), or function old input => new input"),
+  output: (check: a => type(a) == array and a.all(x => x == "any" or type(x) == type or (type(x) == dictionary and "tid" in x)), error: "array of 'any', type, or custom type id (tid: ...), or function old output => new output"),
+  check: (check: a => a == none or type(a) == function, error: "none or function receiving old function and returning a function value => bool"),
+  cast: (check: a => a == none or type(a) == function, error: "none or function receiving old function and returning a function checked input => output"),
+  error: (check: a => a == none or type(a) == function, error: "none or function receiving old function and returning a function checked input => error string"),
+  default: (check: d => d == () or type(d) == array and d.len() == 1, error: "empty array for no default, singleton array for one default, or function old default => new default"),
+)
+
+// Wrap a type, altering its properties while keeping (or replacing) its input types and checks.
+#let wrap(type_, ..data) = {
+  assert(data.pos() == (), message: "types.wrap: unexpected positional arguments")
+  let typeinfo = validate(type_)
+
+  let overrides = data.named()
+  for (key, value) in overrides {
+    let (validate-value, key-error) = overridable-typeinfo-types.at(key, default: (none, none))
+    if validate-value == none or key-error == none {
+      assert(false, message: "types.wrap: invalid key '" + key + "', must be one of " + overridable-typeinfo-types.keys().join(", ", last: " or "))
+    }
+
+    if type(value) != function and not validate-value(value) {
+      assert(false, message: "types.wrap: invalid value for key '" + key + "', expected " + key-error)
+    }
+  }
+
+  if "cast" in overrides and "output" not in overrides or "any" in overrides.output {
+    overrides.output = ("any",)
+  }
+
+  if "input" in overrides and "any" in overrides.input {
+    overrides.input = ("any",)
+  }
+
+  if "check" in overrides and "default" not in overrides {
+    overrides.default = ()
+  }
+
+  base.wrap(typeinfo, overrides)
+}
+
 // Specifies that any from a given selection of types is accepted.
 #let union(..args) = {
   let types = args.pos()
