@@ -19,7 +19,7 @@ It will return the **constructor** and the **data** for this element. Make sure 
   prefix: "@preview/my-package,v1",
 
   // Default show rule: how this element displays itself.
-  _ => [Hello world!],
+  display: it => [Hello world!],
 
   // No fields for now.
   fields: ()
@@ -48,7 +48,7 @@ Let's add a color field to change our part's color:
   prefix: "my-package",
 
   // Default show rule receives the constructed element.
-  fields => text(fill: fields.fill)[Hello world!],
+  display: it => text(fill: it.fill)[Hello world!],
 
   fields: (
     // Specify field name, type and default.
@@ -79,7 +79,7 @@ Let's give it a shot:
   "part",
   prefix: "my-package",
 
-  fields => text(fill: fields.fill)[#fields.body],
+  display: it => text(fill: it.fill)[#fields.body],
 
   fields: (
     // Force this field to be specified.
