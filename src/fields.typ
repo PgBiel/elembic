@@ -100,14 +100,26 @@
 // prefix (for listing missing fields) and per-field error prefix function
 // (for an invalid field; receives the field name).
 //
+// You can customize 'field-term' to customize what the word "field" is
+// in error messages. It should be either a string or a two-element
+// array with (singular, plural).
+//
 // Parse arguments into a dictionary of fields and their casted values.
 // By default, include required arguments and error if they are missing.
 // Setting 'include-required' to false will error if they are present
 // instead.
-#let generate-arg-parser(fields: none, general-error-prefix: "", field-error-prefix: _ => "") = {
+#let generate-arg-parser(fields: none, general-error-prefix: "", field-error-prefix: _ => "", field-term: "field") = {
   assert(type(fields) == dictionary and fields-key in fields, message: "generate-arg-parser: please use 'parse-fields' to generate the fields input.")
   assert(type(general-error-prefix) == str, message: "generate-arg-parser: 'general-error-prefix' must be a string")
   assert(type(field-error-prefix) == function, message: "generate-arg-parser: 'field-error-prefix' must be a function receiving field name and returning string")
+
+  let (field-singular, field-plural) = if type(field-term) == str {
+    (field-term, field-term + "s")
+  } else if type(field-term) == array and field-term.len() == 2 and field-term.all(term => type(term) == str) {
+    field-term
+  } else {
+    assert(false, message: "generate-arg-parser: 'field-term' must either be a string (plural with 's') or a two-element array of strings (singular, plural).")
+  }
 
   let (required-pos-fields, optional-pos-fields, required-named-fields, all-fields) = fields
   let required-pos-fields-amount = required-pos-fields.len()
@@ -121,15 +133,15 @@
     let pos = args.pos()
     if include-required and pos.len() < required-pos-fields-amount {
       // Plural
-      let s = if required-pos-fields-amount - pos.len() == 1 { "" } else { "s" }
+      let term = if required-pos-fields-amount - pos.len() == 1 { field-singular } else { field-plural }
 
-      assert(false, message: general-error-prefix + "missing positional field" + s + " " + fields.required-pos-fields.slice(pos.len()).map(f => "'" + f.name + "'").join(", "))
+      assert(false, message: general-error-prefix + "missing positional " + term + " " + fields.required-pos-fields.slice(pos.len()).map(f => "'" + f.name + "'").join(", "))
     }
 
     let expected-arg-amount = if include-required { total-pos-fields-amount } else { optional-pos-fields-amount }
 
     if pos.len() > expected-arg-amount {
-      let excluding-required-hint = if include-required { "" } else { "\nhint: only optional fields are accepted here" }
+      let excluding-required-hint = if include-required { "" } else { "\n  hint: only optional fields are accepted here" }
       assert(false, message: general-error-prefix + "too many positional arguments, expected " + str(expected-arg-amount) + excluding-required-hint)
     }
 
@@ -149,14 +161,14 @@
         }
         if kind == "literal" and typeinfo.cast == none {
           if value != typeinfo.data.value or value-type not in typeinfo.input or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value)) {
-            assert(false, message: field-error-prefix(pos-field.name, name) + types.generate-cast-error(value, typeinfo))
+            assert(false, message: field-error-prefix(pos-field.name) + types.generate-cast-error(value, typeinfo))
           }
         } else {
           if (
             value-type not in typeinfo.input
             or typeinfo.check != none and not (typeinfo.check)(value)
           ) {
-            assert(false, message: field-error-prefix(pos-field.name, name) + types.generate-cast-error(value, typeinfo))
+            assert(false, message: field-error-prefix(pos-field.name) + types.generate-cast-error(value, typeinfo))
           }
 
           if typeinfo.cast != none {
@@ -179,13 +191,13 @@
     for (field-name, value) in named-args {
       let field = all-fields.at(field-name, default: none)
       if field == none or not field.named {
-        let expected-pos-hint = if field == none or field.named { "" } else { "\nhint: this field must be specified positionally" }
+        let expected-pos-hint = if field == none or field.named { "" } else { "\n  hint: this " + field-singular + " must be specified positionally" }
 
-        assert(false, message: general-error-prefix + "unknown named field '" + field-name + "'" + expected-pos-hint)
+        assert(false, message: general-error-prefix + "unknown named " + field-singular + " '" + field-name + "'" + expected-pos-hint)
       }
 
       if not include-required and field.required {
-        assert(false, message: field-error-prefix(field-name, name) + "this field cannot be specified here\nhint: only optional fields are accepted here")
+        assert(false, message: field-error-prefix(field-name) + "this " + field-singular + " cannot be specified here\n  hint: only optional " + field-plural + " are accepted here")
       }
 
       let typeinfo = field.typeinfo
@@ -200,7 +212,7 @@
         }
         if kind == "literal" and typeinfo.cast == none {
           if value != typeinfo.data.value or value-type not in typeinfo.input or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value)) {
-            assert(false, message: field-error-prefix(field-name, name) + types.generate-cast-error(value, typeinfo))
+            assert(false, message: field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
           }
         } else {
           let value-type = type(value)
@@ -211,7 +223,7 @@
             value-type not in typeinfo.input
             or typeinfo.check != none and not (typeinfo.check)(value)
           ) {
-            assert(false, message: field-error-prefix(field-name, name) + types.generate-cast-error(value, typeinfo))
+            assert(false, message: field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
           }
 
           if typeinfo.cast != none {
@@ -228,11 +240,11 @@
     }
 
     if include-required {
-      let missing-fields = required-named-fields.filter(f => f.name not in named-args)
-      if missing-fields != () {
-        let s = if missing-fields.len() == 1 { "" } else { "s" }
+      if required-named-fields.any(f => f.name not in named-args) {
+        let missing-fields = required-named-fields.filter(f => f.name not in named-args)
+        let term = if missing-fields.len() == 1 { field-singular } else { field-plural }
 
-        assert(false, message: general-error-prefix + "missing required named field" + s + " " + missing-fields.map(f => "'" + f.name + "'").join(", "))
+        assert(false, message: general-error-prefix + "missing required named " + term + " " + missing-fields.map(f => "'" + f.name + "'").join(", "))
       }
     }
 
