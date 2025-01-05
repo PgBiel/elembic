@@ -73,6 +73,13 @@
   stateful: 2
 )
 
+// Special values that can be passed to an element's constructor to retrieve some data or show
+// some behavior.
+#let special-data-values = (
+  // Indicate that the constructor should return the element's data.
+  get-data: 0
+)
+
 // When on stateful mode, this state holds the sequence of 'data' for each scope.
 // The last element on the list is the "current" data.
 #let style-state = state("__custom_element_state", ())
@@ -120,14 +127,19 @@
   revoke-chain: ()
 )
 
-// Convert a custom element into a dictionary with (body, fields, func),
+// Extract data from an element's constructor, as well as convert
+// a custom element instance into a dictionary with (body, fields, func),
 // allowing you to access its fields and information when given content.
 //
 // When this is not a custom element, 'body' will be the given value,
 // 'fields' will be 'body.fields()' and 'func' will be 'body.func()'
-#let decompose(it) = {
-  if type(it) != content {
-    (body: it, fields: (:), func: none, eid: none)
+#let data(it) = {
+  if type(it) == function {
+    (kind: "element", ..it(__elemmic_data: special-data-values.get-data))
+  } else if type(it) == dictionary and element-key in it {
+    (kind: "element", ..it)
+  } else if type(it) != content {
+    (kind: "unknown", body: it, fields: (:), func: none, eid: none, fields-known: false, valid: false)
   } else if (
     it.has("label")
     and str(it.label).starts-with(lbl-show-head)
@@ -140,10 +152,10 @@
       // Decomposing a recently-constructed (but not placed) element
       last.value
     } else {
-      (body: it, fields: it.fields(), func: it.func(), eid: none)
+      (kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
     }
   } else {
-    (body: it, fields: it.fields(), func: it.func(), eid: none)
+    (kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
   }
 }
 
@@ -162,7 +174,7 @@
   context {
     let previous-bib-title = bibliography.title
     [#context {
-      let data = if (
+      let global-data = if (
         type(bibliography.title) == content
         and bibliography.title.func() == metadata
         and bibliography.title.at("label", default: none) == lbl-get
@@ -174,14 +186,14 @@
 
       set bibliography(title: previous-bib-title)
 
-      if data.stateful != enable or force {
+      if global-data.stateful != enable or force {
         if not enable {
           // Enabling stateful mode => use data from the style chain
           //
           // Disabling stateful mode => need to sync stateful with non-stateful,
           // so we use data from the state
           let chain = style-state.get()
-          data = if chain == () {
+          global-data = if chain == () {
             default-global-data
           } else {
             chain.last()
@@ -189,7 +201,7 @@
         }
 
         // Notify both modes about it (non-stateful and stateful)
-        data.stateful = enable
+        global-data.stateful = enable
 
         let (show-normal, show-stateful) = if enable {
           // TODO: Have a way to keep track of previous toggles and undo them
@@ -203,12 +215,12 @@
         show lbl-stateful-mode: show-stateful
 
         // Sync data with style chain for non-stateful modes
-        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
 
         // Sync data with state for stateful mode
         // Push at the start of the scope, pop at the end
         [#style-state.update(chain => {
-          chain.push(data)
+          chain.push(global-data)
           chain
         })#doc#style-state.update(chain => {
           _ = chain.pop()
@@ -343,20 +355,20 @@
     // and pop to previous data at the end.
     let stateful = {
       style-state.update(chain => {
-        let data = if chain == () {
+        let global-data = if chain == () {
           default-global-data
         } else {
           chain.last()
         }
 
         assert(
-          data.stateful,
+          global-data.stateful,
           message: "element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
         )
 
-        data.elements = apply-rules(data.elements, rules)
+        global-data.elements = apply-rules(global-data.elements, rules)
 
-        chain.push(data)
+        chain.push(global-data)
         chain
       })
       doc
@@ -371,7 +383,7 @@
     let normal = context {
       let previous-bib-title = bibliography.title
       [#context {
-        let data = if (
+        let global-data = if (
           type(bibliography.title) == content
           and bibliography.title.func() == metadata
           and bibliography.title.at("label", default: none) == lbl-get
@@ -381,7 +393,7 @@
           default-global-data
         }
 
-        if data.stateful {
+        if global-data.stateful {
           if mode == auto {
             // User chose something else.
             // Don't even place anything.
@@ -396,10 +408,10 @@
         }
 
         // TODO: Read from and update to state in global stateful mode.
-        data.elements = apply-rules(data.elements, rules)
+        global-data.elements = apply-rules(global-data.elements, rules)
 
         set bibliography(title: previous-bib-title)
-        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
         doc
       }#lbl-get]
     }
@@ -415,7 +427,7 @@
       normal
     } else if mode == style-modes.light {
       [#context {
-        let data = if (
+        let global-data = if (
           type(bibliography.title) == content
           and bibliography.title.func() == metadata
           and bibliography.title.at("label", default: none) == lbl-get
@@ -425,7 +437,7 @@
           default-global-data
         }
 
-        if data.stateful {
+        if global-data.stateful {
           if mode == auto {
             // User chose something else.
             // Don't even place anything.
@@ -440,11 +452,11 @@
         }
 
         // TODO: Read from and update to state in global stateful mode.
-        data.elements = apply-rules(data.elements, rules)
+        global-data.elements = apply-rules(global-data.elements, rules)
 
         // TODO: keep track of first seen bibliography title
         set bibliography(title: auto)
-        show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
         doc
       }#lbl-get]
     } else if mode == style-modes.stateful {
@@ -468,7 +480,10 @@
 //
 // When applying many set rules at once, please use 'apply' instead.
 #let set_(elem, ..fields) = {
-  assert(type(elem) != function, message: "element.set_: specify the element's dictionary, not the constructor function (e.g. wibble-e, which contains 'func' and other properties, rather than the wibble function)")
+  if type(elem) == function {
+    elem = data(elem)
+  }
+  assert(type(elem) == dictionary, message: "element.set_: please specify the element's constructor or data in the first parameter")
   let args = (elem.parse-args)(fields, include-required: false)
 
   prepare-rule(
@@ -569,9 +584,11 @@
 #let reset(..args, mode: auto) = {
   assert(args.named() == (:), message: "element.reset: unexpected named arguments")
   assert(mode == auto or mode == style-modes.normal or mode == style-modes.light or mode == style-modes.stateful, message: "element.reset: invalid mode, must be auto or e.style-modes.(normal / light / stateful)")
-  assert(args.pos().all(x => type(x) == dictionary and "eid" in x), message: "element.reset: invalid arguments, please provide element data with at least an 'eid'")
 
-  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "reset", eids: args.pos().map(x => x.eid), name: none, mode: mode))
+  let filters = args.pos().map(it => if type(it) == function { data(it) } else { x })
+  assert(filters.all(x => type(x) == dictionary and "eid" in x), message: "element.reset: invalid arguments, please provide a function or element data with at least an 'eid'")
+
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "reset", eids: filters.map(x => x.eid), name: none, mode: mode))
 }
 
 // Stateful variants
@@ -682,62 +699,12 @@
 
   let default-fields = fields.all-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
 
-  let modified-constructor(..args) = {
-    let args = parse-args(args, include-required: true)
-    let inner = context {
-      let previous-bib-title = bibliography.title
-      [#context {
-        set bibliography(title: previous-bib-title)
-
-        let data = if (
-          type(bibliography.title) == content
-          and bibliography.title.func() == metadata
-          and bibliography.title.at("label", default: none) == lbl-get
-        ) {
-          bibliography.title.value
-        } else {
-          default-global-data
-        }
-
-        if data.stateful {
-          let chain = style-state.get()
-          data = if chain == () {
-            default-global-data
-          } else {
-            chain.last()
-          }
-        }
-
-        let element-data = data.elements.at(eid, default: default-data)
-
-        let folded-chain = if element-data.revoke-chain == default-data.revoke-chain {
-          // Sum the chain of dictionaries so that the latest value specified for
-          // each property wins.
-          element-data.chain.sum(default: (:))
-        } else {
-          // We can't just sum, we need to filter first.
-          // Memoize this operation through a function.
-          fold-chain(element-data.chain, element-data.data-chain, element-data.revoke-chain)
-        }
-
-        let constructed-fields = default-fields + folded-chain + args
-
-        let body = display(constructed-fields)
-        let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor, eid: eid))]
-
-        [#[#body#tag]#lbl-show]
-      }#lbl-get]
-    }
-
-    inner + [#metadata((body: inner, fields: args, func: modified-constructor, eid: eid))#lbl-tag]
-  }
-
   let set-rule = set_.with((parse-args: parse-args, eid: eid, default-data: default-data))
 
   let get-rule(receiver) = context {
     let previous-bib-title = bibliography.title
     [#context {
-      let data = if (
+      let global-data = if (
         type(bibliography.title) == content
         and bibliography.title.func() == metadata
         and bibliography.title.at("label", default: none) == lbl-get
@@ -747,16 +714,16 @@
         default-global-data
       }
 
-      if data.stateful {
+      if global-data.stateful {
         let chain = style-state.get()
-        data = if chain == () {
+        global-data = if chain == () {
           default-global-data
         } else {
           chain.last()
         }
       }
 
-      let element-data = data.elements.at(eid, default: default-data)
+      let element-data = global-data.elements.at(eid, default: default-data)
       let folded-chain = if element-data.revoke-chain == default-data.revoke-chain {
         element-data.chain.sum(default: (:))
       } else {
@@ -789,7 +756,7 @@
     context {
       let previous-bib-title = bibliography.title
       [#context {
-        let data = if (
+        let global-data = if (
           type(bibliography.title) == content
           and bibliography.title.func() == metadata
           and bibliography.title.at("label", default: none) == lbl-get
@@ -799,16 +766,16 @@
           default-global-data
         }
 
-        if data.stateful {
+        if global-data.stateful {
           let chain = style-state.get()
-          data = if chain == () {
+          global-data = if chain == () {
             default-global-data
           } else {
             chain.last()
           }
         }
 
-        let element-data = data.elements.at(eid, default: default-data)
+        let element-data = global-data.elements.at(eid, default: default-data)
 
         // Amount of 'where rules' so far, so we can
         // assign a unique number to each query
@@ -817,7 +784,7 @@
 
         // Add unique matching label to all found elements
         show lbl-show: it => {
-          let (fields,) = decompose(it)
+          let (fields,) = data(it)
 
           // Check if all positional and named arguments match
           if type(fields) == dictionary and args.pairs().all(((k, v)) => k in fields and fields.at(k) == v) {
@@ -827,11 +794,11 @@
           }
         }
 
-        if eid in data {
-          data.elements.at(eid).where-rule-count += 1
+        if eid in global-data {
+          global-data.elements.at(eid).where-rule-count += 1
         } else {
           element-data.where-rule-count += 1
-          data.elements.insert(eid, element-data)
+          global-data.elements.insert(eid, element-data)
         }
 
         set bibliography(title: previous-bib-title)
@@ -842,9 +809,9 @@
         let body = receiver(matching-label)
 
         // Increase where rule counter for further where rules
-        if data.stateful {
+        if global-data.stateful {
           style-state.update(chain => {
-            chain.push(data)
+            chain.push(global-data)
             chain
           })
 
@@ -855,29 +822,91 @@
             chain
           })
         } else {
-          show lbl-get: set bibliography(title: [#metadata(data)#lbl-get])
+          show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
           body
         }
       }#lbl-get]
     }
   }
 
+  let elem-data = (
+    (element-key): true,
+    version: 1,
+    eid: eid,
+    set_: set-rule,
+    get: get-rule,
+    where: where-rule,
+    sel: lbl-show,
+    parse-args: parse-args,
+    default-data: default-data,
+    default-global-data: default-global-data,
+    default-fields: default-fields,
+    all-fields: all-fields,
+  )
+
+  let modified-constructor(..args, __elemmic_data: none) = {
+    if __elemmic_data != none {
+      return if __elemmic_data == special-data-values.get-data {
+        (..elem-data, func: modified-constructor)
+      } else {
+        assert(false, message: "element: invalid data key to constructor: " + repr(__elemmic_data))
+      }
+    }
+
+    let args = parse-args(args, include-required: true)
+    let inner = context {
+      let previous-bib-title = bibliography.title
+      [#context {
+        set bibliography(title: previous-bib-title)
+
+        let global-data = if (
+          type(bibliography.title) == content
+          and bibliography.title.func() == metadata
+          and bibliography.title.at("label", default: none) == lbl-get
+        ) {
+          bibliography.title.value
+        } else {
+          default-global-data
+        }
+
+        if global-data.stateful {
+          let chain = style-state.get()
+          global-data = if chain == () {
+            default-global-data
+          } else {
+            chain.last()
+          }
+        }
+
+        let element-data = global-data.elements.at(eid, default: default-data)
+
+        let folded-chain = if element-data.revoke-chain == default-data.revoke-chain {
+          // Sum the chain of dictionaries so that the latest value specified for
+          // each property wins.
+          element-data.chain.sum(default: (:))
+        } else {
+          // We can't just sum, we need to filter first.
+          // Memoize this operation through a function.
+          fold-chain(element-data.chain, element-data.data-chain, element-data.revoke-chain)
+        }
+
+        let constructed-fields = default-fields + folded-chain + args
+
+        let body = display(constructed-fields)
+        let tag = [#metadata((kind: "instance", body: body, fields: constructed-fields, func: modified-constructor, eid: eid, fields-known: true, valid: true))]
+
+        [#[#body#tag]#lbl-show]
+      }#lbl-get]
+    }
+
+    inner + [#metadata((body: inner, fields: args, func: modified-constructor, eid: eid, fields-known: false, valid: true))#lbl-tag]
+  }
+
   (
     modified-constructor,
     (
-      (element-key): true,
-      version: 1,
-      eid: eid,
+      ..elem-data,
       func: modified-constructor,
-      set_: set-rule,
-      get: get-rule,
-      where: where-rule,
-      sel: lbl-show,
-      parse-args: parse-args,
-      default-data: default-data,
-      default-global-data: default-global-data,
-      default-fields: default-fields,
-      all-fields: all-fields,
     )
   )
 }

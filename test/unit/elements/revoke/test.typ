@@ -18,11 +18,11 @@
 #[
   #let cool-color = luma(89)
   // Name a single set rule
-  #show: e.named("coolness", e.set_(wock-e, color: cool-color))
+  #show: e.named("coolness", e.set_(wock, color: cool-color))
   // Name a group
   #show: e.named("datums", e.apply(
-    e.set_(wock-e, border: blue + 2pt),
-    e.set_(wock-e, size: 300)
+    e.set_(wock, border: blue + 2pt),
+    e.set_(wock, size: 300)
   ))
 
   #(wock-e.get)(d => assert.eq(d.color, cool-color))

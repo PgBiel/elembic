@@ -25,7 +25,7 @@
   #show: e.stateful.revoke("coolness")
 
   // This shouldn't be affected
-  #show: e.named("coolness", e.stateful.set_(wock-e, color: cool-color))
+  #show: e.named("coolness", e.stateful.set_(wock, color: cool-color))
 
   #(wock-e.get)(d => assert.eq(d.color, cool-color))
 ]
@@ -34,12 +34,12 @@
   #let cool-color = luma(89)
 
   // This should be affected
-  #show: e.named("before and after", e.stateful.set_(wock-e, size: 900))
+  #show: e.named("before and after", e.stateful.set_(wock, size: 900))
 
   #show: e.stateful.revoke("before and after")
 
   // This shouldn't be affected
-  #show: e.named("before and after", e.stateful.set_(wock-e, color: cool-color))
+  #show: e.named("before and after", e.stateful.set_(wock, color: cool-color))
 
   #(wock-e.get)(d => assert.ne(d.size, 900))
   #(wock-e.get)(d => assert.eq(d.color, cool-color))

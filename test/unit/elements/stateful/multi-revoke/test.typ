@@ -32,11 +32,11 @@
 
 #[
   #let cool-color = luma(89)
-  #show: e.named("coolness", e.stateful.set_(wock-e, color: cool-color))
-  #show: e.named("docks", e.stateful.set_(dock-e, color: cool-color))
+  #show: e.named("coolness", e.stateful.set_(wock, color: cool-color))
+  #show: e.named("docks", e.stateful.set_(dock, color: cool-color))
   #show: e.named("datums", e.stateful.apply(
-    e.stateful.set_(wock-e, border: blue + 2pt),
-    e.stateful.set_(dock-e, size: 300)
+    e.stateful.set_(wock, border: blue + 2pt),
+    e.stateful.set_(dock, size: 300)
   ))
 
   #(wock-e.get)(w => assert.eq(w.color, cool-color))

@@ -13,204 +13,204 @@
   )
 )
 
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red) // 10
+#show: e.set_(wock, color: red) // 10
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red) // 20
+#show: e.set_(wock, color: red) // 20
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-#show: e.set_(wock-e, color: red)
+#show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red) // 30
+// #show: e.set_(wock, color: red) // 30
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red) // 40
+// #show: e.set_(wock, color: red) // 40
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red) // 50
+// #show: e.set_(wock, color: red) // 50
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red) // 60
+// #show: e.set_(wock, color: red) // 60
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red) // 70
+// #show: e.set_(wock, color: red) // 70
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red) // 80
+// #show: e.set_(wock, color: red) // 80
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red) // 90
+// #show: e.set_(wock, color: red) // 90
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red)
+// #show: e.set_(wock, color: red)
 abc
-// #show: e.set_(wock-e, color: red) // 100
+// #show: e.set_(wock, color: red) // 100
 abc
 #wock()

@@ -29,8 +29,8 @@
   )
 )
 
-#show: e.set_(wibble-e, color: yellow)
-#show: e.set_(wobble-e, border: red + 2pt)
+#show: e.set_(wibble, color: yellow)
+#show: e.set_(wobble, border: red + 2pt)
 
 #(wibble-e.get)(d => assert.eq(d.color, yellow))
 #(wobble-e.get)(d => assert.eq(d.border, red + 2pt))
@@ -45,7 +45,7 @@
 #(wibble-e.get)(d => assert.eq(d.color, yellow))
 #(wobble-e.get)(d => assert.eq(d.border, red + 2pt))
 
-#show: e.reset(wobble-e)
+#show: e.reset(wobble)
 
 #(wibble-e.get)(d => assert.eq(d.color, yellow))
 #(wobble-e.get)(d => assert.eq(d.border, black + 1pt))

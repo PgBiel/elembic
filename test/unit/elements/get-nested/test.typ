@@ -15,7 +15,7 @@
   )
 )
 
-#show: e.set_(wock-e, color: blue)
+#show: e.set_(wock, color: blue)
 
 #(wock-e.get)(
   v => {
@@ -25,7 +25,7 @@
 )
 
 #[
-  #show: e.set_(wock-e, inner: [Bye!])
+  #show: e.set_(wock, inner: [Bye!])
 
   #(wock-e.get)(
     v => {

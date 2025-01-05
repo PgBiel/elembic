@@ -11,12 +11,12 @@
   )
 )
 
-#e.decompose([])
+#e.data([])
 
 #wock()
 
 #let w = wock(color: blue)
-#assert.eq(e.decompose(w).fields, (color: blue))
+#assert.eq(e.data(w).fields, (color: blue))
 
 #[
   #show: e.set_(wock-e, color: blue)
@@ -58,7 +58,7 @@
 
 #[
   #show wock-e.sel: it => {
-    let (body, fields) = e.decompose(it)
+    let (body, fields) = e.data(it)
     [The color is #fields.at("color")]
 
     assert(fields.at("color") in (red, blue))
@@ -75,7 +75,7 @@
 
 #[
   #show selector.or(rect, wock-e.sel): it => {
-    let (body, fields, func) = e.decompose(it)
+    let (body, fields, func) = e.data(it)
     if func == rect {
       [*We have a rect:* #body]
     } else if func == wock {
@@ -97,7 +97,7 @@
 *Querying:*
 
 #context {
-  let wocks = query(wock-e.sel).map(e.decompose)
+  let wocks = query(wock-e.sel).map(e.data)
   let colors = wocks.map(e => e.fields.at("color", default: none)).dedup()
   [There are #wocks.len() wocks. We have #colors.len() colors: #colors]
 }

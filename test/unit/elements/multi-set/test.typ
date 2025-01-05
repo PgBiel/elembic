@@ -42,25 +42,25 @@
 #wobble(run: it => assert.eq(it.color, red))
 #wobble(run: it => assert.eq(it.inner, [Hello!]))
 
-#show: e.set_(wobble-e, color: blue)
+#show: e.set_(wobble, color: blue)
 #assert-fields(5, "data", blue, [Hello!])
 
 #[
-  #show: e.set_(wobble-e, inner: [Bye!])
+  #show: e.set_(wobble, inner: [Bye!])
 
   #assert-fields(5, "data", blue, [Bye!])
 
   #[
-    #show: e.set_(wibble-e, number: 10)
+    #show: e.set_(wibble, number: 10)
 
     #assert-fields(10, "data", blue, [Bye!])
 
     #[
-      #show: e.set_(wobble-e, color: yellow)
+      #show: e.set_(wobble, color: yellow)
 
       #assert-fields(10, "data", yellow, [Bye!])
 
-      #show: e.set_(wibble-e, data: "abc")
+      #show: e.set_(wibble, data: "abc")
 
       #assert-fields(10, "abc", yellow, [Bye!])
     ]

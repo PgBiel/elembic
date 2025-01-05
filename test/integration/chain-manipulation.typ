@@ -14,11 +14,11 @@
 
 #[
   #let rules = (
-    e.set_(wock-e, color: red),
-    e.set_(wock-e, inner: [Something]),
-    e.set_(wock-e, color: blue),
-    e.set_(wock-e, inner: [Something else]),
-    e.set_(wock-e, inner: [e]),
+    e.set_(wock, color: red),
+    e.set_(wock, inner: [Something]),
+    e.set_(wock, color: blue),
+    e.set_(wock, inner: [Something else]),
+    e.set_(wock, inner: [e]),
   )
 
   // Flatten nested applications
@@ -39,10 +39,10 @@
 
 #[
   #let cool-color = luma(89)
-  #show: e.named("coolness", e.set_(wock-e, color: cool-color))
+  #show: e.named("coolness", e.set_(wock, color: cool-color))
   #show: e.named("datums", e.apply(
-    e.set_(wock-e, inner: [ABC]),
-    e.set_(wock-e, somedata: 300)
+    e.set_(wock, inner: [ABC]),
+    e.set_(wock, somedata: 300)
   ))
 
   #(wock-e.get)(d => assert.eq(d.color, cool-color))

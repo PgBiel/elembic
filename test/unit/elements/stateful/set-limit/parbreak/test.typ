@@ -14,204 +14,204 @@
   )
 )
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 10
+#show: e.stateful.set_(wock, color: red) // 10
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 20
+#show: e.stateful.set_(wock, color: red) // 20
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 30
+#show: e.stateful.set_(wock, color: red) // 30
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 40
+#show: e.stateful.set_(wock, color: red) // 40
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 50
+#show: e.stateful.set_(wock, color: red) // 50
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 60
+#show: e.stateful.set_(wock, color: red) // 60
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 70
+#show: e.stateful.set_(wock, color: red) // 70
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 80
+#show: e.stateful.set_(wock, color: red) // 80
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 90
+#show: e.stateful.set_(wock, color: red) // 90
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red)
+#show: e.stateful.set_(wock, color: red)
 
-#show: e.stateful.set_(wock-e, color: red) // 100
+#show: e.stateful.set_(wock, color: red) // 100
 
 #wock()

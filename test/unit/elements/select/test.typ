@@ -19,14 +19,14 @@
 #(wock-e.where)(color: blue, blue-wock => (wock-e.where)(size: 20pt, wide-wock => [
   #show blue-wock: it => {
     // TODO
-    // let (fields,) = e.decompose(it)
+    // let (fields,) = e.data(it)
     // assert.eq(fields.color, blue)
     set rect(stroke: orange)
     it
   }
   #show wide-wock: it => {
     // TODO
-    // let (fields,) = e.decompose(it)
+    // let (fields,) = e.data(it)
     // assert.eq(fields.size, 20pt)
     set rect(stroke: 2pt)
     it

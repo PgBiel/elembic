@@ -16,14 +16,14 @@
 
 #let w = wock(inner: [Updated])
 
-#show: e.set_(wock-e, color: blue)
+#show: e.set_(wock, color: blue)
 #show wock-e.sel: it => {
-  let (body, fields) = e.decompose(it)
+  let (body, fields) = e.data(it)
   assert.eq(fields.color, blue)
   assert.eq(fields.inner, [Updated])
 }
 
-#let (fields,) = e.decompose(w)
+#let (fields,) = e.data(w)
 #assert("color" not in fields)
 #assert.eq(fields.inner, [Updated])
 

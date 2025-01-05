@@ -13,11 +13,11 @@
 
 
 #let all-rules = (
-  e.set_(wock-e, color: red),
-  e.set_(wock-e, inner: [Something]),
-  e.set_(wock-e, color: blue),
-  e.set_(wock-e, inner: [Something else]),
-  e.set_(wock-e, inner: []),
+  e.set_(wock, color: red),
+  e.set_(wock, inner: [Something]),
+  e.set_(wock, color: blue),
+  e.set_(wock, inner: [Something else]),
+  e.set_(wock, inner: []),
 ) * 5000
 
 #let application = e.apply(

@@ -15,7 +15,7 @@
 )
 
 #[
-  #show: e.set_(wock-e, color: blue)
+  #show: e.set_(wock, color: blue)
 
   #context assert.eq(bibliography.title, [Custom Title])
   #bibliography("bib.yml")

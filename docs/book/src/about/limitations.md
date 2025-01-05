@@ -17,9 +17,9 @@ Therefore, **always group set rules together into an apply rule whenever possibl
 
 // OK: Only paying for the cost of a single rule
 #show: e.apply(
-  e.set_(elem-e, fieldA: 1)
-  e.set_(elem-e, fieldB: 2)
-  e.set_(elem-e, fieldC: 3)
+  e.set_(elem, fieldA: 1)
+  e.set_(elem, fieldB: 2)
+  e.set_(elem, fieldC: 3)
 )
 ```
 
@@ -31,11 +31,11 @@ but **do not:**
 // Don't do this! Paying for 3 rules instead of 1
 // (There are implicit parbreaks between the rules,
 // so they cannot be grouped together)
-#show: e.set_(elem-e, fieldA: 1)
+#show: e.set_(elem, fieldA: 1)
 
-#show: e.set_(elem-e, fieldB: 2)
+#show: e.set_(elem, fieldB: 2)
 
-#show: e.set_(elem-e, fieldC: 3)
+#show: e.set_(elem, fieldC: 3)
 ```
 
 Note that Elemmic is smart enough to group together rules **if there is absolutely nothing between them:**
@@ -45,9 +45,9 @@ Note that Elemmic is smart enough to group together rules **if there is absolute
 
 // OK: These 3 are converted into an apply automatically
 // (NOTHING between them)
-#show: e.set_(elem-e, fieldA: 1)
-#show: e.set_(elem-e, fieldB: 2)
-#show: e.set_(elem-e, fieldC: 3)
+#show: e.set_(elem, fieldA: 1)
+#show: e.set_(elem, fieldB: 2)
+#show: e.set_(elem, fieldC: 3)
 ```
 
 but it is not recommended to rely on this behavior, as **it's easy to accidentally add some content between them,** stopping Elemmic from being able to apply this optimization.

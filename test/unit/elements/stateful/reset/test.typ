@@ -19,8 +19,8 @@
   )
 )
 
-#show: e.stateful.set_(wock-e, color: yellow)
-#show: e.stateful.set_(wock-e, border: red + 2pt)
+#show: e.stateful.set_(wock, color: yellow)
+#show: e.stateful.set_(wock, border: red + 2pt)
 
 #(wock-e.get)(d => assert.eq(d.color, yellow))
 #(wock-e.get)(d => assert.eq(d.border, red + 2pt))

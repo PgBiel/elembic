@@ -15,5 +15,5 @@
   )
 )
 
-#show: e.set_(wock-e, color: blue)
+#show: e.set_(wock, color: blue)
 #wock()

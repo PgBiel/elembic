@@ -38,7 +38,7 @@
 #door(red, blue, cool: true, sad: false, family: "family")
 #door(red, blue, cool: true, sad: false, family: 0, verysad: false)
 
-#show: e.set_(door-e, yellow)
+#show: e.set_(door, yellow)
 
 #door(red, blue, cool: true, sad: true)
 #(door-e.get)(v => assert.eq(v.extracolor, yellow))
@@ -57,7 +57,7 @@
 #door(red, blue, cool: true, sad: false, anything: (a: 5))
 
 #[
-  #show: e.set_(door-e, just-true: true, float-or-content: 50, just-float: 5, just-content: "abc", bool-or-pos-float: false)
+  #show: e.set_(door, just-true: true, float-or-content: 50, just-float: 5, just-content: "abc", bool-or-pos-float: false)
 
   #(door-e.get)(v => {
     assert(type(v.float-or-content) == float and v.float-or-content == 50.0)

@@ -17,7 +17,7 @@
   )
 )
 
-#show: e.stateful.set_(wock-e, color: blue)
+#show: e.stateful.set_(wock, color: blue)
 
 #(wock-e.get)(
   v => {
