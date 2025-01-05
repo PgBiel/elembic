@@ -15,6 +15,7 @@
 // - check: none (only check inputs) or function x => bool
 // - cast: none (input is unchanged) or function to convert input to output
 // - error: none or function x => string to customize check failure message
+// - default: empty array (no default) or singleton array => default value for this type
 #let base-typeinfo = (
   (type-key): "base",
   version: type-version,
@@ -25,6 +26,7 @@
   check: none,
   cast: none,
   error: none,
+  default: (),
 )
 
 // Top type
@@ -75,6 +77,7 @@
     data: (value: value, typeinfo: typeinfo, represented: represented),
     check: check,
     error: _ => "given value wasn't equal to literal " + represented,
+    default: (value,),
   )
 }
 
@@ -154,11 +157,11 @@
       and (casting-types.len() == 1 or typeinfos.find(t => t.input.any(i => i in casting-types.at(1).input)) == casting-types.at(1))
     ) {
       if casting-types.len() >= 2 {  // just float and content
-        x => if type(x) == int { float(x) } else if type(x) == str [#x] else { x }
+        x => if type(x) == int { float(x) } else if type(x) in (str, symbol) [#x] else { x }
       } else if first-casting-type.data == float {  // just float
         x => if type(x) == int { float(x) } else { x }
       } else { // just content
-        x => if type(x) == str { [#x] } else { x }
+        x => if type(x) in (str, symbol) { [#x] } else { x }
       }
     } else {
       // Generic case
@@ -191,6 +194,14 @@
     }
   }
 
+  let default = if typeinfos.first().at(type-key) == "native" and typeinfos.first().data in (type(none), type(auto)) {
+    // Default of 'none' for option(...)
+    // Default of 'auto' for smart(...)
+    typeinfos.first().default
+  } else {
+    ()
+  }
+
   (
     ..base-typeinfo,
     (type-key): "union",
@@ -200,7 +211,8 @@
     output: output,
     check: check,
     cast: cast,
-    error: error
+    error: error,
+    default: default
   )
 }
 

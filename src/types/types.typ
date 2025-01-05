@@ -4,23 +4,13 @@
 
 // The default value for a type.
 #let default(type_) = {
-  if type_.at(type-key) == "native" {
-    let native-type = type_.input.at(0)
-    native.default(native-type)
-  } else if type_.at(type-key) == "union" {
-    if native.none_ == type_.data.at(0) {
-      // Default is 'none'
-      return ok(none)
-    }
-    if native.auto_ == type_.data.at(0) {
-      // Default is 'auto'
-      return ok(auto)
-    }
-
-    err("union type '" + type_.name + "' has no known default, please specify an explicit 'default: value' or set 'required: true' for the field")
+  if type_.default == () {
+    let prefix = if type_.at(type-key) in ("native", "union") { type_.at(type-key) + " " } else { "" }
+    err(prefix + "type '" + type_.name + "' has no known default, please specify an explicit 'default: value' or set 'required: true' for the field")
   } else {
-    err("type '" + type_.name + "' has no known default, please specify an explicit 'default: value' or set 'required: true' for the field")
+    ok(type_.default.first())
   }
+}
 
 // Literal type
 // Only accepted if value is equal to the literal.
@@ -151,7 +141,10 @@
   } else if type(type_) == type or key == "native" {
     // exact(float) => can only pass float, not int
     let native-type = if key == "native" { type_.data } else { type_ }
-    native.generic-typeinfo(native-type)
+    (
+      ..native.generic-typeinfo(native-type),
+      default: if type_.default != () and type(type_.default.first()) == native-type { type_.default } else { () }
+    )
   } else if key == "literal" {
     // exact(literal) => literal with base type modified to exact(base type)
     assert(type(type_.data.value) not in (dictionary, array), message: "types.exact: exact literal types for custom types, dictionaries and arrays are not supported\n  hint: consider customizing the check function to recursively check fields if the performance is acceptable")

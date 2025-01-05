@@ -1,6 +1,9 @@
 // Typst-native types.
 #import "base.typ": type-key, base-typeinfo, ok, err
 
+// Tiling type (renamed in Typst 0.13.0)
+#let tiling = if sys.version < version(0, 13, 0) { pattern } else { tiling }
+
 #let native-base = (
   ..base-typeinfo,
   (type-key): "native",
@@ -26,10 +29,11 @@
 #let content_ = (
   ..native-base,
   name: str(content),
-  input: (content, str),
+  input: (content, str, symbol),
   output: (content,),
   data: content,
   cast: x => [#x],
+  default: ([],),
 )
 #let float_ = (
   ..native-base,
@@ -38,6 +42,33 @@
   output: (float,),
   data: float,
   cast: float,
+  default: (0.0,),
+)
+#let stroke_ = (
+  ..native-base,
+  name: str(stroke),
+  input: (stroke, length, color, gradient, tiling, dictionary),
+  output: (stroke,),
+  data: stroke,
+  cast: stroke,
+  default: (stroke(),),
+)
+#let relative_ = (
+  ..native-base,
+  name: str(relative),
+  input: (relative, length, ratio),
+  output: (relative,),
+  data: relative,
+  cast: x => x + 0% + 0pt,
+  default: (0% + 0pt,),
+)
+#let function_ = (
+  ..native-base,
+  name: str(function),
+  // Would add symbol as well, but missing a reliable way to check for callable symbols
+  input: (type, function),
+  output: (type, function,),
+  data: function,
 )
 
 // Simples types (no casting)
@@ -48,6 +79,7 @@
   input: (str,),
   output: (str,),
   data: str,
+  default: ("",)
 )
 #let bool_ = (
   ..native-base,
@@ -55,6 +87,7 @@
   input: (bool,),
   output: (bool,),
   data: bool,
+  default: (false,)
 )
 #let array_ = (
   ..native-base,
@@ -62,6 +95,7 @@
   input: (array,),
   output: (array,),
   data: array,
+  default: ((),),
 )
 #let dict_ = (
   ..native-base,
@@ -69,6 +103,7 @@
   input: (dictionary,),
   output: (dictionary,),
   data: dictionary,
+  default: ((:),),
 )
 #let int_ = (
   ..native-base,
@@ -76,6 +111,7 @@
   input: (int,),
   output: (int,),
   data: int,
+  default: (0,),
 )
 #let color_ = (
   ..native-base,
@@ -91,6 +127,13 @@
   output: (gradient,),
   data: gradient,
 )
+#let tiling_ = (
+  ..native-base,
+  name: str(tiling),
+  input: (tiling,),
+  output: (tiling,),
+  data: tiling,
+)
 #let datetime_ = (
   ..native-base,
   name: str(datetime),
@@ -98,19 +141,45 @@
   output: (datetime,),
   data: datetime,
 )
+#let angle_ = (
+  ..native-base,
+  name: str(angle),
+  input: (angle,),
+  output: (angle,),
+  data: angle,
+  default: (0deg,),
+)
+#let ratio_ = (
+  ..native-base,
+  name: str(ratio),
+  input: (ratio,),
+  output: (ratio,),
+  data: ratio,
+  default: (0%,),
+)
+#let length_ = (
+  ..native-base,
+  name: str(length),
+  input: (length,),
+  output: (length,),
+  data: length,
+  default: (0pt,),
+)
+#let fraction_ = (
+  ..native-base,
+  name: str(fraction),
+  input: (fraction,),
+  output: (fraction,),
+  data: fraction,
+  default: (0fr,),
+)
 #let duration_ = (
   ..native-base,
   name: str(duration),
   input: (duration,),
   output: (duration,),
   data: duration,
-)
-#let function_ = (
-  ..native-base,
-  name: str(function),
-  input: (function,),
-  output: (function,),
-  data: function,
+  default: (duration(seconds: 0),),
 )
 #let type_ = (
   ..native-base,
@@ -118,6 +187,30 @@
   input: (type,),
   output: (type,),
   data: type,
+)
+#let arguments_ = (
+  ..native-base,
+  name: str(arguments),
+  input: (arguments,),
+  output: (arguments,),
+  data: arguments,
+  default: (arguments(),),
+)
+#let bytes_ = (
+  ..native-base,
+  name: str(bytes),
+  input: (bytes,),
+  output: (bytes,),
+  data: bytes,
+  default: (bytes(()),),
+)
+#let version_ = (
+  ..native-base,
+  name: str(version),
+  input: (version,),
+  output: (version,),
+  data: version,
+  default: (version(0, 0, 0),),
 )
 
 // None / auto
@@ -127,12 +220,16 @@
   name: "none",
   input: (type(none),),
   output: (type(none),),
+  data: type(none),
+  default: (none,)
 )
 #let auto_ = (
   ..native-base,
   name: "auto",
   input: (type(auto),),
   output: (type(auto),),
+  data: type(auto),
+  default: (auto,)
 )
 
 // Return the typeinfo for a native type.
@@ -165,52 +262,30 @@
     duration_
   } else if t == function {
     function_
+  } else if t == relative {
+    relative_
+  } else if t == stroke {
+    stroke_
+  } else if t == tiling {
+    tiling_
   } else if t == type {
     type_
-  } else if t in (stroke, align) {
-    // Stroke and align would have fold, which we didn't implement yet
-    return (false, "no preexisting typeinfo definition for type '" + str(t) + "', please use 'types.exact(type here)' instead to indicate it cannot be cast to.")
+  } else if t == angle {
+    angle_
+  } else if t == ratio {
+    ratio_
+  } else if t == length {
+    length_
+  } else if t == fraction {
+    fraction_
+  } else if t == arguments {
+    arguments_
+  } else if t == bytes {
+    bytes_
+  } else if t == version {
+    version_
   } else {
     generic-typeinfo(t)
-  }
-
-  (true, out)
-}
-
-// Return the default for a native type.
-#let default(t) = {
-  let out = if t == type(0) {
-    0
-  } else if t == type("") {
-    ""
-  } else if t == type(1pt + black) {
-    1pt + black
-  } else if t == type(0pt) {
-    0pt
-  } else if t == type(0pt + 0%) {
-    0pt + 0%
-  } else if t == type(0%) {
-    0%
-  } else if t == type(none) {
-    none
-  } else if t == type(auto) {
-    auto
-  } else if t == type(0.0) {
-    0.0
-  } else if t == type(()) {
-    ()
-  } else if t == type((:)) {
-    (:)
-  } else if t == arguments {
-    arguments()
-  } else if t == bytes {
-    bytes(())
-  } else if t == version {
-    version(0, 0, 0)
-  } else if t == type([]) {
-    []
-  } else {
-    return (false, "native type '" + str(t) + "' has no known default, please specify an explicit 'default: value' or set 'required: true' for the field.")
   }
 
   (true, out)
