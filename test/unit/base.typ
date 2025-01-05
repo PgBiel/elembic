@@ -1,3 +1,5 @@
+#import "/src/types/base.typ"
+
 // Base template for tests
 #let template(doc) = {
   set page(width: 120pt, height: auto, margin: 10pt)
@@ -12,4 +14,17 @@
   set text(0pt)
 
   doc
+}
+
+// Unwrap a result.
+#let unwrap((res, value)) = {
+  if not res {
+    assert(false, message: "failing result unwrapped: " + value)
+  }
+  value
+}
+
+// Ensure the given value has the given type.
+#let type-assert-eq(value, type_) = {
+  assert.eq(base.typeof(value), type_)
 }

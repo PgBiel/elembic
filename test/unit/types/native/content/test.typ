@@ -7,5 +7,6 @@
 
 #assert.eq(cast([abc], native.content_), (true, [abc]))
 #assert.eq(cast("abc", native.content_), (true, [abc]))
+#assert.eq(cast(sym.eq, native.content_), (true, [#sym.eq]))
 #assert.eq(cast([= efg], native.content_), (true, [= efg]))
-#assert.eq(cast(123, native.content_), (false, "expected content or string, found integer"))
+#assert.eq(cast(123, native.content_), (false, "expected content, string or symbol, found integer"))
