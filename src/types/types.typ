@@ -1,5 +1,5 @@
 // The type system used by fields.
-#import "base.typ" as base: type-key, ok, err
+#import "base.typ" as base: type-key, ok, err, custom-type-key
 #import "native.typ"
 
 // The default value for a type.
@@ -161,4 +161,100 @@
   } else {
     panic("unexpected type '" + str(type(type_)) + "', please provide an actual type")
   }
+}
+
+#let array_(type_) = {
+  let (res, param) = validate(type_)
+  if not res {
+    assert(false, message: "types.array: " + param)
+  }
+
+  let kind = param.at(type-key)
+
+  base.collection(
+    "array",
+    native.array_,
+    (param,),
+    check: if param.check == none and "any" in param.input {
+      none
+    } else if param.input == () {
+      // Propagate 'never'
+      _ => false
+    } else if "any" in param.input {
+      // Only need to run checks
+      a => a.all(x => (param.check)(x))
+    } else {
+      // Some optimizations ahead
+      // The proper code is at the bottom
+      let input = param.input
+      let check = param.check
+      if kind == "native" and param.data == dictionary {
+        a => a.all(x => type(x) == dictionary and custom-type-key not in x)
+      } else if param.input.all(i => type(i) == type) and dictionary not in param.input {
+        // No custom types accepted
+        // If this is a custom type, it will return type(x) = dictionary, so it will fail
+        // So that suffices
+        if input.len() == 1 {
+          let input = input.first()
+          if check == none {
+            a => a.all(x => type(x) == input)
+          } else {
+            a => a.all(x => type(x) == input and check(x))
+          }
+        } else if input.len() == 2 {
+          let first = input.first()
+          let second = input.at(1)
+          if check == none {
+            a => a.all(x => type(x) == first or type(x) == second)
+          } else {
+            a => a.all(x => (type(x) == first or type(x) == second) and check(x))
+          }
+        } else if check == none {
+          a => a.all(x => type(x) in input)
+        } else {
+          a => a.all(x => type(x) in input and check(x))
+        }
+      } else if param.check == none {
+        a => a.all(x => base.typeof(x) in param.input)
+      } else {
+        a => a.all(x => base.typeof(x) in param.input and check(x))
+      }
+    },
+
+    cast: if param.cast == none {
+      none
+    } else if kind == "native" and param.data == content {
+      a => a.map(x => [#x])
+    } else {
+      a => a.map(param.cast)
+    },
+
+    error: if param.check == none {
+      a => {
+        let (count, message) = a.enumerate().fold((0, ""), ((count, message), (i, element)) => {
+          if base.typeof(element) not in param.input {
+            (count + 1, message + "\n  hint: at position " + str(i) + ": " + generate-cast-error(element, param))
+          } else {
+            (count, message)
+          }
+        })
+
+        let n-elements = if count == 1 { "an element" } else { str(count) + "elements" }
+        n-elements + " in an array of " + param.name + " did not typecheck" + message
+      }
+    } else {
+      a => {
+        let (count, message) = a.enumerate().fold((0, ""), ((count, message), (i, element)) => {
+          if base.typeof(element) not in param.input or not (param.check)(element) {
+            (count + 1, message + "\n  hint: at position " + str(i) + ": " + generate-cast-error(element, param))
+          } else {
+            (count, message)
+          }
+        })
+
+        let n-elements = if count == 1 { "an element" } else { str(count) + "elements" }
+        n-elements + " in an array of " + param.name + " did not typecheck" + message
+      }
+    }
+  )
 }

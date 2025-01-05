@@ -231,6 +231,39 @@
   type(result) == array and result.len() == 2 and result.first() == true
 }
 
+// A particular collection of types.
+#let collection(name, base, parameters, check: none, cast: none, error: none, ..args) = {
+  if check == none {
+    check = base.check
+  }
+
+  if cast == none {
+    cast = base.cast
+  }
+
+  if check == none and error == none {
+    error = base.error
+  }
+
+  let other-args = args.named()
+  let default = if "default" in other-args {
+    other-args.default
+  } else {
+    base.default
+  }
+
+  (
+    ..base,
+    (type-key): "collection",
+    name: name + if parameters != () { " of " + parameters.map(t => t.name).join(", ", last: " and ") },
+    data: (base: base, parameters: parameters),
+    check: check,
+    cast: cast,
+    error: error,
+    default: default,
+  )
+}
+
 // Returns the name of the value's type as a string.
 #let type-name-of(value) = {
   // TODO: Custom element name
