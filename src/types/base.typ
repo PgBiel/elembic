@@ -136,7 +136,7 @@
         }
         // If one of the types without checks accepts this type as an input then we don't need
         // to run any checks!
-        typ in unchecked-inputs or checked-types.any(((inp, check)) => typ in inp and check(x))
+        typ in unchecked-inputs or checks-and-inputs.any(((inp, check)) => typ in inp and check(x))
       }
     }
   }
@@ -235,9 +235,9 @@
 // Mostly unchecked variant of 'types.wrap'.
 #let wrap(typeinfo, overrides) = {
   (
-    (..typeinfo, name: "wrapped", data: (base: typeinfo))
+    (..typeinfo, (type-key): "wrapped", data: (base: typeinfo, extra: none))
     + for (key, default) in base-typeinfo {
-      if key in (type-key, "name", "data") {
+      if key == type-key {
         continue
       }
 
@@ -246,7 +246,12 @@
         if type(override) == function {
           override = override(typeinfo.at(key, default: default))
         }
-        ((key): override)
+
+        if key == "data" {
+          (data: (base: typeinfo, extra: override))
+        } else {
+          ((key): override)
+        }
       }
     }
   )

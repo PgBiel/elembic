@@ -107,6 +107,7 @@
 
 // Expected types for each typeinfo key.
 #let overridable-typeinfo-types = (
+  name: (check: a => type(a) == str, error: "string or function old name => new name"),
   input: (check: a => type(a) == array and a.all(x => x == "any" or type(x) == type or (type(x) == dictionary and "tid" in x)), error: "array of 'any', type, or custom type id (tid: ...), or function old input => new input"),
   output: (check: a => type(a) == array and a.all(x => x == "any" or type(x) == type or (type(x) == dictionary and "tid" in x)), error: "array of 'any', type, or custom type id (tid: ...), or function old output => new output"),
   check: (check: a => a == none or type(a) == function, error: "none or function receiving old function and returning a function value => bool"),
@@ -118,11 +119,14 @@
 // Wrap a type, altering its properties while keeping (or replacing) its input types and checks.
 #let wrap(type_, ..data) = {
   assert(data.pos() == (), message: "types.wrap: unexpected positional arguments")
-  let typeinfo = validate(type_)
+  let (res, typeinfo) = validate(type_)
+  if not res {
+    assert(false, message: "types.wrap: " + typeinfo)
+  }
 
   let overrides = data.named()
   for (key, value) in overrides {
-    let (validate-value, key-error) = overridable-typeinfo-types.at(key, default: (none, none))
+    let (check: validate-value, error: key-error) = overridable-typeinfo-types.at(key, default: (check: none, error: none))
     if validate-value == none or key-error == none {
       assert(false, message: "types.wrap: invalid key '" + key + "', must be one of " + overridable-typeinfo-types.keys().join(", ", last: " or "))
     }
@@ -132,15 +136,19 @@
     }
   }
 
-  if "cast" in overrides and "output" not in overrides or "any" in overrides.output {
+  if "cast" in overrides and "output" not in overrides or "output" in overrides and "any" in overrides.output {
+    // - Collapse "any" + other types into just "any";
+    // - If there is a cast and output is unknown, then set it to any
     overrides.output = ("any",)
   }
 
   if "input" in overrides and "any" in overrides.input {
+    // - Collapse "any" + other types into just "any"
     overrides.input = ("any",)
   }
 
-  if "check" in overrides and "default" not in overrides {
+  if ("check" in overrides or "output" in overrides) and "default" not in overrides {
+    // Not sure if default would fit those criteria anymore
     overrides.default = ()
   }
 
