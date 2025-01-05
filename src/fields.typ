@@ -141,16 +141,17 @@
       let kind = typeinfo.at(type-key)
       let casted = value
 
+      // Inlined version of 'types.cast'
       if kind != "any" {
-        if kind == "literal" {
-          if value != typeinfo.data {
+        let value-type = type(value)
+        if value-type == dictionary and custom-type-key in value {
+          value-type = value.at(custom-type-key)
+        }
+        if kind == "literal" and typeinfo.cast == none {
+          if value != typeinfo.data.value or value-type not in typeinfo.input or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value)) {
             assert(false, message: field-error-prefix(pos-field.name, name) + types.generate-cast-error(value, typeinfo))
           }
         } else {
-          let value-type = type(value)
-          if value-type == dictionary and custom-type-key in value {
-            value-type = value.at(custom-type-key)
-          }
           if (
             value-type not in typeinfo.input
             or typeinfo.check != none and not (typeinfo.check)(value)
@@ -191,9 +192,14 @@
       let kind = typeinfo.at(type-key)
       let casted = value
 
+      // Inlined version of 'types.cast'
       if kind != "any" {
-        if kind == "literal" {
-          if value != typeinfo.data {
+        let value-type = type(value)
+        if value-type == dictionary and custom-type-key in value {
+          value-type = value.at(custom-type-key)
+        }
+        if kind == "literal" and typeinfo.cast == none {
+          if value != typeinfo.data.value or value-type not in typeinfo.input or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value)) {
             assert(false, message: field-error-prefix(field-name, name) + types.generate-cast-error(value, typeinfo))
           }
         } else {

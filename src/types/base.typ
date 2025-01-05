@@ -60,19 +60,21 @@
 // Literal type
 // Only accepted if value is equal to the literal.
 // Input and output are equal to the value.
-#let literal(value) = {
+//
+// Uses base typeinfo information for information such as casts and whatnot.
+#let literal(value, typeinfo) = {
   let represented = "'" + if type(value) == str { value } else { repr(value) } + "'"
   let value-type = typeof(value)
 
+  let check = if typeinfo.check == none { x => x == value } else { x => x == value and (typeinfo.check)(x) }
+
   (
-    ..base-typeinfo,
+    ..typeinfo,
     (type-key): "literal",
     name: "literal " + represented,
-    input: (value-type,),
-    output: (value-type,),
-    data: value,
-    check: x => x == value,
-    error: _ => "given value wasn't equal to literal '" + repr(value) + "'"
+    data: (value: value, typeinfo: typeinfo, represented: represented),
+    check: check,
+    error: _ => "given value wasn't equal to literal " + represented,
   )
 }
 
@@ -101,18 +103,38 @@
   let output = typeinfos.map(t => t.output).sum(default: ()).dedup()
 
   // Try to optimize checks as much as possible
-  let check = if typeinfos.any(t => t.check == none) {
-    // If any type has no checks, then conversion will always succeed somehow
+  let check = if typeinfos.all(t => t.check == none) {
+    // If there are no checks, just checking inputs is enough
     none
   } else {
     let checked-types = typeinfos.filter(t => t.check != none)
-    if checked-types.all(t => t.at(type-key) == "literal") {
-      let values = checked-types.map(t => t.data)
-      x => x in values
+    let unchecked-inputs = typeinfos.filter(t => t.check == none).map(t => t.input).sum(default: ()).dedup()
+    if input.all(t => t in unchecked-inputs) {
+      // Unchecked types include all possible input types, so some check will always succeed
+      none
+    } else if checked-types.all(t => t.at(type-key) == "literal") {
+      let values-inputs-and-checks = checked-types.map(t => (t.data.value, t.input, t.data.typeinfo.check))
+      x => {
+        let typ = type(x)
+        if typ == dictionary and custom-type-key in typ {
+          // Custom type must be checked differently in inputs
+          typ = typ.at(custom-type-key)
+        }
+        typ in unchecked-inputs or values-inputs-and-checks.any(((v, i, check)) => typ in i and x == v and (check == none or check(x)))
+      }
     } else {
-      // If any check succeeds, OK
-      let checks = checked-types.map(t => t.check)
-      x => checks.any(check => check(x))
+      // If any check succeeds and the value has the correct input type, OK
+      let checks-and-inputs = checked-types.map(t => (t.input, t.check))
+      x => {
+        let typ = type(x)
+        if typ == dictionary and custom-type-key in typ {
+          // Custom type must be checked differently in inputs
+          typ = typ.at(custom-type-key)
+        }
+        // If one of the types without checks accepts this type as an input then we don't need
+        // to run any checks!
+        typ in unchecked-inputs or checked-types.any(((inp, check)) => typ in inp and check(x))
+      }
     }
   }
 
@@ -126,9 +148,10 @@
       // If the casting types are all native, and none of the types before them
       // accept their "cast-from" types, then we can fast track to a simple check:
       // if within the 'cast-from' types, then cast, otherwise don't.
-      casting-types.all(t => t.at(type-key) == "native" and t.data in (float, content))
+      casting-types != ()
+      and casting-types.all(t => t.at(type-key) == "native" and t.data in (float, content))
       and typeinfos.find(t => t.input.any(i => i in first-casting-type.input)) == first-casting-type
-      and casting-types.len() == 1 or typeinfos.find(t => t.input.any(i => i in casting-types.at(1).input)) == casting-types.at(1)
+      and (casting-types.len() == 1 or typeinfos.find(t => t.input.any(i => i in casting-types.at(1).input)) == casting-types.at(1))
     ) {
       if casting-types.len() >= 2 {  // just float and content
         x => if type(x) == int { float(x) } else if type(x) == str [#x] else { x }
@@ -145,7 +168,7 @@
           // Custom type must be checked differently in inputs
           typ = typ.at(custom-type-key)
         }
-        let typeinfo = typeinfos.find(t => typ in t.input and t.check == none or (t.check)(x))
+        let typeinfo = typeinfos.find(t => typ in t.input and (t.check == none or (t.check)(x)))
         if typeinfo.cast == none {
           x
         } else {
@@ -157,6 +180,10 @@
 
   let error = if typeinfos.all(t => t.error == none) {
     none
+  } else if typeinfos.all(t => t.at(type-key) == "literal") {
+    let literals = typeinfos.map(t => str(t.data.represented)).join(", ", last: " or ")
+    let message = "given value wasn't equal to literals " + literals
+    x => message
   } else {
     let error-types = typeinfos.filter(t => t.error != none)
     x => {

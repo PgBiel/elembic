@@ -21,6 +21,23 @@
   } else {
     err("type '" + type_.name + "' has no known default, please specify an explicit 'default: value' or set 'required: true' for the field")
   }
+
+// Literal type
+// Only accepted if value is equal to the literal.
+// Input and output are equal to the value.
+//
+// Uses base typeinfo information for information such as casts and whatnot.
+#let literal(value) = {
+  let type_ = base.typeof(value)
+  let (res, typeinfo-or-err) = if type(type_) == type {
+    native.typeinfo(type_)
+  } else {
+    // TODO: Custom types
+    (true, type_)
+  }
+  assert(res, message: if not res { "types.literal: " + typeinfo-or-err } else { "" })
+
+  base.literal(value, typeinfo-or-err)
 }
 
 // Obtain the typeinfo for a type.
@@ -33,9 +50,15 @@
   } else if type(type_) == dictionary and type-key in type_ {
     (true, type_)
   } else if type(type_) == function {
-    (false, "A function is not a valid type.")
+    (false, "A function is not a valid type. (You can use 'types.literal(func)' to only accept a particular function.)")
+  } else if type_ == none or type_ == auto {
+    // Accept none or auto to mean their types
+    native.typeinfo(type(type_))
+  } else if type(type_) not in (dictionary, array, content) {
+    // Automatically accept literals
+    (true, literal(type_))
   } else {
-    (false, "Received invalid type: " + repr(type_) + if type_ in (none, auto) { "\n(hint: write 'type(none)' or 'type(auto)' to only accept none or auto, respectively)" } else { "" })
+    (false, "Received invalid type: " + repr(type_) + "\n  hint: use 'types.literal(value)' to indicate only that particular value is valid")
   }
 }
 
@@ -65,19 +88,19 @@
   let kind = typeinfo.at(type-key)
   if kind == "any" {
     (true, value)
-  } else if kind == "literal" {
-    if value == typeinfo.data {
-      (true, value)
-    } else {
-      (false, generate-cast-error(value, typeinfo))
-    }
   } else {
     let value-type = type(value)
     if value-type == dictionary and base.custom-type-key in value {
       value-type = value.at(base.custom-type-key)
     }
 
-    if (
+    if kind == "literal" and typeinfo.cast == none {
+      if value == typeinfo.data.value and value-type in typeinfo.input and (typeinfo.data.typeinfo.check == none or (typeinfo.data.typeinfo.check)(value)) {
+        (true, value)
+      } else {
+        (false, generate-cast-error(value, typeinfo))
+      }
+    } else if (
       value-type not in typeinfo.input
       or typeinfo.check != none and not (typeinfo.check)(value)
     ) {
@@ -116,6 +139,11 @@
 // Force the type to only accept its outputs (disallow casting).
 // Also disables folding.
 #let exact(type_) = {
+  let (res, type_) = validate(type_)
+  if not res {
+    assert(false, message: "types.exact: " + type_)
+  }
+
   let key = if type(type_) == dictionary { type_.at(type-key, default: none) } else { none }
   if key == "union" {
     // exact(union(A, B)) === union(exact(A), exact(B))
@@ -124,8 +152,12 @@
     // exact(float) => can only pass float, not int
     let native-type = if key == "native" { type_.data } else { type_ }
     native.generic-typeinfo(native-type)
-  } else if key == "literal" or key == "any" or key == "never" {
-    // exact(literal) => literal (input == output)
+  } else if key == "literal" {
+    // exact(literal) => literal with base type modified to exact(base type)
+    assert(type(type_.data.value) not in (dictionary, array), message: "types.exact: exact literal types for custom types, dictionaries and arrays are not supported\n  hint: consider customizing the check function to recursively check fields if the performance is acceptable")
+
+    base.literal(type_.data.value, exact(type_.data.typeinfo))
+  } else if key == "any" or key == "never" {
     // exact(any) => any (same)
     // exact(never) => never (same)
     type_
