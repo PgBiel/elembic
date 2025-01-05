@@ -9,7 +9,7 @@
 
 #let (wock, wock-e) = element(
   "wock",
-  it => {
+  display: it => {
     rect(fill: it.color, width: it.size, height: 10pt)
   },
   fields: (

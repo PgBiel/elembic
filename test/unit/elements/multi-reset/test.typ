@@ -7,7 +7,7 @@
 
 #let (wibble, wibble-e) = element(
   "wibble",
-  it => {
+  display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)
   },
   fields: (
@@ -19,7 +19,7 @@
 
 #let (wobble, wobble-e) = element(
   "wobble",
-  it => {
+  display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)
   },
   fields: (

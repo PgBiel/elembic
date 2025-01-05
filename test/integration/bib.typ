@@ -4,7 +4,7 @@
 
 #let (wock, wock-e) = element(
   "wock",
-  it => {
+  display: it => {
     context assert.eq(bibliography.title, [Custom Title])
     text(it.color)[#it.inner]
   },

@@ -5,7 +5,7 @@
 
 #let (wock, wock-e) = element(
   "wock",
-  it => {},
+  display: it => {},
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [])

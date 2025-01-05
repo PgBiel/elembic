@@ -7,7 +7,7 @@
 
 #let (wock, wock-e) = element(
   "wock",
-  it => {
+  display: it => {
     square(width: 6pt, fill: it.color)[#it.inner]
   },
   fields: (

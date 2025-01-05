@@ -5,7 +5,7 @@
 
 #let (wock, wock-e) = element(
   "wock",
-  it => {
+  display: it => {
     assert.eq(it.color, red)
     assert.eq(it.inner, [Hello!])
   },

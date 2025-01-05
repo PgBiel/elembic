@@ -2,7 +2,7 @@
 
 #let (wock, wock-e) = element(
   "wock",
-  it => {
+  display: it => {
     text(it.color)[#it.inner]
   },
   fields: (

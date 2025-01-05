@@ -2,7 +2,7 @@
 
 #let (wock, wock-e) = element(
   "wock",
-  it => {
+  display: it => {
     [#it.body]
   },
   fields: (
@@ -14,7 +14,7 @@
 
 #let (dock, dock-e) = element(
   "dock",
-  it => {
+  display: it => {
     [#it.body]
   },
   fields: (

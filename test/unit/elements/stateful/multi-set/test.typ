@@ -9,7 +9,7 @@
 
 #let (wibble, wibble-e) = element(
   "wibble",
-  it => {
+  display: it => {
     (it.run)(it)
   },
   fields: (
@@ -21,7 +21,7 @@
 
 #let (wobble, wobble-e) = element(
   "wobble",
-  it => {
+  display: it => {
     (it.run)(it)
   },
   fields: (

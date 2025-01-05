@@ -663,7 +663,8 @@
 }
 
 // Create an element with the given name and constructor.
-#let element(name, constructor, fields: none, prefix: "") = {
+#let element(name, display: none, fields: none, prefix: "") = {
+  assert(type(display) == function, message: "element: please specify a show rule in 'display:' to determine how your element is displayed.")
   assert(type(fields) == array, message: "element: please specify an array of fields.")
 
   let eid = prefix + "_" + name
@@ -721,7 +722,7 @@
 
         let constructed-fields = default-fields + folded-chain + args
 
-        let body = constructor(constructed-fields)
+        let body = display(constructed-fields)
         let tag = [#metadata((body: body, fields: constructed-fields, func: modified-constructor, eid: eid))]
 
         [#[#body#tag]#lbl-show]

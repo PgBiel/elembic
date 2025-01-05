@@ -7,7 +7,7 @@
 
 #let (wock, wock-e) = element(
   "wock",
-  it => {
+  display: it => {
     (it.run)(it)
   },
   fields: (

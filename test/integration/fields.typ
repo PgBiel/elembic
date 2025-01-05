@@ -6,7 +6,7 @@
 
 #let (door, door-e) = element(
   "door",
-  it => {
+  display: it => {
     rect(fill: it.color)[#it]
   },
   fields: (

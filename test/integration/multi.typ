@@ -2,7 +2,7 @@
 
 #let (wibble, wibble-e) = element(
   "wibble",
-  it => {
+  display: it => {
     text(it.color)[#it.inner]
   },
   fields: (
@@ -13,7 +13,7 @@
 
 #let (wobble, wobble-e) = element(
   "wobble",
-  it => {
+  display: it => {
     rect(fill: it.fill, it.inner)
   },
   fields: (
