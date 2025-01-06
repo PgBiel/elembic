@@ -46,6 +46,27 @@
     value
   }
 
+  let fold = if "fold" in typeinfo and typeinfo.fold != none {
+    assert(typeinfo.fold == auto or type(typeinfo.fold) == function, message: "field: type '" + typeinfo.name + "' doesn't appear to have a valid fold field (must be auto or function)")
+    let fold-default = if required {
+      // No field default, use the type's own default to begin folding
+      let (res, value) = types.default(typeinfo)
+      assert(res, message: if not res { error-prefix + value } else { "" })
+
+      value
+    } else {
+      // Use the field default as starting point for folding
+      default
+    }
+
+    (
+      folder: typeinfo.fold,
+      default: fold-default,
+    )
+  } else {
+    none
+  }
+
   if named == auto {
     // Pos arg is generally required
     named = not required
@@ -59,6 +80,7 @@
     default: accepted-default,
     required: required,
     named: named,
+    fold: fold,
   )
 }
 
@@ -67,6 +89,7 @@
   let optional-pos-fields = ()
   let required-named-fields = ()
   let all-fields = (:)
+  let foldable-fields = (:)
 
   for field in fields {
     assert(type(field) == dictionary and field.at(field-key, default: none) == true, message: "element.fields: Invalid field received, please use the 'e.fields.field' constructor.")
@@ -83,6 +106,10 @@
       optional-pos-fields.push(field)
     }
 
+    if field.fold != none {
+      foldable-fields.insert(field.name, field.fold)
+    }
+
     all-fields.insert(field.name, field)
   }
 
@@ -92,6 +119,7 @@
     required-pos-fields: required-pos-fields,
     optional-pos-fields: optional-pos-fields,
     required-named-fields: required-named-fields,
+    foldable-fields: foldable-fields,
     all-fields: all-fields
   )
 }

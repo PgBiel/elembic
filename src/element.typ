@@ -112,6 +112,37 @@
   // this 'counter' by one each time.
   where-rule-count: 0,
 
+  // Chain for foldable fields, that is, fields which have special behavior
+  // when changed through more than one set rule. By default, specifying the
+  // same field in two subsequent set rules will have the innermost set rule
+  // override the value from the previous one, but this can be overridden
+  // for certain types where it makes sense to combine the two values in
+  // some way instead. For example, stroke fields have custom folding: if
+  // you specify 4pt for a stroke field in one set rule and orange in another,
+  // the final stroke will be 4pt + orange, not orange.
+  //
+  // This data structure has an entry for each changed foldable field, laid out as follows:
+  // (
+  //   foldable-field-name: (
+  //     folder: auto or (outer, inner) => combined value  // how to combine two values, auto = simple sum, equivalent to (a, b) => a + b
+  //     default: stroke(),  // default value for this field to begin folding. This is 'field.default' unless 'required = true'.
+  //                         // Then, it is the type's default.
+  //     values: (4pt, orange, ...)  // list of all set values for this field (length = amount of times this field was changed)
+  //                                 // only 'values' is used if possible, for efficiency. E.g.: values.sum(default: stroke())
+  //     data: (                                   // list to associate each value with the real style chain index and name.
+  //       (index: 3, name: none, value: 4pt),     // If 'revoke' or 'reset' are used, this list is used instead
+  //       (index: 5, name: none, value: orange),  // so we can know which values were revoked.
+  //       ...
+  //     )
+  //   ),
+  //   ...
+  // )
+  //
+  // The final argument passed to the constructor, if any, also has to be folded with the latest folded value,
+  // or with the field's default value if nothing was changed. However, that step is done separately. So, if
+  // no set rules change a particular foldable field, it is not present in this dictionary at all.
+  fold-chain: (:),
+
   // The current accumulated styles (overridden values for arguments) for the element.
   chain: (),
 
@@ -240,7 +271,7 @@
     let kind = rule.kind
     if kind == "set" {
       let (element, args) = rule
-      let (eid, default-data) = element
+      let (eid, default-data, fields) = element
       if eid in data {
         data.at(eid).chain.push(args)
       } else {
@@ -255,6 +286,33 @@
         data.at(eid).data-chain += (none,) * (index - element-data.data-chain.len())
         data.at(eid).data-chain.push((kind: "set", name: rule.name))
         data.at(eid).names.insert(rule.name, true)
+      }
+
+      if fields.foldable-fields != (:) and args.keys().any(n => n in fields.foldable-fields) {
+        // A foldable field was specified in this set rule, so we need to record the fold
+        // data in the corresponding data structures separately for later.
+        let element-data = data.at(eid)
+        let index = element-data.chain.len() - 1
+        for (field-name, fold-data) in fields.foldable-fields {
+          if field-name in args {
+            let value = args.at(field-name)
+            let value-data = (index: index, name: rule.name, value: value)
+            if field-name in element-data.fold-chain {
+              data.at(eid).fold-chain.at(field-name).values.push(value)
+              data.at(eid).fold-chain.at(field-name).data.push(value-data)
+            } else {
+              data.at(eid).fold-chain.insert(
+                field-name,
+                (
+                  folder: fold-data.folder,
+                  default: fold-data.default,
+                  values: (value,),
+                  data: (value-data,)
+                )
+              )
+            }
+          }
+        }
       }
     } else if kind == "revoke" {
       for (name, _) in data {
@@ -487,7 +545,7 @@
   let args = (elem.parse-args)(fields, include-required: false)
 
   prepare-rule(
-    ((prepared-rule-key): true, version: element-version, kind: "set", name: none, mode: auto, element: (eid: elem.eid, default-data: elem.default-data), args: args)
+    ((prepared-rule-key): true, version: element-version, kind: "set", name: none, mode: auto, element: (eid: elem.eid, default-data: elem.default-data, fields: elem.fields), args: args)
   )
 }
 
@@ -601,7 +659,7 @@
 
 // Apply revokes and other modifications to the chain and generate a final set
 // of fields.
-#let fold-chain(chain, data-chain, revoke-chain) = {
+#let fold-styles(chain, data-chain, revoke-chain, fold-chain) = {
   // Map name -> up to which index (exclusive) it is revoked.
   //
   // Importantly, a revoke at index B will apply to
@@ -646,6 +704,8 @@
     if revoke.kind == "revoke" and revoke.revoking not in active-revokes and (revoke.name == none or revoke.name not in active-revokes) {
       active-revokes.insert(revoke.revoking, revoke.index)
     } else if revoke.kind == "reset" and (revoke.name == none or revoke.name not in active-revokes) {
+      // Applying a reset, so we delete everything before this index and stop revoking since
+      // any revokes before this reset won't count anymore.
       first-active-index = revoke.index
 
       chain = if chain.len() <= first-active-index {
@@ -660,23 +720,55 @@
         data-chain.slice(first-active-index)
       }
 
+      for (field-name, fold-data) in fold-chain {
+        let first-fold-index = fold-data.data.position(d => d.index >= first-active-index)
+        if first-fold-index == none {
+          // All folded values removed.
+          // The caller will be responsible for joining the default value with the
+          // final arguments (without any chain values inbetween) if that's necessary.
+          _ = fold-chain.remove(field-name)
+        } else {
+          fold-chain.at(field-name).values = fold-data.values.slice(first-fold-index)
+          fold-chain.at(field-name).data = fold-data.data.slice(first-fold-index)
+        }
+      }
+
       // No need to analyze any further revoke rules since everything was reset.
       break
     }
   }
 
-  let i = first-active-index
-  for data in data-chain {
-    if data != none and data.name in active-revokes and i < active-revokes.at(data.name) {
-      // Nullify changes at this stage
-      chain.at(i) = (:)
+  if active-revokes != (:) {
+    let i = first-active-index
+    for data in data-chain {
+      if data != none and data.name in active-revokes and i < active-revokes.at(data.name) {
+        // Nullify changes at this stage
+        chain.at(i) = (:)
+      }
+
+      i += 1
     }
 
-    i += 1
+    for (field-name, fold-data) in fold-chain {
+      fold-chain.at(field-name).data = fold-data.data.filter(d => d.name == none or d.name not in active-revokes or d.index >= active-revokes.at(d.name))
+      fold-chain.at(field-name).values = fold-chain.at(field-name).data.map(d => d.value)
+    }
   }
 
-  // Use map to filter and transform at the same time before joining.
-  chain.sum(default: (:))
+  let final-values = chain.sum(default: (:))
+
+  // Apply folds separately (their fields' values are meaningless in the above dict)
+  for (field-name, fold-data) in fold-chain {
+    final-values.at(field-name) = if fold-data.values == () {
+      fold-data.default
+    } else if fold-data.folder == auto {
+      fold-data.default + fold-data.values.sum()
+    } else {
+      fold-data.values.fold(fold-data.default, fold-data.folder)
+    }
+  }
+
+  final-values
 }
 
 // Create an element with the given name and constructor.
@@ -699,7 +791,7 @@
 
   let default-fields = fields.all-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
 
-  let set-rule = set_.with((parse-args: parse-args, eid: eid, default-data: default-data))
+  let set-rule = set_.with((parse-args: parse-args, eid: eid, default-data: default-data, fields: fields))
 
   let get-rule(receiver) = context {
     let previous-bib-title = bibliography.title
@@ -724,10 +816,10 @@
       }
 
       let element-data = global-data.elements.at(eid, default: default-data)
-      let folded-chain = if element-data.revoke-chain == default-data.revoke-chain {
+      let folded-chain = if element-data.revoke-chain == default-data.revoke-chain and element-data.fold-chain == default-data.fold-chain {
         element-data.chain.sum(default: (:))
       } else {
-        fold-chain(element-data.chain, element-data.data-chain, element-data.revoke-chain)
+        fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
       }
 
       set bibliography(title: previous-bib-title)
@@ -842,6 +934,7 @@
     default-global-data: default-global-data,
     default-fields: default-fields,
     all-fields: all-fields,
+    fields: fields,
   )
 
   let modified-constructor(..args, __elemmic_data: none) = {
@@ -880,17 +973,30 @@
 
         let element-data = global-data.elements.at(eid, default: default-data)
 
-        let folded-chain = if element-data.revoke-chain == default-data.revoke-chain {
+        let constructed-fields = if element-data.revoke-chain == default-data.revoke-chain and element-data.fold-chain == default-data.fold-chain {
           // Sum the chain of dictionaries so that the latest value specified for
           // each property wins.
-          element-data.chain.sum(default: (:))
+          default-fields + element-data.chain.sum(default: (:)) + args
         } else {
-          // We can't just sum, we need to filter first.
+          // We can't just sum, we need to filter and fold first.
           // Memoize this operation through a function.
-          fold-chain(element-data.chain, element-data.data-chain, element-data.revoke-chain)
-        }
+          let outer-chain = default-fields + fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
+          let finalized-chain = outer-chain + args
 
-        let constructed-fields = default-fields + folded-chain + args
+          // Fold with received arguments
+          for (field-name, fold-data) in element-data.fold-chain {
+            if field-name in args {
+              let outer = outer-chain.at(field-name, default: fold-data.default)
+              if fold-data.folder == auto {
+                finalized-chain.at(field-name) = outer + args.at(field-name)
+              } else {
+                finalized-chain.at(field-name) = (fold-data.folder)(outer, args.at(field-name))
+              }
+            }
+          }
+
+          finalized-chain
+        }
 
         let body = display(constructed-fields)
         let tag = [#metadata((kind: "instance", body: body, fields: constructed-fields, func: modified-constructor, eid: eid, fields-known: true, valid: true))]

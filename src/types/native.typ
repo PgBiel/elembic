@@ -52,6 +52,18 @@
   data: stroke,
   cast: stroke,
   default: (stroke(),),
+  // Allow specifying e.g. 4pt in one set rule, red in the other => 4pt + red in the end
+  fold: (outer, inner) => {
+    // Can't sum stroke with stroke, so can't optimize with 'fold: auto' :(
+    stroke(
+      paint: if inner.paint == auto { outer.paint } else { inner.paint },
+      thickness: if inner.thickness == auto { outer.thickness } else { inner.thickness },
+      cap: if inner.cap == auto { outer.cap } else { inner.cap },
+      join: if inner.join == auto { outer.join } else { inner.join },
+      dash: if inner.dash == auto { outer.dash } else { inner.dash },
+      miter-limit: if inner.miter-limit == auto { outer.miter-limit } else { inner.miter-limit },
+    )
+  },
 )
 #let relative_ = (
   ..native-base,

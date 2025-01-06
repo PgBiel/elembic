@@ -16,6 +16,8 @@
 // - cast: none (input is unchanged) or function to convert input to output
 // - error: none or function x => string to customize check failure message
 // - default: empty array (no default) or singleton array => default value for this type
+// - fold: none, auto (equivalent to (a, b) => a + b but more efficient) or function (prev, next) => folded value:
+//         determines how to combine two consecutive values of this type in the stylechain
 #let base-typeinfo = (
   (type-key): "base",
   version: type-version,
@@ -27,6 +29,7 @@
   cast: none,
   error: none,
   default: (),
+  fold: none,
 )
 
 // Top type
