@@ -30,6 +30,7 @@
 // Basic elements for our document tree analysis
 #let sequence = [].func()
 #let space = [ ].func()
+#let styled = { set text(red); [a] }.func()
 
 // Potential modes for configuration of styles.
 // This defines how we declare a set rule (or similar)
@@ -355,6 +356,32 @@
 // Prepare rule(s), returning a function `doc => ...` to be used in
 // `#show: rule`. The rule is attached as metadata to the returned
 // content so it can still be accessed outside of a show rule.
+//
+// This is where we execute our main machinery to apply rules to the
+// document, that is, modifications to the global data of custom
+// elements. This is done in different ways depending on the mode:
+//
+// - In normal mode, we create 'get rule' points by annotating
+// context blocks with `#lbl-get`. Any modifications to the global
+// data are stored as 'set bibliography(title: metadata with data)'
+// scoped to context blocks with that label. Therefore, we can access
+// the data by retrieving bibliography.title inside those blocks.
+//
+// The downside is that the entire document is wrapped in context,
+// so 'max show rule depth exceeded' errors can occur.
+//
+// - In light mode, it is similar, but we reset bibliography.title
+// to an arbitrary value instead of having two context blocks to
+// ensure it remains unchanged.
+//
+// - In stateful mode, we don't wrap anything around the document,
+// removing the 'max show rule depth exceeded' problem. Rather, we
+// place a state update at the start and another at the end of the
+// scope, respectively updating the global data and then undoing
+// the update, ensuring it only applies to that scope.
+//
+// The downside is that this uses 'state()', which can lead to
+// relayouts (slower) and even diverging layout.
 #let prepare-rule(rule) = {
   let rules = if rule.kind == "apply" { rule.rules } else { (rule,) }
 
@@ -400,44 +427,149 @@
     // [#parbreak()#space()#space()#parbreak()[... rule substructure with metadata... ]]
     // which makes the need for stripping multiple kinds of whitespace explicit.
     // We limit at 100 to prevent unbounded search.
-    if [#doc].func() == sequence and doc.children.len() >= 2 and doc.children.len() < 100 {
-      let last = doc.children.last()
-      let doc-prefix = none
+    //
+    // We also need to consider the case with
+    // #show: rule1
+    // #set native(field: value)
+    // #show: rule2
+    //
+    // in which case the document structure (from rule1's view) is
+    //
+    // styled(child: [... rule2 ...], styles: ..)
+    //
+    // Worse, there could be parbreaks around the set rule:
+    //
+    // #show: rule1
+    //
+    // #set native(field: value)
+    //
+    // #show: rule2
+    //
+    // leading to
+    //
+    // sequence(parbreak(), styled(child: sequence(parbreak(), [ ... rule2 ... ]), styles: ..))
+    //
+    // so we need to perform a document tree walk to lift rule2 and transform this into
+    //
+    // #show: apply(
+    //   rule1
+    //   rule2
+    // )
+    //
+    // #set native(field: value)
+    // ...
+    //
+    // Tree walk is performed as follows:
+    //
+    // this rule
+    //   \
+    //   sequence
+    //      \ space  parbreak ... sequence
+    //                              \ space parbreak ... styled (styles = S)
+    //                                                       \ sequence
+    //                                                             \ space parbreak ... inner rule!
+    //                                                                                    \ (rule.doc, rule.rule)
+    // We store each tree level in 'wrappers' so we can reconstruct this document structure without 'rule!'.
+    // In the case above, that would correspond to
+    // wrappers = ((sequence, (space, parbreak, ...)), (sequence, space, parbreak, ...), (styled, S), (sequence, space, parbreak, ...))
+    // and 'rule' would become 'potential-doc'.
+    //
+    // We would then wrap 'rule.doc' in reverse order, adding after the sequence prefix or
+    // making it the styled child, producing
+    //
+    // this rule + inner rule
+    //   \
+    //   (sequence,     apply(this rule, inner rule))
+    //      \ space  parbreak ... sequence
+    //                              \ space parbreak ... styled (styles = S)
+    //                                                       \ sequence
+    //                                                             \ space parbreak ... rule.doc
+    //
+    // as desired. That is, we move the inner rule up into this rule in order to only consume 1 from
+    // the rule limit, which is valid since the rule won't apply to spaces, parbreaks, and styled.
+    // Of course, there could be show rules towards a different structure, but we assume that the user
+    // understands that show rules on spacing may cause unexpected behavior.
+    let potential-doc = [#doc]
+    let wrappers = ()
+    let max-depth = 100
+    // Acceptable content types for set rule lifting.
+    // If we find something that isn't here, e.g. a block, we stop searching as we can't lift any further rules.
+    let whitespace-funcs = (parbreak, space, linebreak)
+    // Content types we can peek at.
+    let recursing-funcs = (styled, sequence)
+    let loop-prefix = none
+    let loop-children = ()
+    let loop-last = none
 
-      // Found a sequence of parbreaks / linebreaks / spaces followed by a rule
-      // application, so override 'last' (the expected rule tag metadata) with
-      // that of the previously applied rule so we can merge below
-      // TODO: styled(.child, .styles)
-      // TODO: recursive search (might be too expensive...)
-      if (
-        last.func() == sequence
-        and last.children.len() == 2
-        and last.children.last().at("label", default: none) == lbl-rule-tag
-        and doc.children.slice(0, -1).all(t => t.func() in (parbreak, space, linebreak) or t == []) // TODO: colbreak
+    while true {
+      // Child is #{
+      //    set something(abc: def)
+      //    show something: else
+      //    [some stuff]
+      // }
+      if potential-doc.func() == styled {
+        max-depth -= 1
+        wrappers.push((styled, potential-doc.styles))
+
+        // 'Recursively' check the child
+        potential-doc = [#potential-doc.child]
+      } else if (
+        // Child is #[
+        //   (parbreak)
+        //   (space)
+        //   #[ sequence, rule or more styles ]
+        // ]
+        potential-doc.func() == sequence
+        and { loop-children = potential-doc.children; loop-children.len() >= 2 }  // something like 'if let Sequence(children) = potential-doc { ... }'
+        and { loop-last = loop-children.last(); loop-last.func() in recursing-funcs }
+        and max-depth - loop-children.len() > 0
+        and { loop-prefix = loop-children.slice(0, -1); loop-prefix.all(t => t.func() in whitespace-funcs or t == []) }
       ) {
-        last = last.children.last()
-        doc-prefix = doc.children.slice(0, -1).join()
+        max-depth -= loop-children.len()
+        wrappers.push((sequence, loop-prefix))
+
+        // 'Recursively' check the last child
+        potential-doc = loop-last
+      } else {
+        break
+      }
+    }
+
+    // Merge with the closest rule application below us, "moving" it upwards
+    // and reducing the rule count by 1
+    if (
+      potential-doc.func() == sequence
+      and potential-doc.children.len() == 2
+      and potential-doc.children.last().at("label", default: none) == lbl-rule-tag
+    ) {
+      let last = potential-doc.children.last()
+      let inner-rule = last.value.rule
+
+      // Process all rules below us together with this one
+      if inner-rule.kind == "apply" {
+        // Note: apply should automatically distribute modes across its children,
+        // so it's okay if we don't inherit its own mode here.
+        rules += inner-rule.rules
+      } else {
+        rules.push(inner-rule)
       }
 
-      if last.at("label", default: none) == lbl-rule-tag {
-        let inner-rule = last.value.rule
+      // Convert this into an 'apply' rule
+      rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: auto)
 
-        // Process all rules below us together with this one
-        if inner-rule.kind == "apply" {
-          // Note: apply should automatically distribute modes across its children,
-          // so it's okay if we don't inherit its own mode here.
-          rules += inner-rule.rules
+      // Place what's inside, don't place the context block that would run our code again
+      doc = last.value.doc
+
+      // Reconstruct the document structure.
+      // Must be in reverse (innermost wrapper to outermost).
+      for (func, data) in wrappers.rev() {
+        if func == styled {
+          doc = styled(doc, data)
         } else {
-          rules.push(inner-rule)
+          // (sequence, prefix)
+          // Re-add stripped whitespace and stuff
+          doc = data.join() + doc
         }
-
-        // Convert this into an 'apply' rule
-        rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: auto)
-
-        // Place what's inside, don't place the context block that would run our code again
-        // Also join with any stripped parbreaks above, if there were any
-        // (Hope this isn't causing a copy somehow)
-        doc = doc-prefix + last.value.doc
       }
     }
 
