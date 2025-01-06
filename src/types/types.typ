@@ -137,10 +137,17 @@
     }
   }
 
-  if "cast" in overrides and "output" not in overrides or "output" in overrides and "any" in overrides.output {
+  if "any" not in typeinfo.output and "cast" in overrides and "output" not in overrides or "output" in overrides and "any" in overrides.output {
     // - Collapse "any" + other types into just "any";
-    // - If there is a cast and output is unknown, then set it to any
+    // - If there is a cast and output is unknown, then set it to any for safety (should we error?)
     overrides.output = ("any",)
+  }
+
+  if typeinfo.cast != none and "output" in overrides and "cast" not in overrides and "any" not in overrides.output and typeinfo.output.any(o => o not in overrides.output) {
+    // If output was changed to a list which isn't 'any' and isn't a superset of the previous output,
+    // then remove casting as it is no longer safe (might produce something that is invalid)
+    // (TODO: Should we error?)
+    overrides.cast = none
   }
 
   if "input" in overrides and "any" in overrides.input {
@@ -148,8 +155,11 @@
     overrides.input = ("any",)
   }
 
-  if ("check" in overrides or "output" in overrides) and "default" not in overrides {
-    // Not sure if default would fit those criteria anymore
+  if "default" not in overrides and typeinfo.default != () and ("check" in overrides or "output" in overrides and "any" not in overrides.output and typeinfo.output.any(o => o not in overrides.output)) {
+    // Not sure if default would fit those criteria anymore:
+    // 1. By overriding the check, it's possible that a type such as positive int (check: int > 0) would no longer
+    // have an acceptable default when changing its check to, say, negative int (check: int < 0).
+    // 2. By overriding the output and removing previous output types, it's possible the default no longer has a valid type (it must be a valid output).
     overrides.default = ()
   }
 
@@ -163,6 +173,16 @@
     //    b. and adding new output, it's possible the fold receives parameters of an unexpected type.
     overrides.fold = none
   }
+
+  let new-default = overrides.at("default", default: typeinfo.default)
+  let new-output = overrides.at("output", default: typeinfo.output)
+  assert(
+    new-default == ()
+    or "any" in new-output
+    or base.typeof(new-default.first()) in new-output,
+
+    message: "types.wrap: new default (currently " + repr(if new-default == () { none } else { new-default.first() }) + ") must have a type within possible 'output' types of the new type (currently " + if new-output == () { "empty" } else { new-output.map(t => if type(t) == dictionary { t.name } else { str(t) }).join(", ", last: " or ") } + "), since it is itself an output\n  hint: you can either change the default, or update possible output types with 'output: (new, list)' to indicate which native or custom types your wrapped type might end up as after casts (if there are casts)."
+  )
 
   base.wrap(typeinfo, overrides)
 }
