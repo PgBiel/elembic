@@ -114,6 +114,7 @@
   cast: (check: a => a == none or type(a) == function, error: "none or function receiving old function and returning a function checked input => output"),
   error: (check: a => a == none or type(a) == function, error: "none or function receiving old function and returning a function checked input => error string"),
   default: (check: d => d == () or type(d) == array and d.len() == 1, error: "empty array for no default, singleton array for one default, or function old default => new default"),
+  fold: (check: f => f == none or f == auto or type(f) == function, error: "none for no folding, auto to fold with sum (same as (a, b) => a + b), or function receiving old fold and returning either none or auto, or a new function (outer, inner) => combined value"),
 )
 
 // Wrap a type, altering its properties while keeping (or replacing) its input types and checks.
@@ -150,6 +151,17 @@
   if ("check" in overrides or "output" in overrides) and "default" not in overrides {
     // Not sure if default would fit those criteria anymore
     overrides.default = ()
+  }
+
+  if ("check" in overrides or "output" in overrides) and "fold" not in overrides {
+    // Folding might not be valid anymore:
+    // 1. By overriding the check, it's possible a fold that, say, adds two numbers, would no longer be valid
+    // if, for example, the new check ensures each number is smaller than 59 (you might add up to that).
+    //    In addition, the fold might now receive parameters that would fail the new check while being cast.
+    // 2. By overriding the output:
+    //    a. and removing old output, it's possible the fold produces invalid output.
+    //    b. and adding new output, it's possible the fold receives parameters of an unexpected type.
+    overrides.fold = none
   }
 
   base.wrap(typeinfo, overrides)

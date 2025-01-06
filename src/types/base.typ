@@ -197,12 +197,43 @@
     }
   }
 
-  let default = if typeinfos.first().at(type-key) == "native" and typeinfos.first().data in (type(none), type(auto)) {
+  let is-option = typeinfos.first().at(type-key) == "native" and typeinfos.first().data == type(none)
+  let is-smart = typeinfos.first().at(type-key) == "native" and typeinfos.first().data == type(auto)
+
+  let default = if is-option or is-smart {
     // Default of 'none' for option(...)
     // Default of 'auto' for smart(...)
     typeinfos.first().default
   } else {
     ()
+  }
+
+  // Match built-in behavior by only folding option(T) if T can fold and the inner isn't explicitly none/auto
+  let fold = if typeinfos.len() == 2 and typeinfos.at(1).fold != none {
+    let other-typeinfo = typeinfos.at(1)
+    let other-fold = other-typeinfo.fold
+    if is-option {
+      if other-fold == auto {
+        (outer, inner) => if inner != none and outer != none { outer + inner } else { inner }
+      } else {
+        (outer, inner) => if inner != none and outer != none { other-fold(outer, inner) } else { inner }
+      }
+    } else if is-smart {
+      if other-fold == auto {
+        (outer, inner) => if inner != auto and outer != auto { outer + inner } else { inner }
+      } else {
+        (outer, inner) => if inner != auto and outer != auto { other-fold(outer, inner) } else { inner }
+      }
+    } else {
+      none
+    }
+  } else {
+    // TODO: We could consider folding an arbitrary union iff the outputs are all disjoint,
+    // so we can easily distinguish the typeinfo for an output based on the type.
+    // Otherwise, can't do much if e.g. an int could be typeinfo A (say, positive integer)
+    // or typeinfo B (say, negative integer) because checks apply to inputs and not outputs
+    // (unless, of course, there is no casting).
+    none
   }
 
   (
@@ -215,7 +246,8 @@
     check: check,
     cast: cast,
     error: error,
-    default: default
+    default: default,
+    fold: fold,
   )
 }
 

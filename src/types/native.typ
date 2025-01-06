@@ -83,7 +83,47 @@
   data: function,
 )
 
-// Simples types (no casting)
+// Folding types (also includes stroke above)
+#let array_ = (
+  ..native-base,
+  name: str(array),
+  input: (array,),
+  output: (array,),
+  data: array,
+  default: ((),),
+
+  // Array fields are added together by default.
+  fold: auto,
+)
+
+#let alignment_ = (
+  ..native-base,
+  name: str(alignment),
+  input: (alignment,),
+  output: (alignment,),
+  data: alignment,
+  fold: (outer, inner) => if inner.axis() == none or outer.axis() == inner.axis() {
+    // If axis A == axis B, we override. For example, left -> right. (No sum)
+    // Same if both are none (2D alignments), in which case inner fully overrides as well (left + top -> center + bottom).
+    // In addition, if inner axis is none (it is a 2D alignment), it overrides in both ways (left -> right + top).
+    inner
+  } else if outer.axis() == none {
+    // Here, we know that inner isn't 2D, so either outer is 2D or both have different axes.
+    // If outer is 2D and inner is 1D, inner replaces its axis in outer, but the other axis is kept.
+    if inner.axis() == "horizontal" {
+      inner + outer.y
+    } else {
+      outer.x + inner
+    }
+  } else {
+    // Both are 1D and have distinct axes, so we just sum.
+    // left and top => left + top
+    // bottom and right => right + bottom
+    inner + outer
+  }
+)
+
+// Simple types (no casting)
 
 #let str_ = (
   ..native-base,
@@ -100,14 +140,6 @@
   output: (bool,),
   data: bool,
   default: (false,)
-)
-#let array_ = (
-  ..native-base,
-  name: str(array),
-  input: (array,),
-  output: (array,),
-  data: array,
-  default: ((),),
 )
 #let dict_ = (
   ..native-base,
@@ -284,6 +316,8 @@
     type_
   } else if t == angle {
     angle_
+  } else if t == alignment {
+    alignment_
   } else if t == ratio {
     ratio_
   } else if t == length {
