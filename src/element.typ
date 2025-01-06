@@ -31,6 +31,8 @@
 #let sequence = [].func()
 #let space = [ ].func()
 #let styled = { set text(red); [a] }.func()
+#let state-update-func = state(".").update(1).func()
+#let counter-update-func = counter(".").update(1).func()
 
 // Potential modes for configuration of styles.
 // This defines how we declare a set rule (or similar)
@@ -493,8 +495,11 @@
     let wrappers = ()
     let max-depth = 100
     // Acceptable content types for set rule lifting.
+    // These are content types that are leaves and we usually don't expect them to
+    // be replaced in a show rule by an actual custom element.
     // If we find something that isn't here, e.g. a block, we stop searching as we can't lift any further rules.
-    let whitespace-funcs = (parbreak, space, linebreak)
+    // We also exclude anything with a label since that indicates there might be a show rule application incoming.
+    let whitespace-funcs = (parbreak, space, linebreak, h, v, state-update-func, counter-update-func)
     // Content types we can peek at.
     let recursing-funcs = (styled, sequence)
     let loop-prefix = none
@@ -523,7 +528,10 @@
         and { loop-children = potential-doc.children; loop-children.len() >= 2 }  // something like 'if let Sequence(children) = potential-doc { ... }'
         and { loop-last = loop-children.last(); loop-last.func() in recursing-funcs }
         and max-depth - loop-children.len() > 0
-        and { loop-prefix = loop-children.slice(0, -1); loop-prefix.all(t => t.func() in whitespace-funcs or t == []) }
+        and {
+          loop-prefix = loop-children.slice(0, -1);
+          loop-prefix.all(t => (t.func() in whitespace-funcs or t == []) and t.at("label", default: none) == none)
+        }
       ) {
         max-depth -= loop-children.len()
         wrappers.push((sequence, loop-prefix))
