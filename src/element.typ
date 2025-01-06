@@ -27,7 +27,9 @@
 #let element-data-key = "__custom_element_data"
 #let global-data-key = "__custom_element_global_data"
 
+// Basic elements for our document tree analysis
 #let sequence = [].func()
+#let space = [ ].func()
 
 // Potential modes for configuration of styles.
 // This defines how we declare a set rule (or similar)
@@ -365,10 +367,58 @@
     // probability of accidental nested function limit errors.
     //
     // Note that all rules replace the document with
-    // [#context { ... doc .. }#metadata(doc: doc, rule: rule)]
+    // [#context { ... doc .. }[#metadata(doc: doc, rule: rule)#lbl-rule-tag]]
     // We get the second child to extract the original rule information.
-    if [#doc].func() == sequence and doc.children.len() == 2 {
+    // If 'doc' has the form above, this means the user wrote
+    // #show: rule1
+    // #show: rule2
+    // which we want to unify. So we check children len == 2 and unify if the tag is there.
+    //
+    // But we also want to accept some parbreaks before, i.e.
+    //
+    // #show: rule1
+    //
+    // #show: rule2
+    //
+    // This generates a doc of the form
+    // [#parbreak()[#context { ... doc .. }[#metadata(doc: doc, rule: rule)#lbl-rule-tag]]]
+    // So we also check for children len >= 2 (although == 2 is enough in that case) and
+    // strip any leading parbreaks / spaces / linebreaks, moving them to the new 'doc' (they
+    // now receive the rules, which is technically incorrect, but in practice is only a problem
+    // if you have a show rule on parbreak or space or something, which is odd).
+    //
+    // Note also that
+    // #show: rule1
+    //
+    // // hello world!
+    // // hello world!
+    // // hello world!
+    //
+    // #show: rule2
+    //
+    // produces
+    // [#parbreak()#space()#space()#parbreak()[... rule substructure with metadata... ]]
+    // which makes the need for stripping multiple kinds of whitespace explicit.
+    // We limit at 100 to prevent unbounded search.
+    if [#doc].func() == sequence and doc.children.len() >= 2 and doc.children.len() < 100 {
       let last = doc.children.last()
+      let doc-prefix = none
+
+      // Found a sequence of parbreaks / linebreaks / spaces followed by a rule
+      // application, so override 'last' (the expected rule tag metadata) with
+      // that of the previously applied rule so we can merge below
+      // TODO: styled(.child, .styles)
+      // TODO: recursive search (might be too expensive...)
+      if (
+        last.func() == sequence
+        and last.children.len() == 2
+        and last.children.last().at("label", default: none) == lbl-rule-tag
+        and doc.children.slice(0, -1).all(t => t.func() in (parbreak, space, linebreak) or t == []) // TODO: colbreak
+      ) {
+        last = last.children.last()
+        doc-prefix = doc.children.slice(0, -1).join()
+      }
+
       if last.at("label", default: none) == lbl-rule-tag {
         let inner-rule = last.value.rule
 
@@ -385,7 +435,9 @@
         rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: auto)
 
         // Place what's inside, don't place the context block that would run our code again
-        doc = last.value.doc
+        // Also join with any stripped parbreaks above, if there were any
+        // (Hope this isn't causing a copy somehow)
+        doc = doc-prefix + last.value.doc
       }
     }
 
