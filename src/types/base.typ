@@ -208,7 +208,7 @@
     ()
   }
 
-  // Match built-in behavior by only folding option(T) if T can fold and the inner isn't explicitly none/auto
+  // Match built-in behavior by only folding option(T) or smart(T) if T can fold and the inner isn't explicitly none/auto
   let fold = if typeinfos.len() == 2 and typeinfos.at(1).fold != none {
     let other-typeinfo = typeinfos.at(1)
     let other-fold = other-typeinfo.fold

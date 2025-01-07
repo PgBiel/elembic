@@ -1140,6 +1140,8 @@
     default-fields: default-fields,
     all-fields: all-fields,
     fields: fields,
+    typecheck: typecheck,
+    allow-unknown-fields: allow-unknown-fields,
   )
 
   let modified-constructor(..args, __elemmic_data: none) = {
