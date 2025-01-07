@@ -993,12 +993,21 @@
   prefix: "",
   typecheck: true,
   allow-unknown-fields: false,
+  synthesize: none,
+  contextual: auto,
 ) = {
   assert(type(display) == function, message: "element: please specify a show rule in 'display:' to determine how your element is displayed.")
   assert(type(fields) == array, message: "element: please specify an array of fields, creating each field with the 'field' function.")
   assert(type(prefix) == str, message: "element: the prefix must be a string.")
   assert(type(typecheck) == bool, message: "element: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
   assert(type(allow-unknown-fields) == bool, message: "element: the 'allow-unknown-fields' argument must be a boolean.")
+  assert(synthesize == none or type(synthesize) == function, message: "element: 'synthesize' must be 'none' or a function element fields => element fields.")
+  assert(contextual == auto or type(contextual) == bool, message: "element: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
+
+  if contextual == auto {
+    // Provide separate context for synthesize.
+    contextual = synthesize != none
+  }
 
   let eid = base.unique-id(prefix, name)
   let lbl-show = label(lbl-show-head + eid)
@@ -1227,9 +1236,39 @@
           finalized-chain
         }
 
-        let body = display(constructed-fields)
-        let tag = [#metadata((kind: "instance", body: body, fields: constructed-fields, func: modified-constructor, eid: eid, fields-known: true, valid: true))]
-        let shown = [#[#body#tag]#lbl-show]
+        let shown = {
+          let tag = (kind: "instance", body: none, fields: constructed-fields, func: modified-constructor, eid: eid, fields-known: true, valid: true)
+
+          if contextual {
+            // Use context for synthesize as well
+            context {
+              let synthesized-fields = if synthesize == none {
+                constructed-fields
+              } else {
+                synthesize(constructed-fields)
+              }
+              let body = display(synthesized-fields)
+
+              let tag = tag
+              tag.fields = synthesized-fields
+              tag.body = body
+
+              [#[#body#metadata(tag)]#lbl-show]
+            }
+          } else {
+            let synthesized-fields = if synthesize == none {
+              constructed-fields
+            } else {
+              synthesize(constructed-fields)
+            }
+            let body = display(synthesized-fields)
+
+            tag.fields = synthesized-fields
+            tag.body = body
+
+            [#[#body#metadata(tag)]#lbl-show]
+          }
+        }
 
         if data-changed {
           show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
