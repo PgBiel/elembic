@@ -84,11 +84,15 @@
   )
 }
 
-#let parse-fields(fields) = {
+#let parse-fields(fields, allow-unknown-fields: false) = {
+  assert(type(allow-unknown-fields) == bool, message: "element.fields: 'allow-unknown-fields' must be a boolean, not " + str(type(allow-unknown-fields)))
+
   let required-pos-fields = ()
   let optional-pos-fields = ()
   let required-named-fields = ()
+  let optional-named-fields = ()
   let all-fields = (:)
+  let named-fields = (:)
   let foldable-fields = (:)
 
   for field in fields {
@@ -102,12 +106,18 @@
       } else {
         required-pos-fields.push(field)
       }
-    } else if not field.named {
+    } else if field.named {
+      optional-named-fields.push(field)
+    } else {
       optional-pos-fields.push(field)
     }
 
     if field.fold != none {
       foldable-fields.insert(field.name, field.fold)
+    }
+
+    if field.named {
+      named-fields.insert(field.name, field)
     }
 
     all-fields.insert(field.name, field)
@@ -119,8 +129,11 @@
     required-pos-fields: required-pos-fields,
     optional-pos-fields: optional-pos-fields,
     required-named-fields: required-named-fields,
+    optional-named-fields: optional-named-fields,
     foldable-fields: foldable-fields,
-    all-fields: all-fields
+    named-fields: named-fields,
+    all-fields: all-fields,
+    allow-unknown-fields: allow-unknown-fields,
   )
 }
 
@@ -130,16 +143,24 @@
 //
 // You can customize 'field-term' to customize what the word "field" is
 // in error messages. It should be either a string or a two-element
-// array with (singular, plural).
+// array with (singular, plural). Setting 'typecheck: false' also fully
+// disables typechecking.
 //
 // Parse arguments into a dictionary of fields and their casted values.
 // By default, include required arguments and error if they are missing.
 // Setting 'include-required' to false will error if they are present
 // instead.
-#let generate-arg-parser(fields: none, general-error-prefix: "", field-error-prefix: _ => "", field-term: "field") = {
+#let generate-arg-parser(
+  fields: none,
+  general-error-prefix: "",
+  field-error-prefix: _ => "",
+  field-term: "field",
+  typecheck: true,
+) = {
   assert(type(fields) == dictionary and fields-key in fields, message: "generate-arg-parser: please use 'parse-fields' to generate the fields input.")
   assert(type(general-error-prefix) == str, message: "generate-arg-parser: 'general-error-prefix' must be a string")
   assert(type(field-error-prefix) == function, message: "generate-arg-parser: 'field-error-prefix' must be a function receiving field name and returning string")
+  assert(type(typecheck) == bool, message: "generate-arg-parser: 'typecheck' must be a boolean, not " + str(type(typecheck)))
 
   let (field-singular, field-plural) = if type(field-term) == str {
     (field-term, field-term + "s")
@@ -149,12 +170,82 @@
     assert(false, message: "generate-arg-parser: 'field-term' must either be a string (plural with 's') or a two-element array of strings (singular, plural).")
   }
 
-  let (required-pos-fields, optional-pos-fields, required-named-fields, all-fields) = fields
+  let (required-pos-fields, optional-pos-fields, required-named-fields, optional-named-fields, all-fields, named-fields, allow-unknown-fields) = fields
   let required-pos-fields-amount = required-pos-fields.len()
   let optional-pos-fields-amount = optional-pos-fields.len()
   let total-pos-fields-amount = required-pos-fields-amount + optional-pos-fields-amount
   let all-pos-fields = required-pos-fields + optional-pos-fields
 
+  let has-required-fields = required-pos-fields-amount + required-named-fields.len() != 0
+
+  // If we allow unknown named fields, we still need to check whether a
+  // positional field was accidentally specified as a named field.
+  let is-unknown-named-field = if allow-unknown-fields {
+    f => f in all-fields and f not in named-fields
+  } else {
+    f => f not in named-fields
+  }
+
+  // Disable typechecking anyway if all fields are 'any'
+  //
+  // Have a separate typecheck option so type information can be kept in fields
+  // even if typechecking is undesirable
+  let typecheck = typecheck and all-fields.values().any(f => f.typeinfo.at(type-key) != "any")
+
+  // Parse args (no typechecking)
+  let parse-args-no-typechecking(args, include-required: true) = {
+    let pos = args.pos()
+
+    if include-required and pos.len() < required-pos-fields-amount {
+      // Plural
+      let term = if required-pos-fields-amount - pos.len() == 1 { field-singular } else { field-plural }
+
+      assert(false, message: general-error-prefix + "missing positional " + term + " " + fields.required-pos-fields.slice(pos.len()).map(f => "'" + f.name + "'").join(", "))
+    }
+
+    if pos.len() > if include-required { total-pos-fields-amount } else { optional-pos-fields-amount } {
+      let expected-arg-amount = if include-required { total-pos-fields-amount } else { optional-pos-fields-amount }
+      let excluding-required-hint = if include-required { "" } else { "\n  hint: only optional fields are accepted here" }
+      assert(false, message: general-error-prefix + "too many positional arguments, expected " + str(expected-arg-amount) + excluding-required-hint)
+    }
+
+    let named-args = args.named()
+    if include-required {
+      if required-named-fields.any(f => f.name not in named-args) {
+        let missing-fields = required-named-fields.filter(f => f.name not in named-args)
+        let term = if missing-fields.len() == 1 { field-singular } else { field-plural }
+
+        assert(false, message: general-error-prefix + "missing required named " + term + " " + missing-fields.map(f => "'" + f.name + "'").join(", "))
+      }
+    } else if required-named-fields.any(f => f.name in named-args) {
+      let field = required-named-fields.find(f => f.name in named-args)
+      assert(false, message: field-error-prefix(field.name) + "this " + field-singular + " cannot be specified here\n  hint: only optional " + field-plural + " are accepted here")
+    }
+
+    // Here we simultaneously check for unknown fields and for positional fields
+    // being wrongly specified as named. If there are no positional fields and
+    // unknown fields are allowed, there is no point in doing this check.
+    if (not allow-unknown-fields or total-pos-fields-amount > 0) and named-args.keys().any(is-unknown-named-field) {
+      let field-name = named-args.keys().find(is-unknown-named-field)
+      let field = all-fields.at(field-name, default: none)
+      let expected-pos-hint = if field == none or field.named { "" } else { "\n  hint: this " + field-singular + " must be specified positionally" }
+
+      assert(false, message: general-error-prefix + "unknown named " + field-singular + " '" + field-name + "'" + expected-pos-hint)
+    }
+
+    let pos-fields = if include-required { all-pos-fields } else { optional-pos-fields }
+    let i = 0
+    for value in pos {
+      let pos-field = pos-fields.at(i)
+      named-args.insert(pos-field.name, value)
+
+      i += 1
+    }
+
+    named-args
+  }
+
+  // Parse args (with typechecking)
   let parse-args(args, include-required: true) = {
     let result = (:)
 
@@ -218,6 +309,11 @@
 
     for (field-name, value) in named-args {
       let field = all-fields.at(field-name, default: none)
+      if allow-unknown-fields and field == none {
+        result.insert(field-name, value)
+        continue
+      }
+
       if field == none or not field.named {
         let expected-pos-hint = if field == none or field.named { "" } else { "\n  hint: this " + field-singular + " must be specified positionally" }
 
@@ -279,5 +375,9 @@
     result
   }
 
-  parse-args
+  if typecheck {
+    parse-args
+  } else {
+    parse-args-no-typechecking
+  }
 }

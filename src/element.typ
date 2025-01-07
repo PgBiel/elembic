@@ -964,21 +964,32 @@
 }
 
 // Create an element with the given name and constructor.
-#let element(name, display: none, fields: none, prefix: "") = {
+#let element(
+  name,
+  display: none,
+  fields: none,
+  prefix: "",
+  typecheck: true,
+  allow-unknown-fields: false,
+) = {
   assert(type(display) == function, message: "element: please specify a show rule in 'display:' to determine how your element is displayed.")
-  assert(type(fields) == array, message: "element: please specify an array of fields.")
+  assert(type(fields) == array, message: "element: please specify an array of fields, creating each field with the 'field' function.")
+  assert(type(prefix) == str, message: "element: the prefix must be a string.")
+  assert(type(typecheck) == bool, message: "element: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
+  assert(type(allow-unknown-fields) == bool, message: "element: the 'allow-unknown-fields' argument must be a boolean.")
 
   let eid = prefix + "_" + name
   let lbl-show = label(lbl-show-head + eid)
   let lbl-where(n) = label("__custom_element_where_" + str(n) + eid)
 
-  let fields = field-internals.parse-fields(fields)
+  let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
   let (all-fields,) = fields
 
   let parse-args = field-internals.generate-arg-parser(
     fields: fields,
     general-error-prefix: "element '" + name + "': ",
-    field-error-prefix: field-name => "field '" + field-name + "' of element '" + name + "': "
+    field-error-prefix: field-name => "field '" + field-name + "' of element '" + name + "': ",
+    typecheck: typecheck
   )
 
   let default-fields = fields.all-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
@@ -1031,10 +1042,12 @@
     assert(args.pos().len() == 0, message: "unexpected positional arguments\nhint: here, specify positional fields as named arguments, using their names")
     let args = args.named()
 
-    let unknown-fields = args.keys().filter(k => k not in all-fields)
-    if unknown-fields != () {
-      let s = if unknown-fields.len() == 1 { "" } else { "s" }
-      assert(false, message: "unknown field" + s + " " + unknown-fields.map(f => "'" + f + "'").join(", "))
+    if not allow-unknown-fields {
+      let unknown-fields = args.keys().filter(k => k not in all-fields)
+      if unknown-fields != () {
+        let s = if unknown-fields.len() == 1 { "" } else { "s" }
+        assert(false, message: "unknown field" + s + " " + unknown-fields.map(f => "'" + f + "'").join(", "))
+      }
     }
 
     context {
