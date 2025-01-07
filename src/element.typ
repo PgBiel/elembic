@@ -49,7 +49,7 @@
   // that, in this mode, you can have up to 32 non-consecutive set rules.
   normal: 0,
 
-  // Light mode: similar to normal mode, but we don't try to preserve the value of bibliography.title
+  // leaky mode: similar to normal mode, but we don't try to preserve the value of bibliography.title
   // after applying our changes to the document. This doubles the limit to up to 64 non-consecutive
   // set rules since we no longer have an extra step to retrieve the old value, but, as a downside,
   // we lose the original value of bibliography.title. While, in a future change, we might be able to
@@ -61,7 +61,7 @@
   // this mode if they hit a "max show rule depth exceeded" error.
   //
   // Note that this mode can only be enabled on individual set rules.
-  light: 1,
+  leaky: 1,
 
   // Stateful mode: this is entirely different from the other modes and should only be set by the end
   // user (not by packages). This stores the style chain - and, thus, set rules' updated fields - in
@@ -372,7 +372,7 @@
 // The downside is that the entire document is wrapped in context,
 // so 'max show rule depth exceeded' errors can occur.
 //
-// - In light mode, it is similar, but we reset bibliography.title
+// - In leaky mode, it is similar, but we reset bibliography.title
 // to an arbitrary value instead of having two context blocks to
 // ensure it remains unchanged.
 //
@@ -589,11 +589,11 @@
       rules.fold(auto, (mode, rule) => {
         if (
           rule.mode == style-modes.stateful
-          or mode != style-modes.stateful and rule.mode == style-modes.light
+          or mode != style-modes.stateful and rule.mode == style-modes.leaky
           or mode != auto
         ) {
           // Prioritize more explicit modes:
-          // stateful > light > normal
+          // stateful > leaky > normal
           rule.mode
         } else {
           mode
@@ -668,14 +668,14 @@
 
     let body = if mode == auto {
       // Allow user to pick the mode through show rules.
-      // Note: picking light mode has no effect on show rule depth, so we don't allow choosing
+      // Note: picking leaky mode has no effect on show rule depth, so we don't allow choosing
       // it globally. For it to make a difference, it must be explicitly chosen.
       [#metadata((body: stateful))#lbl-stateful-mode]
       [#metadata((body: normal))#lbl-normal-mode]
       [#normal#lbl-auto-mode]
     } else if mode == style-modes.normal {
       normal
-    } else if mode == style-modes.light {
+    } else if mode == style-modes.leaky {
       [#context {
         let global-data = if (
           type(bibliography.title) == content
@@ -750,7 +750,7 @@
 // )
 #let apply(mode: auto, ..args) = {
   assert(args.named() == (:), message: "element.apply: unexpected named arguments")
-  assert(mode == auto or mode == style-modes.normal or mode == style-modes.light or mode == style-modes.stateful, message: "element.apply: invalid mode, must be auto or e.style-modes.(normal / light / stateful)")
+  assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "element.apply: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
 
   let rules = args.pos().map(
     rule => {
@@ -819,7 +819,7 @@
 // #show: revoke("name")
 #let revoke(name, mode: auto) = {
   assert(type(name) == str, message: "element.revoke: rule name must be a string, not " + str(type(name)))
-  assert(mode == auto or mode == style-modes.normal or mode == style-modes.light or mode == style-modes.stateful, message: "element.revoke: invalid mode, must be auto or e.style-modes.(normal / light / stateful)")
+  assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "element.revoke: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
 
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "revoke", revoking: name, name: none, mode: mode))
 }
@@ -833,7 +833,7 @@
 // (Rules no longer apply here)
 #let reset(..args, mode: auto) = {
   assert(args.named() == (:), message: "element.reset: unexpected named arguments")
-  assert(mode == auto or mode == style-modes.normal or mode == style-modes.light or mode == style-modes.stateful, message: "element.reset: invalid mode, must be auto or e.style-modes.(normal / light / stateful)")
+  assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "element.reset: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
 
   let filters = args.pos().map(it => if type(it) == function { data(it) } else { x })
   assert(filters.all(x => type(x) == dictionary and "eid" in x), message: "element.reset: invalid arguments, please provide a function or element data with at least an 'eid'")
@@ -848,6 +848,14 @@
 #let stateful-apply = apply.with(mode: style-modes.stateful)
 #let stateful-revoke = revoke.with(mode: style-modes.stateful)
 #let stateful-reset = reset.with(mode: style-modes.stateful)
+
+// Leaky variants
+#let leaky-set(..args) = {
+  apply(set_(..args), mode: style-modes.leaky)
+}
+#let leaky-apply = apply.with(mode: style-modes.leaky)
+#let leaky-revoke = revoke.with(mode: style-modes.leaky)
+#let leaky-reset = reset.with(mode: style-modes.leaky)
 
 // Apply revokes and other modifications to the chain and generate a final set
 // of fields.

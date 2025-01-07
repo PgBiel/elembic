@@ -2,4 +2,5 @@
 #import "fields.typ": field
 #import "pub/fields.typ"
 #import "pub/types.typ"
+#import "pub/leaky.typ"
 #import "pub/stateful.typ"
