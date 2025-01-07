@@ -264,6 +264,69 @@
       assert(false, message: general-error-prefix + "too many positional arguments, expected " + str(expected-arg-amount) + excluding-required-hint)
     }
 
+    let named-args = args.named()
+
+    if include-required and required-named-fields.any(f => f.name not in named-args) {
+      let missing-fields = required-named-fields.filter(f => f.name not in named-args)
+      let term = if missing-fields.len() == 1 { field-singular } else { field-plural }
+
+      assert(false, message: general-error-prefix + "missing required named " + term + " " + missing-fields.map(f => "'" + f.name + "'").join(", "))
+    }
+
+    for (field-name, value) in named-args {
+      if allow-unknown-fields and field-name not in all-fields {
+        continue
+      }
+
+      let field = all-fields.at(field-name)
+
+      if field == none or not field.named {
+        let expected-pos-hint = if field == none or field.named { "" } else { "\n  hint: this " + field-singular + " must be specified positionally" }
+
+        assert(false, message: general-error-prefix + "unknown named " + field-singular + " '" + field-name + "'" + expected-pos-hint)
+      }
+
+      if not include-required and field.required {
+        assert(false, message: field-error-prefix(field-name) + "this " + field-singular + " cannot be specified here\n  hint: only optional " + field-plural + " are accepted here")
+      }
+
+      let typeinfo = field.typeinfo
+      let kind = typeinfo.at(type-key)
+
+      // Inlined version of 'types.cast'
+      if kind != "any" {
+        let value-type = type(value)
+        if value-type == dictionary and custom-type-key in value {
+          value-type = value.at(custom-type-key)
+        }
+        if kind == "literal" and typeinfo.cast == none {
+          if value != typeinfo.data.value or value-type not in typeinfo.input or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value)) {
+            assert(false, message: field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
+          }
+        } else {
+          let value-type = type(value)
+          if value-type == dictionary and custom-type-key in value {
+            value-type = value.at(custom-type-key)
+          }
+          if (
+            value-type not in typeinfo.input
+            or typeinfo.check != none and not (typeinfo.check)(value)
+          ) {
+            assert(false, message: field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
+          }
+
+          // Only then do we need to replace the given value
+          if typeinfo.cast != none {
+            named-args.insert(field-name, if kind == "native" and typeinfo.data == content {
+              [#value]
+            } else {
+              (typeinfo.cast)(value)
+            })
+          }
+        }
+      }
+    }
+
     let pos-fields = if include-required { all-pos-fields } else { optional-pos-fields }
     let i = 0
     for value in pos {
@@ -300,79 +363,12 @@
         }
       }
 
-      result.insert(pos-field.name, casted)
+      named-args.insert(pos-field.name, casted)
 
       i += 1
     }
 
-    let named-args = args.named()
-
-    for (field-name, value) in named-args {
-      let field = all-fields.at(field-name, default: none)
-      if allow-unknown-fields and field == none {
-        result.insert(field-name, value)
-        continue
-      }
-
-      if field == none or not field.named {
-        let expected-pos-hint = if field == none or field.named { "" } else { "\n  hint: this " + field-singular + " must be specified positionally" }
-
-        assert(false, message: general-error-prefix + "unknown named " + field-singular + " '" + field-name + "'" + expected-pos-hint)
-      }
-
-      if not include-required and field.required {
-        assert(false, message: field-error-prefix(field-name) + "this " + field-singular + " cannot be specified here\n  hint: only optional " + field-plural + " are accepted here")
-      }
-
-      let typeinfo = field.typeinfo
-      let kind = typeinfo.at(type-key)
-      let casted = value
-
-      // Inlined version of 'types.cast'
-      if kind != "any" {
-        let value-type = type(value)
-        if value-type == dictionary and custom-type-key in value {
-          value-type = value.at(custom-type-key)
-        }
-        if kind == "literal" and typeinfo.cast == none {
-          if value != typeinfo.data.value or value-type not in typeinfo.input or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value)) {
-            assert(false, message: field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
-          }
-        } else {
-          let value-type = type(value)
-          if value-type == dictionary and custom-type-key in value {
-            value-type = value.at(custom-type-key)
-          }
-          if (
-            value-type not in typeinfo.input
-            or typeinfo.check != none and not (typeinfo.check)(value)
-          ) {
-            assert(false, message: field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
-          }
-
-          if typeinfo.cast != none {
-            casted = if kind == "native" and typeinfo.data == content {
-              [#value]
-            } else {
-              (typeinfo.cast)(value)
-            }
-          }
-        }
-      }
-
-      result.insert(field-name, casted)
-    }
-
-    if include-required {
-      if required-named-fields.any(f => f.name not in named-args) {
-        let missing-fields = required-named-fields.filter(f => f.name not in named-args)
-        let term = if missing-fields.len() == 1 { field-singular } else { field-plural }
-
-        assert(false, message: general-error-prefix + "missing required named " + term + " " + missing-fields.map(f => "'" + f.name + "'").join(", "))
-      }
-    }
-
-    result
+    named-args
   }
 
   if typecheck {
