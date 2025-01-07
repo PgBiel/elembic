@@ -101,6 +101,11 @@
   // enabled stateful mode with `#shoW: e.stateful.toggle(true)`.
   stateful: false,
 
+  // First known bib title.
+  // This is used by leaky mode to attempt to preserve the correct bibliography.title
+  // property. Evidently, it's not perfect, and leaky mode should be avoided.
+  first-bib-title: (),
+
   // Per-element data (set rules and other style chain info).
   elements: (:)
 )
@@ -210,14 +215,14 @@
   context {
     let previous-bib-title = bibliography.title
     [#context {
-      let global-data = if (
+      let (global-data, was-first-bib-title) = if (
         type(bibliography.title) == content
         and bibliography.title.func() == metadata
         and bibliography.title.at("label", default: none) == lbl-get
       ) {
-        bibliography.title.value
+        (bibliography.title.value, false)
       } else {
-        default-global-data
+        ((..default-global-data, first-bib-title: previous-bib-title), true)
       }
 
       set bibliography(title: previous-bib-title)
@@ -233,6 +238,11 @@
             default-global-data
           } else {
             chain.last()
+          }
+
+          // Store the first known bib title in the state as well
+          if global-data.first-bib-title == () and was-first-bib-title {
+            global-data.first-bib-title = previous-bib-title
           }
         }
 
@@ -640,7 +650,7 @@
         ) {
           bibliography.title.value
         } else {
-          default-global-data
+          (..default-global-data, first-bib-title: previous-bib-title)
         }
 
         if global-data.stateful {
@@ -657,7 +667,6 @@
           }
         }
 
-        // TODO: Read from and update to state in global stateful mode.
         global-data.elements = apply-rules(global-data.elements, rules)
 
         set bibliography(title: previous-bib-title)
@@ -684,7 +693,14 @@
         ) {
           bibliography.title.value
         } else {
-          default-global-data
+          // Bibliography title wasn't overridden, so we can use it
+          (..default-global-data, first-bib-title: bibliography.title)
+        }
+
+        let first-bib-title = global-data.first-bib-title
+        if first-bib-title == () {
+          // Nobody has seen the bibliography title (bug?)
+          first-bib-title = auto
         }
 
         if global-data.stateful {
@@ -695,17 +711,15 @@
           } else {
             // Use state instead!
             return {
-              set bibliography(title: auto)
+              set bibliography(title: first-bib-title)
               stateful
             }
           }
         }
 
-        // TODO: Read from and update to state in global stateful mode.
         global-data.elements = apply-rules(global-data.elements, rules)
 
-        // TODO: keep track of first seen bibliography title
-        set bibliography(title: auto)
+        set bibliography(title: first-bib-title)
         show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
         doc
       }#lbl-get]
@@ -1014,7 +1028,7 @@
       ) {
         bibliography.title.value
       } else {
-        default-global-data
+        (..default-global-data, first-bib-title: previous-bib-title)
       }
 
       if global-data.stateful {
@@ -1068,7 +1082,7 @@
         ) {
           bibliography.title.value
         } else {
-          default-global-data
+          (..default-global-data, first-bib-title: previous-bib-title)
         }
 
         if global-data.stateful {
@@ -1167,14 +1181,14 @@
       [#context {
         set bibliography(title: previous-bib-title)
 
-        let global-data = if (
+        let (global-data, data-changed) = if (
           type(bibliography.title) == content
           and bibliography.title.func() == metadata
           and bibliography.title.at("label", default: none) == lbl-get
         ) {
-          bibliography.title.value
+          (bibliography.title.value, false)
         } else {
-          default-global-data
+          ((..default-global-data, first-bib-title: previous-bib-title), true)
         }
 
         if global-data.stateful {
@@ -1215,8 +1229,14 @@
 
         let body = display(constructed-fields)
         let tag = [#metadata((kind: "instance", body: body, fields: constructed-fields, func: modified-constructor, eid: eid, fields-known: true, valid: true))]
+        let shown = [#[#body#tag]#lbl-show]
 
-        [#[#body#tag]#lbl-show]
+        if data-changed {
+          show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
+          shown
+        } else {
+          shown
+        }
       }#lbl-get]
     }
 
