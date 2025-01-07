@@ -176,11 +176,11 @@
 // 'fields' will be 'body.fields()' and 'func' will be 'body.func()'
 #let data(it) = {
   if type(it) == function {
-    (kind: "element", ..it(__elemmic_data: special-data-values.get-data))
+    (data-kind: "element", ..it(__elemmic_data: special-data-values.get-data))
   } else if type(it) == dictionary and element-key in it {
-    (kind: "element", ..it)
+    (data-kind: "element", ..it)
   } else if type(it) != content {
-    (kind: "unknown", body: it, fields: (:), func: none, eid: none, fields-known: false, valid: false)
+    (data-kind: "unknown", body: it, fields: (:), func: none, eid: none, fields-known: false, valid: false)
   } else if (
     it.has("label")
     and str(it.label).starts-with(lbl-show-head)
@@ -193,10 +193,10 @@
       // Decomposing a recently-constructed (but not placed) element
       last.value
     } else {
-      (kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
+      (data-kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
     }
   } else {
-    (kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
+    (data-kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
   }
 }
 
