@@ -62,6 +62,21 @@
   value-type
 }
 
+// Make a unique element or type ID based on prefix and name.
+//
+// Uses a separator and a "bit stuffing" technique to ensure
+// the separator sequence doesn't appear in either of the
+// prefix or the name in the final ID.
+#let id-separator = "_---_"
+#let trimmed-separator = id-separator.trim("_", at: end)
+#let unique-id(prefix, name) = {
+  prefix.replace(
+    trimmed-separator, trimmed-separator + "-"
+  ) + id-separator + name.replace(
+    trimmed-separator, trimmed-separator + "-"
+  )
+}
+
 // Literal type
 // Only accepted if value is equal to the literal.
 // Input and output are equal to the value.

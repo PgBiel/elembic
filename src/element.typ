@@ -1,4 +1,4 @@
-#import "types/base.typ": custom-type-key, type-key
+#import "types/base.typ" as base: custom-type-key, type-key
 #import "types/types.typ"
 #import "fields.typ" as field-internals
 
@@ -978,7 +978,7 @@
   assert(type(typecheck) == bool, message: "element: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
   assert(type(allow-unknown-fields) == bool, message: "element: the 'allow-unknown-fields' argument must be a boolean.")
 
-  let eid = prefix + "_" + name
+  let eid = base.unique-id(prefix, name)
   let lbl-show = label(lbl-show-head + eid)
   let lbl-where(n) = label("__custom_element_where_" + str(n) + eid)
 
@@ -1128,7 +1128,7 @@
 
   let elem-data = (
     (element-key): true,
-    version: 1,
+    version: element-version,
     eid: eid,
     set_: set-rule,
     get: get-rule,
