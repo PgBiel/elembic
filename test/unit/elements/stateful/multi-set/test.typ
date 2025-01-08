@@ -16,7 +16,8 @@
     field("number", int, default: 5),
     field("data", str, default: "data"),
     field("run", function, default: panic),
-  )
+  ),
+  prefix: ""
 )
 
 #let wobble = e.element.declare(
@@ -28,7 +29,8 @@
     field("color", color, default: red),
     field("inner", content, default: [Hello!]),
     field("run", function, default: panic),
-  )
+  ),
+  prefix: ""
 )
 
 #let assert-fields(num, data, clr, inner) = {

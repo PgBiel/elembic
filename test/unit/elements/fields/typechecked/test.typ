@@ -60,7 +60,8 @@
   display: it => {
     rect(fill: it.color)[#it]
   },
-  fields: all-fields
+  fields: all-fields,
+  prefix: ""
 )
 
 #let udoor = e.element.declare(
@@ -69,6 +70,7 @@
     rect(fill: it.color)[#it]
   },
   fields: all-fields,
+  prefix: "",
   allow-unknown-fields: true
 )
 

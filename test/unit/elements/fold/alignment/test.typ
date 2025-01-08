@@ -12,7 +12,8 @@
     field("run", function, required: true),
     field("align", alignment, default: left),
     field("align2", alignment, default: top),
-  )
+  ),
+  prefix: ""
 )
 
 #let assert-fields(align, align2) = it => {

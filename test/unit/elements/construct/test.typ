@@ -12,7 +12,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
-  )
+  ),
+  prefix: ""
 )
 
 #let dock = e.element.declare(
@@ -33,7 +34,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
-  )
+  ),
+  prefix: ""
 )
 
 #wock(color: yellow)

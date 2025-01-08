@@ -20,7 +20,8 @@
   synthesize: it => {
     it.resolved-value = count.get().first()
     it
-  }
+  },
+  prefix: ""
 )
 
 #show e.selector(wock): it => {

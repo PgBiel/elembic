@@ -12,7 +12,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
-  )
+  ),
+  prefix: ""
 )
 
 #e.get(

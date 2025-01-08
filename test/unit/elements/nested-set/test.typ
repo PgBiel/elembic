@@ -12,7 +12,8 @@
     field("color", color, default: red),
     field("inner", content, default: [Hello!]),
     field("run", function, default: panic),
-  )
+  ),
+  prefix: ""
 )
 
 #wock(run: it => assert.eq(it.color, red))

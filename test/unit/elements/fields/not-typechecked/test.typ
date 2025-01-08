@@ -40,7 +40,8 @@
     rect(fill: it.color)[#it]
   },
   typecheck: false,
-  fields: all-fields
+  fields: all-fields,
+  prefix: ""
 )
 
 #let udoor = e.element.declare(
@@ -50,6 +51,7 @@
   },
   typecheck: false,
   fields: all-fields,
+  prefix: "",
   allow-unknown-fields: true
 )
 

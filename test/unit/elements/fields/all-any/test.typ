@@ -19,13 +19,15 @@
 #let door = e.element.declare(
   "door",
   display: it => {},
-  fields: all-fields
+  fields: all-fields,
+  prefix: ""
 )
 
 #let udoor = e.element.declare(
   "udoor",
   display: it => {},
   fields: all-fields,
+  prefix: "",
   allow-unknown-fields: true
 )
 

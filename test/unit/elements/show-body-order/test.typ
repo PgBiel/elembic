@@ -11,7 +11,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [])
-  )
+  ),
+  prefix: ""
 )
 
 // By placing the body, previous show rules have no effect (circle is gone)...

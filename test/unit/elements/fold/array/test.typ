@@ -12,7 +12,8 @@
     field("run", function, required: true),
     field("arr", array),
     field("typed-arr", types.array(int)),
-  )
+  ),
+  prefix: ""
 )
 
 #let assert-fields(arr, typed-arr) = it => {

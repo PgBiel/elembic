@@ -15,7 +15,8 @@
   fields: (
     field("color", color, default: red),
     field("size", length, default: 10pt)
-  )
+  ),
+  prefix: ""
 )
 
 #(e.data(wock).where)(color: blue, blue-wock => (e.data(wock).where)(size: 20pt, wide-wock => [

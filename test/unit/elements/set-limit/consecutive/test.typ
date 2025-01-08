@@ -9,7 +9,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [])
-  )
+  ),
+  prefix: ""
 )
 
 #show: e.set_(wock, color: red)

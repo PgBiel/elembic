@@ -13,7 +13,8 @@
     field("border", stroke, default: red + 5pt),
     // No default
     field("second-border", stroke),
-  )
+  ),
+  prefix: ""
 )
 
 #let dock = e.element.declare(
@@ -24,7 +25,8 @@
   fields: (
     field("required-stroke", stroke, required: true),
     field("run", function, required: true),
-  )
+  ),
+  prefix: ""
 )
 
 // Native rectangle for comparison

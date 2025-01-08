@@ -1049,7 +1049,7 @@
   name,
   display: none,
   fields: none,
-  prefix: "",
+  prefix: none,
   typecheck: true,
   allow-unknown-fields: false,
   construct: none,

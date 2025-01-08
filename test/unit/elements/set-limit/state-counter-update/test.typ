@@ -9,7 +9,8 @@
   fields: (
     field("color", color, default: blue),
     field("inner", content, default: [])
-  )
+  ),
+  prefix: ""
 )
 
 #let count = counter("abc")

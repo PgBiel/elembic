@@ -14,7 +14,8 @@
     field("smart", types.smart(stroke)),
     field("option-sum", types.option(array)),
     field("smart-sum", types.smart(array)),
-  )
+  ),
+  prefix: ""
 )
 
 #let assert-fields(option, smart) = it => {

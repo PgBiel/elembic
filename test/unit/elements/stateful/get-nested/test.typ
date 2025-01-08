@@ -14,7 +14,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
-  )
+  ),
+  prefix: ""
 )
 
 #show: e.stateful.set_(wock, color: blue)

@@ -11,7 +11,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [])
-  )
+  ),
+  prefix: ""
 )
 
 #let w = wock(inner: [Updated])

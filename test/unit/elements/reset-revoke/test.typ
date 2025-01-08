@@ -14,7 +14,8 @@
     field("color", color, default: red),
     field("size", int, default: 100),
     field("border", types.exact(stroke), default: black + 1pt)
-  )
+  ),
+  prefix: ""
 )
 
 #show: e.set_(wock, color: yellow)

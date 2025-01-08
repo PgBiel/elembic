@@ -10,7 +10,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [])
-  )
+  ),
+  prefix: ""
 )
 
 #[
