@@ -17,9 +17,9 @@
   )
 )
 
-#(wock-e.get)(
-  v => {
-    assert.eq(v.color, red)
-    assert.eq(v.inner, [Hello!])
+#e.get(
+  get => {
+    assert.eq(get(wock).color, red)
+    assert.eq(get(wock).inner, [Hello!])
   }
 )

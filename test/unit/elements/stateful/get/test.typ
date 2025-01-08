@@ -19,9 +19,9 @@
 
 #show: e.stateful.set_(wock, color: blue)
 
-#(wock-e.get)(
-  v => {
-    assert.eq(v.color, blue)
-    assert.eq(v.inner, [Hello!])
+#e.get(
+  get => {
+    assert.eq(get(wock).color, blue)
+    assert.eq(get(wock).inner, [Hello!])
   }
 )

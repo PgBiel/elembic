@@ -985,6 +985,62 @@
   final-values
 }
 
+// Retrieves the final chain data for an element, after applying all set rules so far.
+#let get-styles(element, elements: (:)) = {
+  if type(element) == function {
+    element = data(element)
+  }
+  let (eid, default-fields) = if type(element) == dictionary and "eid" in element and "default-fields" in element {
+    (element.eid, element.default-fields)
+  } else {
+    assert(false, message: "element.get: expected element (function / data dictionary), received " + str(type(element)))
+  }
+
+  let element-data = elements.at(eid, default: default-data)
+  let folded-chain = if element-data.revoke-chain == default-data.revoke-chain and element-data.fold-chain == default-data.fold-chain {
+    element-data.chain.sum(default: (:))
+  } else {
+    fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
+  }
+
+  // No need to do extra folding like in constructor:
+  // if a foldable field hasn't been specified, it is either equal to
+  // its default, or it is a required field which has no default and
+  // thus it is not returned here since it can't be set.
+  default-fields + folded-chain
+}
+
+// Reads the current values of element fields after applying set rules.
+//
+// The callback receives a 'get' function which can be used to read the
+// values for a given element.
+#let prepare-get(receiver) = context {
+  let previous-bib-title = bibliography.title
+  [#context {
+    let global-data = if (
+      type(bibliography.title) == content
+      and bibliography.title.func() == metadata
+      and bibliography.title.at("label", default: none) == lbl-get
+    ) {
+      bibliography.title.value
+    } else {
+      (..default-global-data, first-bib-title: previous-bib-title)
+    }
+
+    if global-data.stateful {
+      let chain = style-state.get()
+      global-data = if chain == () {
+        default-global-data
+      } else {
+        chain.last()
+      }
+    }
+
+    set bibliography(title: previous-bib-title)
+    receiver(get-styles.with(elements: global-data.elements))
+  }#lbl-get]
+}
+
 // Create an element with the given name and constructor.
 #let element(
   name,
@@ -1029,41 +1085,7 @@
 
   let set-rule = set_.with((parse-args: parse-args, eid: eid, default-data: default-data, fields: fields))
 
-  let get-rule(receiver) = context {
-    let previous-bib-title = bibliography.title
-    [#context {
-      let global-data = if (
-        type(bibliography.title) == content
-        and bibliography.title.func() == metadata
-        and bibliography.title.at("label", default: none) == lbl-get
-      ) {
-        bibliography.title.value
-      } else {
-        (..default-global-data, first-bib-title: previous-bib-title)
-      }
-
-      if global-data.stateful {
-        let chain = style-state.get()
-        global-data = if chain == () {
-          default-global-data
-        } else {
-          chain.last()
-        }
-      }
-
-      let element-data = global-data.elements.at(eid, default: default-data)
-      let folded-chain = if element-data.revoke-chain == default-data.revoke-chain and element-data.fold-chain == default-data.fold-chain {
-        element-data.chain.sum(default: (:))
-      } else {
-        fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
-      }
-
-      set bibliography(title: previous-bib-title)
-      receiver(
-        default-fields + folded-chain
-      )
-    }#lbl-get]
-  }
+  let get-rule(receiver) = prepare-get(g => receiver(g((eid: eid, default-fields: default-fields))))
 
   // Prepare a 'element.where(..args)' selector which
   // can be used in "show sel: set". This works by applying
