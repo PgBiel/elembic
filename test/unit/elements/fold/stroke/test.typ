@@ -3,7 +3,7 @@
 
 #import "/src/lib.typ" as e: field
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     (it.run)(it)
@@ -16,7 +16,7 @@
   )
 )
 
-#let (dock, dock-e) = e.element.declare(
+#let dock = e.element.declare(
   "dock",
   display: it => {
     (it.run)(it)
@@ -41,10 +41,10 @@
   assert.eq(it.border, red + 5pt)
   assert.eq(it.second-border, stroke())
 })
-#(wock-e.get)(
-  v => {
-    assert.eq(v.border, red + 5pt)
-    assert.eq(v.second-border, stroke())
+#e.get(
+  get => {
+    assert.eq(get(wock).border, red + 5pt)
+    assert.eq(get(wock).second-border, stroke())
   }
 )
 
@@ -55,10 +55,10 @@
   assert.eq(it.border, blue + 4pt)
   assert.eq(it.second-border, stroke())
 })
-#(wock-e.get)(
-  v => {
-    assert.eq(v.border, blue + 4pt)
-    assert.eq(v.second-border, stroke())
+#e.get(
+  get => {
+    assert.eq(get(wock).border, blue + 4pt)
+    assert.eq(get(wock).second-border, stroke())
   }
 )
 
@@ -74,10 +74,10 @@
   assert.eq(it.border, expected-border)
   assert.eq(it.second-border, 5pt + gradient.linear(red, blue))
 })
-#(wock-e.get)(
-  v => {
-    assert.eq(v.border, expected-border)
-    assert.eq(v.second-border, 5pt + gradient.linear(red, blue))
+#e.get(
+  get => {
+    assert.eq(get(wock).border, expected-border)
+    assert.eq(get(wock).second-border, 5pt + gradient.linear(red, blue))
   }
 )
 
@@ -88,10 +88,10 @@
   assert.eq(it.border, expected-border)
   assert.eq(it.second-border, 5pt + gradient.linear(red, blue))
 })
-#(wock-e.get)(
-  v => {
-    assert.eq(v.border, expected-border)
-    assert.eq(v.second-border, 5pt + gradient.linear(red, blue))
+#e.get(
+  get => {
+    assert.eq(get(wock).border, expected-border)
+    assert.eq(get(wock).second-border, 5pt + gradient.linear(red, blue))
   }
 )
 
@@ -100,10 +100,10 @@
   assert.eq(it.border, expected-border)
   assert.eq(it.second-border, stroke(5pt))
 })
-#(wock-e.get)(
-  v => {
-    assert.eq(v.border, expected-border)
-    assert.eq(v.second-border, stroke(5pt))
+#e.get(
+  get => {
+    assert.eq(get(wock).border, expected-border)
+    assert.eq(get(wock).second-border, stroke(5pt))
   }
 )
 
@@ -116,10 +116,10 @@
   assert.eq(it.border, stroke(red + 10pt))
   assert.eq(it.second-border, stroke())
 })
-#(wock-e.get)(
-  v => {
-    assert.eq(v.border, stroke(red + 10pt))
-    assert.eq(v.second-border, stroke())
+#e.get(
+  get => {
+    assert.eq(get(wock).border, stroke(red + 10pt))
+    assert.eq(get(wock).second-border, stroke())
   }
 )
 

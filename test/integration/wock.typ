@@ -1,6 +1,6 @@
 #import "/src/lib.typ" as e: field, types
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     text(it.color)[#it.inner]
@@ -8,7 +8,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
-  )
+  ),
+  prefix: ""
 )
 
 #e.data([])
@@ -19,28 +20,28 @@
 #assert.eq(e.data(w).fields, (color: blue))
 
 #[
-  #show: e.set_(wock-e, color: blue)
+  #show: e.set_(wock, color: blue)
 
   #wock()
 
-  #(wock-e.get)(v => assert.eq(v.color, blue))
-  #(wock-e.get)(v => assert.eq(v.inner, [Hello!]))
+  #e.get(get => assert.eq(get(wock).color, blue))
+  #e.get(get => assert.eq(get(wock).inner, [Hello!]))
 
   #[
-    #show: e.set_(wock-e, inner: [Buh bye!])
+    #show: e.set_(wock, inner: [Buh bye!])
 
-    #(wock-e.get)(v => assert.eq(v.at("inner"), [Buh bye!]))
-    #(wock-e.get)(v => v)
+    #e.get(get => assert.eq(get(wock).at("inner"), [Buh bye!]))
+    #e.get(get => get(wock))
 
     #wock()
   ]
 
   #[
-    #show: e.set_(wock-e, color: green)
-    #(wock-e.get)(v => assert.eq(v.at("color"), green))
+    #show: e.set_(wock, color: green)
+    #e.get(get => assert.eq(get(wock).at("color"), green))
   ]
 
-  #(wock-e.get)(v => assert.eq(v.at("color"), blue))
+  #e.get(get => assert.eq(get(wock).at("color"), blue))
   #wock()
 
   #wock(color: yellow)
@@ -57,7 +58,7 @@
 #wock()
 
 #[
-  #show wock-e.sel: it => {
+  #show e.selector(wock): it => {
     let (body, fields) = e.data(it)
     [The color is #fields.at("color")]
 
@@ -74,7 +75,7 @@
 ---
 
 #[
-  #show selector.or(rect, wock-e.sel): it => {
+  #show selector.or(rect, e.selector(wock)): it => {
     let (body, fields, func) = e.data(it)
     if func == rect {
       [*We have a rect:* #body]
@@ -97,7 +98,7 @@
 *Querying:*
 
 #context {
-  let wocks = query(wock-e.sel).map(e.data)
+  let wocks = query(e.selector(wock)).map(e.data)
   let colors = wocks.map(e => e.fields.at("color", default: none)).dedup()
   [There are #wocks.len() wocks. We have #colors.len() colors: #colors]
 }
@@ -111,14 +112,14 @@
 #wock()
 
 #[
-  #show wock-e.sel: set text(2em)
+  #show e.selector(wock): set text(2em)
   Normal
   #wock(inner: [Big])
 ]
 
 #wock()
 
-#(wock-e.where)(color: green, green-wock => (wock-e.where)(color: blue, blue-wock => [
+#(e.data(wock).where)(color: green, green-wock => (wock-e.where)(color: blue, blue-wock => [
   #show green-wock: set text(6pt)
   #show blue-wock: set text(22pt)
 

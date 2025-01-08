@@ -3,7 +3,7 @@
 
 #import "/src/lib.typ" as e: field
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     square(width: 6pt, fill: it.color)[#it.inner]
@@ -17,7 +17,7 @@
 #let w = wock(inner: [Updated])
 
 #show: e.set_(wock, color: blue)
-#show wock-e.sel: it => {
+#show e.selector(wock): it => {
   let (body, fields) = e.data(it)
   assert.eq(fields.color, blue)
   assert.eq(fields.inner, [Updated])

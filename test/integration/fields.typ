@@ -4,7 +4,7 @@
 #(bool-or-pos-float.check = x => if type(x) == bool { true } else { x >= 0.0 })
 #(bool-or-pos-float.error = _ => "float must be positive or zero")
 
-#let (door, door-e) = e.element.declare(
+#let door = e.element.declare(
   "door",
   display: it => {
     rect(fill: it.color)[#it]
@@ -32,7 +32,8 @@
     field("just-content", types.union(color, content),  default: red),
     field("just-true", types.literal(true), default: true),
     field("bool-or-pos-float", bool-or-pos-float, default: 5.0)
-  )
+  ),
+  prefix: ""
 )
 
 #door(red, blue, cool: true, sad: false, family: "family")
@@ -41,9 +42,9 @@
 #show: e.set_(door, yellow)
 
 #door(red, blue, cool: true, sad: true)
-#(door-e.get)(v => assert.eq(v.extracolor, yellow))
+#e.get(get => assert.eq(get(door).extracolor, yellow))
 
-#(door-e.where)(extracolor: yellow, sad: false, yellow-not-sad-doors => {
+#(e.data(door).where)(extracolor: yellow, sad: false, yellow-not-sad-doors => {
   show yellow-not-sad-doors: [yep, yellow door, not sad]
 
   door(red, blue, cool: true, sad: false)
@@ -59,9 +60,9 @@
 #[
   #show: e.set_(door, just-true: true, float-or-content: 50, just-float: 5, just-content: "abc", bool-or-pos-float: false)
 
-  #(door-e.get)(v => {
-    assert(type(v.float-or-content) == float and v.float-or-content == 50.0)
-    assert(type(v.just-float) == float and v.just-float == 5)
-    assert(v.just-content == [abc])
+  #e.get(get => {
+    assert(type(get(door).float-or-content) == float and get(door).float-or-content == 50.0)
+    assert(type(get(door).just-float) == float and get(door).just-float == 5)
+    assert(get(door).just-content == [abc])
   })
 ]

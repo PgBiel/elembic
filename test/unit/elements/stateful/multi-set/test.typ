@@ -7,7 +7,7 @@
 
 #show: e.stateful.enable()
 
-#let (wibble, wibble-e) = e.element.declare(
+#let wibble = e.element.declare(
   "wibble",
   display: it => {
     (it.run)(it)
@@ -19,7 +19,7 @@
   )
 )
 
-#let (wobble, wobble-e) = e.element.declare(
+#let wobble = e.element.declare(
   "wobble",
   display: it => {
     (it.run)(it)

@@ -3,13 +3,13 @@
 
 #import "/src/lib.typ" as e: field, types
 
-#let (door, door-e) = e.element.declare(
+#let door = e.element.declare(
   "door",
   display: it => {},
   fields: ()
 )
 
-#let (udoor, udoor-e) = e.element.declare(
+#let udoor = e.element.declare(
   "udoor",
   display: it => {},
   fields: (),

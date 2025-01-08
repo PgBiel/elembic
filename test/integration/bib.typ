@@ -2,7 +2,7 @@
 
 #set bibliography(title: [Custom Title])
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     context assert.eq(bibliography.title, [Custom Title])
@@ -11,7 +11,8 @@
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
-  )
+  ),
+  prefix: ""
 )
 
 #[
@@ -21,11 +22,11 @@
   #bibliography("bib.yml")
 ]
 
-#(wock-e.get)(v => {
+#e.get(_ => {
   context assert.eq(bibliography.title, [Custom Title])
 })
 
-#(wock-e.where)(color: blue, _ => {
+#(e.data(wock).where)(color: blue, _ => {
   context assert.eq(bibliography.title, [Custom Title])
 })
 

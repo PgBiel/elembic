@@ -7,7 +7,7 @@
 
 #show: e.stateful.enable()
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)
@@ -22,10 +22,10 @@
 #show: e.stateful.set_(wock, color: yellow)
 #show: e.stateful.set_(wock, border: red + 2pt)
 
-#(wock-e.get)(d => assert.eq(d.color, yellow))
-#(wock-e.get)(d => assert.eq(d.border, red + 2pt))
+#e.get(get => assert.eq(get(wock).color, yellow))
+#e.get(get => assert.eq(get(wock).border, red + 2pt))
 
 #show: e.stateful.reset()
 
-#(wock-e.get)(d => assert.eq(d.color, red))
-#(wock-e.get)(d => assert.eq(d.border, black + 1pt))
+#e.get(get => assert.eq(get(wock).color, red))
+#e.get(get => assert.eq(get(wock).border, black + 1pt))

@@ -34,7 +34,7 @@
   field("bool-or-pos-float", bool-or-pos-float, default: 5.0)
 )
 
-#let (door, door-e) = e.element.declare(
+#let door = e.element.declare(
   "door",
   display: it => {
     rect(fill: it.color)[#it]
@@ -43,7 +43,7 @@
   fields: all-fields
 )
 
-#let (udoor, udoor-e) = e.element.declare(
+#let udoor = e.element.declare(
   "udoor",
   display: it => {
     rect(fill: it.color)[#it]
@@ -66,10 +66,10 @@
 #show: e.set_(door, 50, verysad: red)
 
 #door(red, blue, cool: true, sad: true)
-#(door-e.get)(v => assert.eq(v.extracolor, 50))
-#(door-e.get)(v => assert.eq(v.verysad, red))
+#e.get(get => assert.eq(get(door).extracolor, 50))
+#e.get(get => assert.eq(get(door).verysad, red))
 
-#(door-e.where)(extracolor: yellow, sad: false, yellow-not-sad-doors => {
+#(e.data(door).where)(extracolor: yellow, sad: false, yellow-not-sad-doors => {
   show yellow-not-sad-doors: [yep, yellow door, not sad]
 
   door(red, blue, cool: true, sad: false)
@@ -87,17 +87,17 @@
   #show: e.set_(door, just-true: true, float-or-content: 50, just-float: 5, just-content: "abc", bool-or-pos-float: false)
   #show: e.set_(udoor, just-true: true, float-or-content: 50, just-float: 5, just-content: "abc", bool-or-pos-float: false)
 
-  #(door-e.get)(v => {
+  #e.get(get => {
     // No casting without typechecking
-    assert(type(v.float-or-content) == int and v.float-or-content == 50)
-    assert(type(v.just-float) == int and v.just-float == 5)
-    assert(v.just-content == "abc")
+    assert(type(get(door).float-or-content) == int and get(door).float-or-content == 50)
+    assert(type(get(door).just-float) == int and get(door).just-float == 5)
+    assert(get(door).just-content == "abc")
   })
 
-  #(udoor-e.get)(v => {
+  #e.get(get => {
     // No casting without typechecking
-    assert(type(v.float-or-content) == int and v.float-or-content == 50)
-    assert(type(v.just-float) == int and v.just-float == 5)
-    assert(v.just-content == "abc")
+    assert(type(get(udoor).float-or-content) == int and get(udoor).float-or-content == 50)
+    assert(type(get(udoor).just-float) == int and get(udoor).just-float == 5)
+    assert(get(udoor).just-content == "abc")
   })
 ]

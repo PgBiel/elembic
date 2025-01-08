@@ -3,7 +3,7 @@
 
 #import "/src/lib.typ" as e: field, types
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)
@@ -15,7 +15,7 @@
   )
 )
 
-#let (dock, dock-e) = e.element.declare(
+#let dock = e.element.declare(
   "dock",
   display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)
@@ -36,33 +36,33 @@
     e.set_(dock, size: 300)
   ))
 
-  #(wock-e.get)(w => assert.eq(w.color, cool-color))
-  #(dock-e.get)(d => assert.eq(d.color, cool-color))
-  #(wock-e.get)(w => assert.eq(w.border, blue + 2pt))
-  #(dock-e.get)(d => assert.eq(d.size, 300))
+  #e.get(get => assert.eq(get(wock).color, cool-color))
+  #e.get(get => assert.eq(get(dock).color, cool-color))
+  #e.get(get => assert.eq(get(wock).border, blue + 2pt))
+  #e.get(get => assert.eq(get(dock).size, 300))
 
   #show: e.revoke("coolness")
 
   // First color change revoked
-  #(wock-e.get)(w => assert.ne(w.color, cool-color))
-  #(dock-e.get)(d => assert.eq(d.color, cool-color))
-  #(wock-e.get)(w => assert.eq(w.border, blue + 2pt))
-  #(dock-e.get)(d => assert.eq(d.size, 300))
+  #e.get(get => assert.ne(get(wock).color, cool-color))
+  #e.get(get => assert.eq(get(dock).color, cool-color))
+  #e.get(get => assert.eq(get(wock).border, blue + 2pt))
+  #e.get(get => assert.eq(get(dock).size, 300))
 
   #show: e.revoke("datums")
 
   // Other changes also revoked **to both elements**,
   // except the second color change
-  #(wock-e.get)(w => assert.ne(w.color, cool-color))
-  #(dock-e.get)(d => assert.eq(d.color, cool-color))
-  #(wock-e.get)(w => assert.ne(w.border, blue + 2pt))
-  #(dock-e.get)(d => assert.ne(d.size, 300))
+  #e.get(get => assert.ne(get(wock).color, cool-color))
+  #e.get(get => assert.eq(get(dock).color, cool-color))
+  #e.get(get => assert.ne(get(wock).border, blue + 2pt))
+  #e.get(get => assert.ne(get(dock).size, 300))
 
   #show: e.revoke("docks")
 
   // Second color change also revoked now
-  #(wock-e.get)(w => assert.ne(w.color, cool-color))
-  #(dock-e.get)(d => assert.ne(d.color, cool-color))
-  #(wock-e.get)(w => assert.ne(w.border, blue + 2pt))
-  #(dock-e.get)(d => assert.ne(d.size, 300))
+  #e.get(get => assert.ne(get(wock).color, cool-color))
+  #e.get(get => assert.ne(get(dock).color, cool-color))
+  #e.get(get => assert.ne(get(wock).border, blue + 2pt))
+  #e.get(get => assert.ne(get(dock).size, 300))
 ]

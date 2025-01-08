@@ -3,7 +3,7 @@
 
 #import "/src/lib.typ" as e: field
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     assert.eq(it.color, yellow)
@@ -15,7 +15,7 @@
   )
 )
 
-#let (dock, dock-e) = e.element.declare(
+#let dock = e.element.declare(
   "dock",
   construct: constructor => {
     (a: red, b: 10%) => {

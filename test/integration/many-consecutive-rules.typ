@@ -1,6 +1,6 @@
 #import "/src/lib.typ" as e: field, types
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     [#it.body]
@@ -9,17 +9,19 @@
     field("body", content, default: ""),
     field("color", color, default: red),
     field("something", int, default: 10),
-  )
+  ),
+  prefix: ""
 )
 
-#let (dock, dock-e) = e.element.declare(
+#let dock = e.element.declare(
   "dock",
   display: it => {
     [#it.body]
   },
   fields: (
     field("body", content, default: ""),
-  )
+  ),
+  prefix: ""
 )
 
 #show: e.set_(wock, body: "a")
@@ -257,4 +259,4 @@
 #wock()
 
 // Ensure the set rules in 'apply' worked
-#(wock-e.get)(v => { assert.eq(v.color, blue); assert.eq(v.something, 500) })
+#e.get(get => { assert.eq(get(wock).color, blue); assert.eq(get(wock).something, 500) })

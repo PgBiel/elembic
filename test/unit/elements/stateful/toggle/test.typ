@@ -4,7 +4,7 @@
 
 #import "/src/lib.typ" as e: field
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {},
   fields: (
@@ -21,17 +21,17 @@
 
     #show: e.stateful.set_(wock, inner: [Abc])
 
-    #(wock-e.get)(w => assert.eq(w.color, blue))
-    #(wock-e.get)(w => assert.eq(w.inner, [Abc]))
+    #e.get(get => assert.eq(get(wock).color, blue))
+    #e.get(get => assert.eq(get(wock).inner, [Abc]))
   ]
 
-  #(wock-e.get)(w => assert.eq(w.color, blue))
-  #(wock-e.get)(w => assert.ne(w.inner, [Abc]))
+  #e.get(get => assert.eq(get(wock).color, blue))
+  #e.get(get => assert.ne(get(wock).inner, [Abc]))
 
   #show: e.set_(wock, inner: [Is this thing on?])
 
-  #(wock-e.get)(w => assert.eq(w.color, blue))
-  #(wock-e.get)(w => assert.eq(w.inner, [Is this thing on?]))
+  #e.get(get => assert.eq(get(wock).color, blue))
+  #e.get(get => assert.eq(get(wock).inner, [Is this thing on?]))
 ]
 
 #show: e.stateful.enable()
@@ -43,14 +43,14 @@
 
   #show: e.set_(wock, inner: [Def])
 
-  #(wock-e.get)(w => assert.eq(w.color, yellow))
-  #(wock-e.get)(w => assert.eq(w.inner, [Def]))
+  #e.get(get => assert.eq(get(wock).color, yellow))
+  #e.get(get => assert.eq(get(wock).inner, [Def]))
 ]
 
-#(wock-e.get)(w => assert.eq(w.color, yellow))
-#(wock-e.get)(w => assert.ne(w.inner, [Def]))
+#e.get(get => assert.eq(get(wock).color, yellow))
+#e.get(get => assert.ne(get(wock).inner, [Def]))
 
 #show: e.stateful.set_(wock, inner: [Is it still working?])
 
-#(wock-e.get)(w => assert.eq(w.color, yellow))
-#(wock-e.get)(w => assert.eq(w.inner, [Is it still working?]))
+#e.get(get => assert.eq(get(wock).color, yellow))
+#e.get(get => assert.eq(get(wock).inner, [Is it still working?]))

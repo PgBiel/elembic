@@ -5,7 +5,7 @@
 
 #show: e.stateful.enable()
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     square(width: 6pt, fill: it.color)[#it.inner]
@@ -16,7 +16,7 @@
   )
 )
 
-#show wock-e.sel: it => {
+#show e.selector(wock): it => {
   let (body, fields) = e.data(it)
   assert.eq(fields.color, red)
   assert.eq(fields.inner, [Updated])

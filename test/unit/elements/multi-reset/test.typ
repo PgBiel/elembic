@@ -5,7 +5,7 @@
 
 #import "/src/lib.typ" as e: field, types
 
-#let (wibble, wibble-e) = e.element.declare(
+#let wibble = e.element.declare(
   "wibble",
   display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)
@@ -17,7 +17,7 @@
   )
 )
 
-#let (wobble, wobble-e) = e.element.declare(
+#let wobble = e.element.declare(
   "wobble",
   display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)
@@ -32,20 +32,20 @@
 #show: e.set_(wibble, color: yellow)
 #show: e.set_(wobble, border: red + 2pt)
 
-#(wibble-e.get)(d => assert.eq(d.color, yellow))
-#(wobble-e.get)(d => assert.eq(d.border, red + 2pt))
+#e.get(get => assert.eq(get(wibble).color, yellow))
+#e.get(get => assert.eq(get(wobble).border, red + 2pt))
 
 #show: e.named("scary", e.reset())
 
-#(wibble-e.get)(d => assert.eq(d.color, red))
-#(wobble-e.get)(d => assert.eq(d.border, black + 1pt))
+#e.get(get => assert.eq(get(wibble).color, red))
+#e.get(get => assert.eq(get(wobble).border, black + 1pt))
 
 #show: e.revoke("scary")
 
-#(wibble-e.get)(d => assert.eq(d.color, yellow))
-#(wobble-e.get)(d => assert.eq(d.border, red + 2pt))
+#e.get(get => assert.eq(get(wibble).color, yellow))
+#e.get(get => assert.eq(get(wobble).border, red + 2pt))
 
 #show: e.reset(wobble)
 
-#(wibble-e.get)(d => assert.eq(d.color, yellow))
-#(wobble-e.get)(d => assert.eq(d.border, black + 1pt))
+#e.get(get => assert.eq(get(wibble).color, yellow))
+#e.get(get => assert.eq(get(wobble).border, black + 1pt))

@@ -5,7 +5,7 @@
 
 #set bibliography(title: [Custom Title])
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     context assert.eq(bibliography.title, [Custom Title])
@@ -23,16 +23,16 @@
   #hide(bibliography("bib.yml"))
 ]
 
-#show wock-e.sel: it => {
+#show e.selector(wock): it => {
   context assert.eq(bibliography.title, [Custom Title])
   it
 }
 
-#(wock-e.get)(v => {
+#e.get(_ => {
   context assert.eq(bibliography.title, [Custom Title])
 })
 
-#(wock-e.where)(color: blue, _ => {
+#(e.data(wock).where)(color: blue, _ => {
   context assert.eq(bibliography.title, [Custom Title])
 })
 

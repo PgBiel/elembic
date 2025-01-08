@@ -3,7 +3,7 @@
 
 #import "/src/lib.typ" as e: field, types
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)
@@ -25,18 +25,18 @@
     e.set_(wock, size: 300)
   ))
 
-  #(wock-e.get)(d => assert.eq(d.color, cool-color))
-  #(wock-e.get)(d => assert.eq(d.border, blue + 2pt))
-  #(wock-e.get)(d => assert.eq(d.size, 300))
+  #e.get(get => assert.eq(get(wock).color, cool-color))
+  #e.get(get => assert.eq(get(wock).border, blue + 2pt))
+  #e.get(get => assert.eq(get(wock).size, 300))
 
   #wock()
 
   #show: e.named("revoker", e.revoke("coolness"))
 
   // Color change revoked
-  #(wock-e.get)(d => assert.ne(d.color, cool-color))
-  #(wock-e.get)(d => assert.eq(d.border, blue + 2pt))
-  #(wock-e.get)(d => assert.eq(d.size, 300))
+  #e.get(get => assert.ne(get(wock).color, cool-color))
+  #e.get(get => assert.eq(get(wock).border, blue + 2pt))
+  #e.get(get => assert.eq(get(wock).size, 300))
 
   #wock()
 
@@ -44,31 +44,31 @@
     #show: e.revoke("datums")
 
     // Both color change and other changes revoked
-    #(wock-e.get)(d => assert.ne(d.color, cool-color))
-    #(wock-e.get)(d => assert.ne(d.border, blue + 2pt))
-    #(wock-e.get)(d => assert.ne(d.size, 300))
+    #e.get(get => assert.ne(get(wock).color, cool-color))
+    #e.get(get => assert.ne(get(wock).border, blue + 2pt))
+    #e.get(get => assert.ne(get(wock).size, 300))
 
     #wock()
   ]
 
   // 'datums' no longer revoked
-  #(wock-e.get)(d => assert.ne(d.color, cool-color))
-  #(wock-e.get)(d => assert.eq(d.border, blue + 2pt))
-  #(wock-e.get)(d => assert.eq(d.size, 300))
+  #e.get(get => assert.ne(get(wock).color, cool-color))
+  #e.get(get => assert.eq(get(wock).border, blue + 2pt))
+  #e.get(get => assert.eq(get(wock).size, 300))
 
   #[
     #show: e.revoke("revoker")
 
     // 'coolness' no longer revoked
-    #(wock-e.get)(d => assert.eq(d.color, cool-color))
-    #(wock-e.get)(d => assert.eq(d.border, blue + 2pt))
-    #(wock-e.get)(d => assert.eq(d.size, 300))
+    #e.get(get => assert.eq(get(wock).color, cool-color))
+    #e.get(get => assert.eq(get(wock).border, blue + 2pt))
+    #e.get(get => assert.eq(get(wock).size, 300))
   ]
 
   // 'coolness' revoked again
-    #(wock-e.get)(d => assert.ne(d.color, cool-color))
-    #(wock-e.get)(d => assert.eq(d.border, blue + 2pt))
-    #(wock-e.get)(d => assert.eq(d.size, 300))
+    #e.get(get => assert.ne(get(wock).color, cool-color))
+    #e.get(get => assert.eq(get(wock).border, blue + 2pt))
+    #e.get(get => assert.eq(get(wock).size, 300))
 
   #wock()
 ]

@@ -3,7 +3,7 @@
 
 #import "/src/lib.typ" as e: field
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     square(width: 6pt, fill: it.color)[#it.inner]
@@ -16,11 +16,11 @@
 
 // By placing the body, previous show rules have no effect (circle is gone)...
 #[
-  #show wock-e.sel: it => {
+  #show e.selector(wock): it => {
     let (body, fields) = e.data(it)
     circle(radius: 4pt, fill: blue, body)
   }
-  #show wock-e.sel: it => {
+  #show e.selector(wock): it => {
     let (body, fields) = e.data(it)
     square(height: 8pt, body, fill: orange)
   }
@@ -29,19 +29,19 @@
 
 // But by placing 'it', they do
 #[
-  #show wock-e.sel: it => {
+  #show e.selector(wock): it => {
     let (body, fields) = e.data(it)
     circle(radius: 4pt, fill: blue, it)
   }
-  #show wock-e.sel: square.with(height: 8pt, fill: orange)
+  #show e.selector(wock): square.with(height: 8pt, fill: orange)
   #wock(inner: rect(width: 15pt, height: 8pt, fill: black))
 ]
 
 #[
-  #show wock-e.sel: it => {
+  #show e.selector(wock): it => {
     let (body, fields) = e.data(it)
     circle(radius: 4pt, fill: blue, body)
   }
-  #show wock-e.sel: square.with(height: 8pt, fill: orange)
+  #show e.selector(wock): square.with(height: 8pt, fill: orange)
   #wock(inner: rect(width: 15pt, height: 8pt, fill: black))
 ]

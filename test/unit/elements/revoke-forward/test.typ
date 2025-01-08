@@ -5,7 +5,7 @@
 
 #import "/src/lib.typ" as e: field, types
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)
@@ -25,7 +25,7 @@
   // This shouldn't be affected
   #show: e.named("coolness", e.set_(wock, color: cool-color))
 
-  #(wock-e.get)(d => assert.eq(d.color, cool-color))
+  #e.get(get => assert.eq(get(wock).color, cool-color))
 ]
 
 #[
@@ -39,6 +39,6 @@
   // This shouldn't be affected
   #show: e.named("before and after", e.set_(wock, color: cool-color))
 
-  #(wock-e.get)(d => assert.ne(d.size, 900))
-  #(wock-e.get)(d => assert.eq(d.color, cool-color))
+  #e.get(get => assert.ne(get(wock).size, 900))
+  #e.get(get => assert.eq(get(wock).color, cool-color))
 ]

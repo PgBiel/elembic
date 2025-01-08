@@ -3,7 +3,7 @@
 
 #import "/src/lib.typ" as e: field
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {},
   fields: (
@@ -616,5 +616,5 @@
 // Hello world!
 
 #wock()
-#(wock-e.get)(v => assert.eq(v.color, yellow))
-#(wock-e.get)(v => assert.eq(v.inner, [Road]))
+#e.get(get => assert.eq(get(wock).color, yellow))
+#e.get(get => assert.eq(get(wock).inner, [Road]))

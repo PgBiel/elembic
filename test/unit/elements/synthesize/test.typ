@@ -5,7 +5,7 @@
 
 #let count = counter("adb")
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     assert.eq(it.color, red)
@@ -23,7 +23,7 @@
   }
 )
 
-#show wock-e.sel: it => {
+#show e.selector(wock): it => {
   count.step()
   it
 }
@@ -32,7 +32,7 @@
 #wock(test: () => count.get().first() == 1)
 #wock(test: () => count.get().first() == 2)
 
-#show wock-e.sel: it => {
+#show e.selector(wock): it => {
   assert.eq(e.data(it).fields.resolved-value, 3)
   it
 }

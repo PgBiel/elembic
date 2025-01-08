@@ -1039,6 +1039,11 @@
   }#lbl-get]
 }
 
+// Obtain a Typst selector to use to match this element in show rules.
+#let selector(elem) = {
+  data(elem).sel
+}
+
 // Create an element with the given name and constructor.
 #let declare(
   name,
@@ -1200,12 +1205,12 @@
     func: none,
   )
 
-  let modified-constructor(..args, __elemmic_data: none, __elemmic_func: auto) = {
+  let default-constructor(..args, __elemmic_data: none, __elemmic_func: auto) = {
     if __elemmic_func == auto {
-      __elemmic_func = modified-constructor
+      __elemmic_func = default-constructor
     }
 
-    let default-constructor = modified-constructor.with(__elemmic_func: __elemmic_func)
+    let default-constructor = default-constructor.with(__elemmic_func: __elemmic_func)
     if __elemmic_data != none {
       return if __elemmic_data == special-data-values.get-data {
         (data-kind: "element", ..elem-data, func: __elemmic_func, default-constructor: default-constructor)
@@ -1332,33 +1337,26 @@
 
   let final-constructor = if construct != none {
     {
-      let test-construct = construct(modified-constructor)
+      let test-construct = construct(default-constructor)
       assert(type(test-construct) == function, message: "element.declare: the 'construct' function must receive original constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
     }
 
     let final-constructor(..args, __elemmic_data: none) = {
       if __elemmic_data != none {
         return if __elemmic_data == special-data-values.get-data {
-          (data-kind: "element", ..elem-data, func: final-constructor, default-constructor: modified-constructor.with(__elemmic_func: final-constructor))
+          (data-kind: "element", ..elem-data, func: final-constructor, default-constructor: default-constructor.with(__elemmic_func: final-constructor))
         } else {
           assert(false, message: "element: invalid data key to constructor: " + repr(__elemmic_data))
         }
       }
 
-      construct(modified-constructor.with(__elemmic_func: final-constructor))(..args)
+      construct(default-constructor.with(__elemmic_func: final-constructor))(..args)
     }
 
     final-constructor
   } else {
-    modified-constructor
+    default-constructor
   }
 
-  (
-    final-constructor,
-    (
-      ..elem-data,
-      default-constructor: modified-constructor.with(__elemmic_func: final-constructor),
-      func: final-constructor,
-    )
-  )
+  final-constructor
 }

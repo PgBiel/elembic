@@ -55,7 +55,7 @@
   field("owner", person),
 )
 
-#let (door, door-e) = e.element.declare(
+#let door = e.element.declare(
   "door",
   display: it => {
     rect(fill: it.color)[#it]
@@ -63,7 +63,7 @@
   fields: all-fields
 )
 
-#let (udoor, udoor-e) = e.element.declare(
+#let udoor = e.element.declare(
   "udoor",
   display: it => {
     rect(fill: it.color)[#it]
@@ -90,17 +90,17 @@
 #show: e.set_(udoor, owner: person("Maria", 30))
 #show: e.set_(udoor, owner2: person("Maria", 30))
 
-#(udoor-e.get)(v => assert.eq(v.this-does-not-exist, [abc]))
-#(udoor-e.get)(v => assert.eq(v.owner, person("Maria", 30))))
-#(udoor-e.get)(v => assert.eq(v.owner, v.owner2)))
+#e.get(get => assert.eq(get(udoor).this-does-not-exist, [abc]))
+#e.get(get => assert.eq(get(udoor).owner, person("Maria", 30))))
+#e.get(get => assert.eq(get(udoor).owner, get(udoor).owner2)))
 
 #door(red, blue, cool: true, sad: true)
-#(door-e.get)(v => assert.eq(v.extracolor, yellow))
-#(door-e.get)(v => assert.eq(v.singleton-array, ("a",)))
-#(door-e.get)(v => assert.eq(v.owner.name, "Johnson"))
-#(door-e.get)(v => assert.eq(v.owner.age, 50))
+#e.get(get => assert.eq(get(door).extracolor, yellow))
+#e.get(get => assert.eq(get(door).singleton-array, ("a",)))
+#e.get(get => assert.eq(get(door).owner.name, "Johnson"))
+#e.get(get => assert.eq(get(door).owner.age, 50))
 
-#(door-e.where)(extracolor: yellow, sad: false, yellow-not-sad-doors => {
+#(e.data(door).where)(extracolor: yellow, sad: false, yellow-not-sad-doors => {
   show yellow-not-sad-doors: [yep, yellow door, not sad]
 
   door(red, blue, cool: true, sad: false)
@@ -116,10 +116,10 @@
 #[
   #show: e.set_(door, just-true: true, float-or-content: 50, just-float: 5, just-content: "abc", bool-or-pos-float: false)
 
-  #(door-e.get)(v => {
-    assert(type(v.float-or-content) == float and v.float-or-content == 50.0)
-    assert(type(v.just-float) == float and v.just-float == 5)
-    assert(v.just-content == [abc])
+  #e.get(get => {
+    assert(type(get(door).float-or-content) == float and get(door).float-or-content == 50.0)
+    assert(type(get(door).just-float) == float and get(door).just-float == 5)
+    assert(get(door).just-content == [abc])
   })
 ]
 

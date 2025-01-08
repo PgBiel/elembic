@@ -5,7 +5,7 @@
 
 #show: e.stateful.enable()
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     assert.eq(it.color, blue)

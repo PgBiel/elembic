@@ -5,7 +5,7 @@
 
 #show rect: block.with(above: 0pt, below: 3pt)
 
-#let (wock, wock-e) = e.element.declare(
+#let wock = e.element.declare(
   "wock",
   display: it => {
     rect(fill: it.color, width: it.size, height: 10pt)
@@ -16,7 +16,7 @@
   )
 )
 
-#(wock-e.where)(color: blue, blue-wock => (wock-e.where)(size: 20pt, wide-wock => [
+#(e.data(wock).where)(color: blue, blue-wock => (e.data(wock).where)(size: 20pt, wide-wock => [
   #show blue-wock: it => {
     // TODO
     // let (fields,) = e.data(it)
