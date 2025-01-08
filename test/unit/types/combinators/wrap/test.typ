@@ -12,7 +12,7 @@
   types.any,
   name: "value wrapped in singleton array",
   output: (array,),
-  cast: v => if type(v) == array and v.len() == 1 { v } else { (v,) }
+  cast: _ => v => if type(v) == array and v.len() == 1 { v } else { (v,) }
 )
 
 #assert.eq(cast(none, larger-len), ok(none))

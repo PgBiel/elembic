@@ -132,6 +132,10 @@
       assert(false, message: "types.wrap: invalid key '" + key + "', must be one of " + overridable-typeinfo-types.keys().join(", ", last: " or "))
     }
 
+    if type(value) == function {
+      value = value(typeinfo.at(key, default: base.base-typeinfo.at(key)))
+    }
+
     if type(value) != function and not validate-value(value) {
       assert(false, message: "types.wrap: invalid value for key '" + key + "', expected " + key-error)
     }
