@@ -119,7 +119,7 @@
 
 #wock()
 
-#(e.data(wock).where)(color: green, green-wock => (wock-e.where)(color: blue, blue-wock => [
+#(e.data(wock).where)(color: green, green-wock => (e.data(wock).where)(color: blue, blue-wock => [
   #show green-wock: set text(6pt)
   #show blue-wock: set text(22pt)
 
