@@ -75,6 +75,14 @@
 // Returns ok(value) a.k.a. (true, value) on success
 // Returns err(value) a.k.a. (false, value) on error
 #let cast(value, typeinfo) = {
+  if type(typeinfo) != dictionary or type-key not in typeinfo {
+    let (res, typeinfo-or-err) = validate(typeinfo)
+    if not res {
+      assert(false, message: "types.cast: " + typeinfo-or-err)
+    }
+    typeinfo = typeinfo-or-err
+  }
+
   let kind = typeinfo.at(type-key)
   if kind == "any" {
     (true, value)
