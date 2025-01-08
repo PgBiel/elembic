@@ -3,11 +3,11 @@
 #import "/test/unit/base.typ": empty
 #show: empty
 
-#import "/src/lib.typ" as e: element, field, types
+#import "/src/lib.typ" as e: field, types
 
 #show: e.stateful.enable()
 
-#let (wock, wock-e) = element(
+#let (wock, wock-e) = e.element.declare(
   "wock",
   display: it => {
     rect(stroke: it.border, fill: it.color, height: 5pt, width: it.size * 0.05pt)

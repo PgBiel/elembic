@@ -1,11 +1,11 @@
 #import "/test/unit/base.typ": empty
 #show: empty
 
-#import "/src/lib.typ" as e: element, field
+#import "/src/lib.typ" as e: field
 
 #let count = counter("adb")
 
-#let (wock, wock-e) = element(
+#let (wock, wock-e) = e.element.declare(
   "wock",
   display: it => {
     assert.eq(it.color, red)

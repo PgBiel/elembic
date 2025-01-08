@@ -1,9 +1,9 @@
 #import "/test/unit/base.typ": template
 #show: template
 
-#import "/src/lib.typ" as e: element, field
+#import "/src/lib.typ" as e: field
 
-#let (wock, wock-e) = element(
+#let (wock, wock-e) = e.element.declare(
   "wock",
   display: it => {
     (it.run)(it)
@@ -16,7 +16,7 @@
   )
 )
 
-#let (dock, dock-e) = element(
+#let (dock, dock-e) = e.element.declare(
   "dock",
   display: it => {
     (it.run)(it)

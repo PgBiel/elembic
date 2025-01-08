@@ -3,9 +3,9 @@
 #import "/test/unit/base.typ": empty
 #show: empty
 
-#import "/src/lib.typ" as e: element, field, types
+#import "/src/lib.typ" as e: field, types
 
-#let (wibble, wibble-e) = element(
+#let (wibble, wibble-e) = e.element.declare(
   "wibble",
   display: it => {
     (it.run)(it)
@@ -17,7 +17,7 @@
   )
 )
 
-#let (wobble, wobble-e) = element(
+#let (wobble, wobble-e) = e.element.declare(
   "wobble",
   display: it => {
     (it.run)(it)

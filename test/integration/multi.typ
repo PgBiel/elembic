@@ -1,6 +1,6 @@
-#import "/src/lib.typ" as e: element, field
+#import "/src/lib.typ" as e: field
 
-#let (wibble, wibble-e) = element(
+#let (wibble, wibble-e) = e.element.declare(
   "wibble",
   display: it => {
     text(it.color)[#it.inner]
@@ -11,7 +11,7 @@
   )
 )
 
-#let (wobble, wobble-e) = element(
+#let (wobble, wobble-e) = e.element.declare(
   "wobble",
   display: it => {
     rect(fill: it.fill, it.inner)

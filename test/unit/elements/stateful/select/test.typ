@@ -1,13 +1,13 @@
 #import "/test/unit/base.typ": template
 #show: template
 
-#import "/src/lib.typ" as e: element, field
+#import "/src/lib.typ" as e: field
 
 #show rect: block.with(above: 0pt, below: 3pt)
 
 #show: e.stateful.enable()
 
-#let (wock, wock-e) = element(
+#let (wock, wock-e) = e.element.declare(
   "wock",
   display: it => {
     rect(fill: it.color, width: it.size, height: 10pt)

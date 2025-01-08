@@ -15,7 +15,7 @@
   construct: none,
 ) = {
   assert(type(fields) == array, message: "types.declare: please specify an array of fields, creating each field with the 'field' function.")
-  assert(prefix != none, message: "types.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. Please do not use an empty prefix if you are writing a package or template, otherwise that is OK.")
+  assert(prefix != none, message: "types.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
   assert(type(prefix) == str, message: "types.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
   assert(type(typecheck) == bool, message: "types.declare: the 'typecheck' argument must be a boolean (true to enable typechecking in the constructor, false to disable).")
   assert(type(allow-unknown-fields) == bool, message: "types.declare: the 'allow-unknown-fields' argument must be a boolean.")

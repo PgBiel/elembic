@@ -1,10 +1,10 @@
-#import "/src/lib.typ" as e: element, field, types
+#import "/src/lib.typ" as e: field, types
 
 #let bool-or-pos-float = types.union(bool, float)
 #(bool-or-pos-float.check = x => if type(x) == bool { true } else { x >= 0.0 })
 #(bool-or-pos-float.error = _ => "float must be positive or zero")
 
-#let (door, door-e) = element(
+#let (door, door-e) = e.element.declare(
   "door",
   display: it => {
     rect(fill: it.color)[#it]

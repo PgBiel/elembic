@@ -1040,7 +1040,7 @@
 }
 
 // Create an element with the given name and constructor.
-#let element(
+#let declare(
   name,
   display: none,
   fields: none,
@@ -1051,14 +1051,15 @@
   synthesize: none,
   contextual: auto,
 ) = {
-  assert(type(display) == function, message: "element: please specify a show rule in 'display:' to determine how your element is displayed.")
-  assert(type(fields) == array, message: "element: please specify an array of fields, creating each field with the 'field' function.")
-  assert(type(prefix) == str, message: "element: the prefix must be a string.")
-  assert(type(typecheck) == bool, message: "element: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
-  assert(type(allow-unknown-fields) == bool, message: "element: the 'allow-unknown-fields' argument must be a boolean.")
-  assert(synthesize == none or type(synthesize) == function, message: "element: 'synthesize' must be 'none' or a function element fields => element fields.")
-  assert(contextual == auto or type(contextual) == bool, message: "element: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
-  assert(construct == none or type(construct) == function, message: "element: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
+  assert(type(display) == function, message: "element.declare: please specify a show rule in 'display:' to determine how your element is displayed.")
+  assert(type(fields) == array, message: "element.declare: please specify an array of fields, creating each field with the 'field' function.")
+  assert(prefix != none, message: "element.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
+  assert(type(prefix) == str, message: "element.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
+  assert(type(typecheck) == bool, message: "element.declare: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
+  assert(type(allow-unknown-fields) == bool, message: "element.declare: the 'allow-unknown-fields' argument must be a boolean.")
+  assert(synthesize == none or type(synthesize) == function, message: "element:.declare 'synthesize' must be 'none' or a function element fields => element fields.")
+  assert(contextual == auto or type(contextual) == bool, message: "element.declare: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
+  assert(construct == none or type(construct) == function, message: "element.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
 
   if contextual == auto {
     // Provide separate context for synthesize.
@@ -1332,7 +1333,7 @@
   let final-constructor = if construct != none {
     {
       let test-construct = construct(modified-constructor)
-      assert(type(test-construct) == function, message: "element: the 'construct' function must receive original constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
+      assert(type(test-construct) == function, message: "element.declare: the 'construct' function must receive original constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
     }
 
     let final-constructor(..args, __elemmic_data: none) = {

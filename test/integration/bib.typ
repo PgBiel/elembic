@@ -1,8 +1,8 @@
-#import "/src/lib.typ" as e: element, field
+#import "/src/lib.typ" as e: field
 
 #set bibliography(title: [Custom Title])
 
-#let (wock, wock-e) = element(
+#let (wock, wock-e) = e.element.declare(
   "wock",
   display: it => {
     context assert.eq(bibliography.title, [Custom Title])

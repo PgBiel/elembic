@@ -1,7 +1,7 @@
 #import "/test/unit/base.typ": empty
 #show: empty
 
-#import "/src/lib.typ" as e: element, field, types
+#import "/src/lib.typ" as e: field, types
 
 #let bool-or-pos-float = types.wrap(
   types.union(bool, float),
@@ -16,13 +16,13 @@
   field("name", types.any, default: 3em),
 )
 
-#let (door, door-e) = element(
+#let (door, door-e) = e.element.declare(
   "door",
   display: it => {},
   fields: all-fields
 )
 
-#let (udoor, udoor-e) = element(
+#let (udoor, udoor-e) = e.element.declare(
   "udoor",
   display: it => {},
   fields: all-fields,
