@@ -17,7 +17,7 @@
   #show: e.set_(wock, color: blue)
 
   #[
-    #show: e.stateful.toggle(true)
+    #show: e.stateful.enable()
 
     #show: e.stateful.set_(wock, inner: [Abc])
 
@@ -34,12 +34,12 @@
   #(wock-e.get)(w => assert.eq(w.inner, [Is this thing on?]))
 ]
 
-#show: e.stateful.toggle(true)
+#show: e.stateful.enable()
 
 #show: e.stateful.set_(wock, color: yellow)
 
 #[
-  #show: e.stateful.toggle(false)
+  #show: e.stateful.disable()
 
   #show: e.set_(wock, inner: [Def])
 

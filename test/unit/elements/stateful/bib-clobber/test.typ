@@ -16,7 +16,7 @@
   )
 )
 
-#show: e.stateful.toggle(true)
+#show: e.stateful.enable()
 
 #[
   #show: e.stateful.set_(wock, color: blue)

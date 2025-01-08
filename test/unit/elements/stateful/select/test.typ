@@ -5,7 +5,7 @@
 
 #show rect: block.with(above: 0pt, below: 3pt)
 
-#show: e.stateful.toggle(true)
+#show: e.stateful.enable()
 
 #let (wock, wock-e) = element(
   "wock",

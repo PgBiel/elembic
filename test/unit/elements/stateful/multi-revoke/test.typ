@@ -4,7 +4,7 @@
 #import "/src/lib.typ" as e: element, field, types
 #import "/src/element.typ" as elos
 
-#show: e.stateful.toggle(true)
+#show: e.stateful.enable()
 
 #let (wock, wock-e) = element(
   "wock",
