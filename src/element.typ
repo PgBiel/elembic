@@ -8,13 +8,19 @@
 #let lbl-show-head = "__custom_element_shown_"
 
 // Label for context blocks which have access to the virtual stylechain.
-#let lbl-get = label("__custom_element_get")
+#let lbl-get = <__custom_element_get>
 
 // Label for metadata indicating an element's initial properties post-construction.
-#let lbl-tag = label("__custom_element_tag")
+#let lbl-tag = <__custom_element_tag>
 
 // Label for metadata indicating a rule's parameters.
-#let lbl-rule-tag = label("__custom_element_rule")
+#let lbl-rule-tag = <__custom_element_rule>
+
+// Label for metadata which stores the global data.
+// In practice, this label is never present in the document
+// unless one accidentally leaks the 'bibliography.title'
+// override from our workaround.
+#let lbl-data-metadata = <__custom_element_global_data_metadata>
 
 #let lbl-stateful-mode = <__custom_element_stateful_mode>
 #let lbl-normal-mode = <__custom_element_normal_mode>
@@ -216,7 +222,7 @@
       let (global-data, was-first-bib-title) = if (
         type(bibliography.title) == content
         and bibliography.title.func() == metadata
-        and bibliography.title.at("label", default: none) == lbl-get
+        and bibliography.title.at("label", default: none) == lbl-data-metadata
       ) {
         (bibliography.title.value, false)
       } else {
@@ -259,7 +265,7 @@
         show lbl-stateful-mode: show-stateful
 
         // Sync data with style chain for non-stateful modes
-        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
+        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
 
         // Sync data with state for stateful mode
         // Push at the start of the scope, pop at the end
@@ -644,7 +650,7 @@
         let global-data = if (
           type(bibliography.title) == content
           and bibliography.title.func() == metadata
-          and bibliography.title.at("label", default: none) == lbl-get
+          and bibliography.title.at("label", default: none) == lbl-data-metadata
         ) {
           bibliography.title.value
         } else {
@@ -668,7 +674,7 @@
         global-data.elements = apply-rules(global-data.elements, rules)
 
         set bibliography(title: previous-bib-title)
-        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
+        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
         doc
       }#lbl-get]
     }
@@ -687,7 +693,7 @@
         let global-data = if (
           type(bibliography.title) == content
           and bibliography.title.func() == metadata
-          and bibliography.title.at("label", default: none) == lbl-get
+          and bibliography.title.at("label", default: none) == lbl-data-metadata
         ) {
           bibliography.title.value
         } else {
@@ -718,7 +724,7 @@
         global-data.elements = apply-rules(global-data.elements, rules)
 
         set bibliography(title: first-bib-title)
-        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
+        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
         doc
       }#lbl-get]
     } else if mode == style-modes.stateful {
@@ -1018,7 +1024,7 @@
     let global-data = if (
       type(bibliography.title) == content
       and bibliography.title.func() == metadata
-      and bibliography.title.at("label", default: none) == lbl-get
+      and bibliography.title.at("label", default: none) == lbl-data-metadata
     ) {
       bibliography.title.value
     } else {
@@ -1115,7 +1121,7 @@
         let global-data = if (
           type(bibliography.title) == content
           and bibliography.title.func() == metadata
-          and bibliography.title.at("label", default: none) == lbl-get
+          and bibliography.title.at("label", default: none) == lbl-data-metadata
         ) {
           bibliography.title.value
         } else {
@@ -1178,7 +1184,7 @@
             chain
           })
         } else {
-          show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
+          show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
           body
         }
       }#lbl-get]
@@ -1228,7 +1234,7 @@
         let (global-data, data-changed) = if (
           type(bibliography.title) == content
           and bibliography.title.func() == metadata
-          and bibliography.title.at("label", default: none) == lbl-get
+          and bibliography.title.at("label", default: none) == lbl-data-metadata
         ) {
           (bibliography.title.value, false)
         } else {
@@ -1315,7 +1321,7 @@
         }
 
         if data-changed {
-          show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-get])
+          show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
           shown
         } else {
           shown
