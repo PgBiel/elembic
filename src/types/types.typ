@@ -1,5 +1,5 @@
 // The type system used by fields.
-#import "base.typ" as base: type-key, ok, err, custom-type-key
+#import "base.typ" as base: type-key, ok, err, custom-type-key, custom-type-data-key
 #import "native.typ"
 
 // The default value for a type.
@@ -34,11 +34,24 @@
 //
 // Returns ok(typeinfo), or err(error) if there is no corresponding typeinfo.
 #let validate(type_) = {
-  // TODO: Support custom elements
+  if type(type_) == function {
+    let data = type_(__elemmic_data: base.special-data-values.get-data)
+    let data-kind = data.at("data-kind", default: "unknown")
+    if data-kind == "custom-type-data" {
+      type_ = data.typeinfo
+    } else if data-kind == "element" {
+      return (false, "cannot use elements as types")
+    } else {
+      return (false, "Received invalid type: " + repr(type_) + "\n  hint: use 'types.literal(value)' to indicate only that particular value is valid")
+    }
+  }
+
   if type(type_) == type {
     native.typeinfo(type_)
   } else if type(type_) == dictionary and type-key in type_ {
     (true, type_)
+  } else if type(type_) == dictionary and custom-type-data-key in type_ {
+    (true, type_.typeinfo)
   } else if type(type_) == function {
     (false, "A function is not a valid type. (You can use 'types.literal(func)' to only accept a particular function.)")
   } else if type_ == none or type_ == auto {
@@ -59,7 +72,7 @@
       "expected "
       + typeinfo.input.map(t => if type(t) == dictionary and "name" in t { t.name } else { str(t) }).join(", ", last: " or ")
       + ", found "
-      + base.type-name-of(value)
+      + base.typename(value)
     )
   } else if typeinfo.at("error", default: none) != none {
     (typeinfo.error)(value)

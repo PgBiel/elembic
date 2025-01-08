@@ -161,12 +161,15 @@
   revoke-chain: ()
 )
 
-// Extract data from an element's constructor, as well as convert
-// a custom element instance into a dictionary with (body, fields, func),
-// allowing you to access its fields and information when given content.
+// Extract data from a type's or element's constructor, as well as convert
+// a custom type or element instance into a dictionary with keys such as body (for elements only),
+// fields and func, allowing you to access its fields and information when given content (for elements)
+// or the type instance (for types).
 //
-// When this is not a custom element, 'body' will be the given value,
-// 'fields' will be 'body.fields()' and 'func' will be 'body.func()'
+// When given content that is not a custom element, 'body' will be the given value,
+// 'fields' will be 'body.fields()' and 'func' will be 'body.func()'.
+//
+// The returned 'data-kind' indicates which kind of data was retrieved.
 #let data(it) = {
   if type(it) == function {
     it(__elemmic_data: special-data-values.get-data)
