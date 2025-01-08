@@ -993,6 +993,7 @@
   prefix: "",
   typecheck: true,
   allow-unknown-fields: false,
+  construct: none,
   synthesize: none,
   contextual: auto,
 ) = {
@@ -1003,6 +1004,7 @@
   assert(type(allow-unknown-fields) == bool, message: "element: the 'allow-unknown-fields' argument must be a boolean.")
   assert(synthesize == none or type(synthesize) == function, message: "element: 'synthesize' must be 'none' or a function element fields => element fields.")
   assert(contextual == auto or type(contextual) == bool, message: "element: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
+  assert(construct == none or type(construct) == function, message: "element: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
 
   if contextual == auto {
     // Provide separate context for synthesize.
@@ -1173,12 +1175,19 @@
     fields: fields,
     typecheck: typecheck,
     allow-unknown-fields: allow-unknown-fields,
+    default-constructor: none,
+    func: none,
   )
 
-  let modified-constructor(..args, __elemmic_data: none) = {
+  let modified-constructor(..args, __elemmic_data: none, __elemmic_func: auto) = {
+    if __elemmic_func == auto {
+      __elemmic_func = modified-constructor
+    }
+
+    let default-constructor = modified-constructor.with(__elemmic_func: __elemmic_func)
     if __elemmic_data != none {
       return if __elemmic_data == special-data-values.get-data {
-        (..elem-data, func: modified-constructor)
+        (..elem-data, func: __elemmic_func, default-constructor: default-constructor)
       } else {
         assert(false, message: "element: invalid data key to constructor: " + repr(__elemmic_data))
       }
@@ -1237,7 +1246,16 @@
         }
 
         let shown = {
-          let tag = (kind: "instance", body: none, fields: constructed-fields, func: modified-constructor, eid: eid, fields-known: true, valid: true)
+          let tag = (
+            data-kind: "element-instance",
+            body: none,
+            fields: constructed-fields,
+            func: __elemmic_func,
+            default-constructor: default-constructor,
+            eid: eid,
+            fields-known: true,
+            valid: true
+          )
 
           if contextual {
             // Use context for synthesize as well
@@ -1279,14 +1297,47 @@
       }#lbl-get]
     }
 
-    inner + [#metadata((body: inner, fields: args, func: modified-constructor, eid: eid, fields-known: false, valid: true))#lbl-tag]
+    inner + [#metadata((
+      data-kind: "element-instance",
+      body: inner,
+      fields: args,
+      func: __elemmic_func,
+      default-constructor: default-constructor,
+      eid: eid,
+      fields-known: false,
+      valid: true
+    ))#lbl-tag]
+  }
+
+  let final-constructor = if construct != none {
+    {
+      let test-construct = construct(modified-constructor)
+      assert(type(test-construct) == function, message: "element: the 'construct' function must receive original constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
+    }
+
+    let final-constructor(..args, __elemmic_data: none) = {
+      if __elemmic_data != none {
+        return if __elemmic_data == special-data-values.get-data {
+          (..elem-data, func: final-constructor, default-constructor: modified-constructor.with(__elemmic_func: final-constructor))
+        } else {
+          assert(false, message: "element: invalid data key to constructor: " + repr(__elemmic_data))
+        }
+      }
+
+      construct(modified-constructor.with(__elemmic_func: final-constructor))(..args)
+    }
+
+    final-constructor
+  } else {
+    modified-constructor
   }
 
   (
-    modified-constructor,
+    final-constructor,
     (
       ..elem-data,
-      func: modified-constructor,
+      default-constructor: modified-constructor.with(__elemmic_func: final-constructor),
+      func: final-constructor,
     )
   )
 }
