@@ -17,6 +17,16 @@
   default: (("b",),),
 )
 
+#let person = types.declare(
+  "person",
+  fields: (
+    field("name", str, required: true),
+    field("age", int, required: true)
+  ),
+  prefix: "",
+  default: person => person("Joe", 5)
+)
+
 #let all-fields = (
   field("color", color, required: true),
   field("backcolor", color, required: true),
@@ -42,6 +52,7 @@
   field("bool-or-pos-float", bool-or-pos-float, default: 5.0),
   field("stroke", stroke),
   field("singleton-array", singleton-array),
+  field("owner", person),
 )
 
 #let (door, door-e) = element(
@@ -61,24 +72,33 @@
   allow-unknown-fields: true
 )
 
-#door(red, blue, cool: true, sad: false, family: "family")
+#door(red, blue, cool: true, sad: false, family: "family", owner: person("Joe", 10))
 #door(red, blue, cool: true, sad: false, family: 0, verysad: false)
 
-#udoor(red, blue, cool: true, sad: false, family: 0, verysad: false)
+#udoor(red, blue, cool: true, sad: false, family: 0, verysad: false, owner: person("Joe", 10))
 #let u = udoor(red, blue, cool: true, sad: false, family: 0, verysad: true, nope-not-existing: 50)
 
 #assert.eq(e.data(u).fields.nope-not-existing, 50)
 
+#e.get(get => assert.eq(get(door).owner, person("Joe", 5))))
+
 #show: e.set_(door, yellow)
 #show: e.set_(door, singleton-array: "a")
+#show: e.set_(door, owner: person("Johnson", 50))
 #show: e.set_(udoor, yellow)
 #show: e.set_(udoor, this-does-not-exist: [abc])
+#show: e.set_(udoor, owner: person("Maria", 30))
+#show: e.set_(udoor, owner2: person("Maria", 30))
 
 #(udoor-e.get)(v => assert.eq(v.this-does-not-exist, [abc]))
+#(udoor-e.get)(v => assert.eq(v.owner, person("Maria", 30))))
+#(udoor-e.get)(v => assert.eq(v.owner, v.owner2)))
 
 #door(red, blue, cool: true, sad: true)
 #(door-e.get)(v => assert.eq(v.extracolor, yellow))
 #(door-e.get)(v => assert.eq(v.singleton-array, ("a",)))
+#(door-e.get)(v => assert.eq(v.owner.name, "Johnson"))
+#(door-e.get)(v => assert.eq(v.owner.age, 50))
 
 #(door-e.where)(extracolor: yellow, sad: false, yellow-not-sad-doors => {
   show yellow-not-sad-doors: [yep, yellow door, not sad]
