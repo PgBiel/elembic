@@ -102,7 +102,7 @@
 #e.get(get => assert.eq(get(door).owner.name, "Johnson"))
 #e.get(get => assert.eq(get(door).owner.age, 50))
 
-#(e.data(door).where)(extracolor: yellow, sad: false, yellow-not-sad-doors => {
+#e.select(door.with(extracolor: yellow, sad: false), yellow-not-sad-doors => {
   show yellow-not-sad-doors: [yep, yellow door, not sad]
 
   door(red, blue, cool: true, sad: false)

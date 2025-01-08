@@ -36,8 +36,10 @@
 // Special values that can be passed to a type or element's constructor to retrieve some data or show
 // some behavior.
 #let special-data-values = (
-  // Indicate that the constructor should return the element's data.
-  get-data: 0
+  // Indicate that the constructor should return the type or element's data.
+  get-data: 0,
+  // Indicate that the constructor should return an element filter.
+  get-where: 1,
 )
 
 // Top type

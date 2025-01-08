@@ -1,4 +1,4 @@
-#import "element.typ": set_, data, apply, revoke, reset, named, style-modes, prepare-get as get, selector
+#import "element.typ": set_, data, apply, revoke, reset, named, style-modes, prepare-get as get, selector, select
 #import "fields.typ": field
 #import "pub/element.typ"
 #import "pub/fields.typ"

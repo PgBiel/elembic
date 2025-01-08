@@ -33,7 +33,7 @@
   context assert.eq(bibliography.title, [Custom Title])
 })
 
-#(e.data(wock).where)(color: blue, _ => {
+#e.select(wock.with(color: blue), _ => {
   context assert.eq(bibliography.title, [Custom Title])
 })
 
