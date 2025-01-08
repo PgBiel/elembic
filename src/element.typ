@@ -1,4 +1,4 @@
-#import "types/base.typ" as base: custom-type-key, type-key
+#import "types/base.typ" as base: custom-type-key, custom-type-data-key, type-key, special-data-values
 #import "types/types.typ"
 #import "fields.typ" as field-internals
 
@@ -76,13 +76,6 @@
   // only effectively fixes the error if the set rules are individually switched to stateful mode
   // with `e.stateful.set_` instead of `e.set_`.
   stateful: 2
-)
-
-// Special values that can be passed to an element's constructor to retrieve some data or show
-// some behavior.
-#let special-data-values = (
-  // Indicate that the constructor should return the element's data.
-  get-data: 0
 )
 
 // When on stateful mode, this state holds the sequence of 'data' for each scope.
@@ -176,9 +169,11 @@
 // 'fields' will be 'body.fields()' and 'func' will be 'body.func()'
 #let data(it) = {
   if type(it) == function {
-    (data-kind: "element", ..it(__elemmic_data: special-data-values.get-data))
+    it(__elemmic_data: special-data-values.get-data)
   } else if type(it) == dictionary and element-key in it {
     (data-kind: "element", ..it)
+  } else if type(it) == dictionary and custom-type-data-key in it {
+    (data-kind: "custom-type-data", ..it)
   } else if type(it) != content {
     (data-kind: "unknown", body: it, fields: (:), func: none, eid: none, fields-known: false, valid: false)
   } else if (
@@ -1067,7 +1062,7 @@
     contextual = synthesize != none
   }
 
-  let eid = base.unique-id(prefix, name)
+  let eid = base.unique-id("e", prefix, name)
   let lbl-show = label(lbl-show-head + eid)
   let lbl-where(n) = label("__custom_element_where_" + str(n) + eid)
 
@@ -1209,7 +1204,7 @@
     let default-constructor = modified-constructor.with(__elemmic_func: __elemmic_func)
     if __elemmic_data != none {
       return if __elemmic_data == special-data-values.get-data {
-        (..elem-data, func: __elemmic_func, default-constructor: default-constructor)
+        (data-kind: "element", ..elem-data, func: __elemmic_func, default-constructor: default-constructor)
       } else {
         assert(false, message: "element: invalid data key to constructor: " + repr(__elemmic_data))
       }
@@ -1340,7 +1335,7 @@
     let final-constructor(..args, __elemmic_data: none) = {
       if __elemmic_data != none {
         return if __elemmic_data == special-data-values.get-data {
-          (..elem-data, func: final-constructor, default-constructor: modified-constructor.with(__elemmic_func: final-constructor))
+          (data-kind: "element", ..elem-data, func: final-constructor, default-constructor: modified-constructor.with(__elemmic_func: final-constructor))
         } else {
           assert(false, message: "element: invalid data key to constructor: " + repr(__elemmic_data))
         }

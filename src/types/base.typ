@@ -4,6 +4,7 @@
 
 // To be used by any custom types in the future
 #let custom-type-key = "__custom_type"
+#let custom-type-data-key = "__custom_type_data"
 
 // Typeinfo structure:
 // - type-key: kind of type
@@ -30,6 +31,13 @@
   error: none,
   default: (),
   fold: none,
+)
+
+// Special values that can be passed to a type or element's constructor to retrieve some data or show
+// some behavior.
+#let special-data-values = (
+  // Indicate that the constructor should return the element's data.
+  get-data: 0
 )
 
 // Top type
@@ -69,8 +77,10 @@
 // prefix or the name in the final ID.
 #let id-separator = "_---_"
 #let trimmed-separator = id-separator.trim("_", at: end)
-#let unique-id(prefix, name) = {
-  prefix.replace(
+#let unique-id(kind, prefix, name) = {
+  (
+    kind + "_"
+  ) + prefix.replace(
     trimmed-separator, trimmed-separator + "-"
   ) + id-separator + name.replace(
     trimmed-separator, trimmed-separator + "-"
