@@ -54,6 +54,7 @@ jobs:
           ANSI_GREEN=$'\e[32m'
           ANSI_BLUE=$'\e[34m'
           ANSI_END=$'\e[0m'
+          status=0
           for doc in test/integration/*.typ
           do
             echo "Compiling ${ANSI_BLUE}$doc${ANSI_END}..."
@@ -62,8 +63,10 @@ jobs:
               echo "Compiled ${ANSI_BLUE}$doc${ANSI_END} in ${ANSI_GREEN}$(jq '.[-1]?.ts / 1000' <$doc.t.json) ms${ANSI_END}"
             else
               echo "Failed to compile ${ANSI_RED}$doc${ANSI_END}"
+              status=1
             fi
           done
+          exit $status
 
       - name: ⚠️ Skip incompatible unit tests (Typst v0.11)
         if: ${{ matrix.typst-version == 'v0.11.0' || matrix.typst-version == 'v0.11.1' }}
