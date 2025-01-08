@@ -54,7 +54,7 @@
 
 // Error when a value doesn't conform to a certain cast
 #let generate-cast-error(value, typeinfo, hint: none) = {
-  let message = if base.typeof(value) not in typeinfo.input {
+  let message = if "any" not in typeinfo.input and base.typeof(value) not in typeinfo.input {
     (
       "expected "
       + typeinfo.input.map(t => if type(t) == dictionary and type-key in t { t.name } else { str(t) }).join(", ", last: " or ")
@@ -85,13 +85,13 @@
     }
 
     if kind == "literal" and typeinfo.cast == none {
-      if value == typeinfo.data.value and value-type in typeinfo.input and (typeinfo.data.typeinfo.check == none or (typeinfo.data.typeinfo.check)(value)) {
+      if value == typeinfo.data.value and (value-type in typeinfo.input or "any" in typeinfo.input) and (typeinfo.data.typeinfo.check == none or (typeinfo.data.typeinfo.check)(value)) {
         (true, value)
       } else {
         (false, generate-cast-error(value, typeinfo))
       }
     } else if (
-      value-type not in typeinfo.input
+      value-type not in typeinfo.input and "any" not in typeinfo.input
       or typeinfo.check != none and not (typeinfo.check)(value)
     ) {
       (false, generate-cast-error(value, typeinfo))
@@ -277,7 +277,7 @@
       if kind == "native" and param.data == dictionary {
         a => a.all(x => type(x) == dictionary and custom-type-key not in x)
       } else if param.input.all(i => type(i) == type) and dictionary not in param.input {
-        // No custom types accepted
+        // No custom types accepted (the check above excludes '(tid: ..., name: ...)' as well as "any")
         // If this is a custom type, it will return type(x) = dictionary, so it will fail
         // So that suffices
         if input.len() == 1 {
@@ -318,7 +318,7 @@
     error: if param.check == none {
       a => {
         let (count, message) = a.enumerate().fold((0, ""), ((count, message), (i, element)) => {
-          if base.typeof(element) not in param.input {
+          if "any" not in param.input and base.typeof(element) not in param.input {
             (count + 1, message + "\n  hint: at position " + str(i) + ": " + generate-cast-error(element, param))
           } else {
             (count, message)
@@ -331,7 +331,7 @@
     } else {
       a => {
         let (count, message) = a.enumerate().fold((0, ""), ((count, message), (i, element)) => {
-          if base.typeof(element) not in param.input or not (param.check)(element) {
+          if "any" not in param.input and base.typeof(element) not in param.input or not (param.check)(element) {
             (count + 1, message + "\n  hint: at position " + str(i) + ": " + generate-cast-error(element, param))
           } else {
             (count, message)

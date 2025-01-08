@@ -9,6 +9,14 @@
   error: _ => _ => "float must be positive or zero"
 )
 
+#let singleton-array = types.wrap(
+  types.any,
+  name: "value wrapped in singleton array",
+  output: (array,),
+  cast: _ => v => if type(v) == array and v.len() == 1 { v } else { (v,) },
+  default: (("b",),),
+)
+
 #let all-fields = (
   field("color", color, required: true),
   field("backcolor", color, required: true),
@@ -33,6 +41,7 @@
   field("just-true", types.literal(true), default: true),
   field("bool-or-pos-float", bool-or-pos-float, default: 5.0),
   field("stroke", stroke),
+  field("singleton-array", singleton-array),
 )
 
 #let (door, door-e) = element(
@@ -61,6 +70,7 @@
 #assert.eq(e.data(u).fields.nope-not-existing, 50)
 
 #show: e.set_(door, yellow)
+#show: e.set_(door, singleton-array: "a")
 #show: e.set_(udoor, yellow)
 #show: e.set_(udoor, this-does-not-exist: [abc])
 
@@ -68,6 +78,7 @@
 
 #door(red, blue, cool: true, sad: true)
 #(door-e.get)(v => assert.eq(v.extracolor, yellow))
+#(door-e.get)(v => assert.eq(v.singleton-array, ("a",)))
 
 #(door-e.where)(extracolor: yellow, sad: false, yellow-not-sad-doors => {
   show yellow-not-sad-doors: [yep, yellow door, not sad]

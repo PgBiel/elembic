@@ -123,6 +123,17 @@
   let input = typeinfos.map(t => t.input).sum(default: ()).dedup()
   let output = typeinfos.map(t => t.output).sum(default: ()).dedup()
 
+  let has-any-input = "any" in input
+  let has-any-output = "any" in output
+
+  if has-any-input {
+    input = ("any",)
+  }
+
+  if has-any-output {
+    output = ("any",)
+  }
+
   // Try to optimize checks as much as possible
   let check = if typeinfos.all(t => t.check == none) {
     // If there are no checks, just checking inputs is enough
@@ -132,8 +143,14 @@
     let unchecked-inputs = typeinfos.filter(t => t.check == none).map(t => t.input).sum(default: ()).dedup()
     if input.all(t => t in unchecked-inputs) {
       // Unchecked types include all possible input types, so some check will always succeed
+      // Note that this check also works for input reduced to just "any". If "any" is an
+      // unchecked input, then checks will never fail.
       none
     } else if checked-types.all(t => t.at(type-key) == "literal") {
+      // From here onwards, we can assume unchecked-inputs doesn't contain "any",
+      // since it is a subset of input, therefore input would be just ("any",) and
+      // the check above would have had to pass in that case.
+
       let values-inputs-and-checks = checked-types.map(t => (t.data.value, t.input, t.data.typeinfo.check))
       x => {
         let typ = type(x)
@@ -141,7 +158,7 @@
           // Custom type must be checked differently in inputs
           typ = typ.at(custom-type-key)
         }
-        typ in unchecked-inputs or values-inputs-and-checks.any(((v, i, check)) => typ in i and x == v and (check == none or check(x)))
+        typ in unchecked-inputs or values-inputs-and-checks.any(((v, i, check)) => x == v and (typ in i or "any" in i) and (check == none or check(x)))
       }
     } else {
       // If any check succeeds and the value has the correct input type, OK
@@ -154,7 +171,7 @@
         }
         // If one of the types without checks accepts this type as an input then we don't need
         // to run any checks!
-        typ in unchecked-inputs or checks-and-inputs.any(((inp, check)) => typ in inp and check(x))
+        typ in unchecked-inputs or checks-and-inputs.any(((inp, check)) => (typ in inp or "any" in inp) and check(x))
       }
     }
   }
@@ -171,8 +188,8 @@
       // if within the 'cast-from' types, then cast, otherwise don't.
       casting-types != ()
       and casting-types.all(t => t.at(type-key) == "native" and t.data in (float, content))
-      and typeinfos.find(t => t.input.any(i => i in first-casting-type.input)) == first-casting-type
-      and (casting-types.len() == 1 or typeinfos.find(t => t.input.any(i => i in casting-types.at(1).input)) == casting-types.at(1))
+      and typeinfos.find(t => t.input.any(i => i == "any" or i in first-casting-type.input)) == first-casting-type
+      and (casting-types.len() == 1 or typeinfos.find(t => t.input.any(i => i == "any" or i in casting-types.at(1).input)) == casting-types.at(1))
     ) {
       if casting-types.len() >= 2 {  // just float and content
         x => if type(x) == int { float(x) } else if type(x) in (str, symbol) [#x] else { x }
@@ -189,7 +206,7 @@
           // Custom type must be checked differently in inputs
           typ = typ.at(custom-type-key)
         }
-        let typeinfo = typeinfos.find(t => typ in t.input and (t.check == none or (t.check)(x)))
+        let typeinfo = typeinfos.find(t => (typ in t.input or "any" in t.input) and (t.check == none or (t.check)(x)))
         if typeinfo.cast == none {
           x
         } else {

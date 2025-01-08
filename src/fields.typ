@@ -300,7 +300,11 @@
           value-type = value.at(custom-type-key)
         }
         if kind == "literal" and typeinfo.cast == none {
-          if value != typeinfo.data.value or value-type not in typeinfo.input or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value)) {
+          if (
+            value != typeinfo.data.value
+            or value-type not in typeinfo.input and "any" not in typeinfo.input
+            or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value))
+          ) {
             assert(false, message: field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
           }
         } else {
@@ -309,7 +313,7 @@
             value-type = value.at(custom-type-key)
           }
           if (
-            value-type not in typeinfo.input
+            value-type not in typeinfo.input and "any" not in typeinfo.input
             or typeinfo.check != none and not (typeinfo.check)(value)
           ) {
             assert(false, message: field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
@@ -342,12 +346,16 @@
           value-type = value.at(custom-type-key)
         }
         if kind == "literal" and typeinfo.cast == none {
-          if value != typeinfo.data.value or value-type not in typeinfo.input or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value)) {
+          if (
+            value != typeinfo.data.value
+            or value-type not in typeinfo.input and "any" not in typeinfo.input
+            or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value))
+          ) {
             assert(false, message: field-error-prefix(pos-field.name) + types.generate-cast-error(value, typeinfo))
           }
         } else {
           if (
-            value-type not in typeinfo.input
+            value-type not in typeinfo.input and "any" not in typeinfo.input
             or typeinfo.check != none and not (typeinfo.check)(value)
           ) {
             assert(false, message: field-error-prefix(pos-field.name) + types.generate-cast-error(value, typeinfo))

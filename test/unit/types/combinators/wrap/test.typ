@@ -24,12 +24,13 @@
 #assert.eq(cast(-5, neg-int), ok(-5))
 #assert.eq(cast(5, neg-int), err("integer must be negative"))
 #assert.eq(cast((-56, <A>, 5), types.array(types.union(label, neg-int))), err("an element in an array of label or negative integer did not typecheck\n  hint: at position 2: all typechecks for union failed\n  hint (negative integer): integer must be negative"))
-// TODO: "any" in input
-// #assert.eq(cast(105, singleton-array), ok((105,)))
-// #assert.eq(cast((<A>,), singleton-array), ok((<A>,)))
-// #assert.eq(cast(0.5, types.union(float, singleton-array)), ok(0.5))
-// #assert.eq(cast("a", types.union(float, singleton-array)), ok(("a",)))
-// #assert.eq(cast(("a",), types.union(float, singleton-array)), ok(("a",)))
+
+// any input
+#assert.eq(cast(105, singleton-array), ok((105,)))
+#assert.eq(cast((<A>,), singleton-array), ok((<A>,)))
+#assert.eq(cast(0.5, types.union(float, singleton-array)), ok(0.5))
+#assert.eq(cast("a", types.union(float, singleton-array)), ok(("a",)))
+#assert.eq(cast(("a",), types.union(float, singleton-array)), ok(("a",)))
 
 #assert.eq(default(singleton-array).first(), false)
 #assert.eq(default(larger-len), (true, 0pt))
