@@ -26,5 +26,5 @@
 
 // Ensure the given value has the given type.
 #let type-assert-eq(value, type_) = {
-  assert.eq(base.typeof(value), type_)
+  assert.eq(base.typeid(value), type_)
 }

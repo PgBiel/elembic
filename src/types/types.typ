@@ -18,7 +18,7 @@
 //
 // Uses base typeinfo information for information such as casts and whatnot.
 #let literal(value) = {
-  let type_ = base.typeof(value)
+  let type_ = base.typeid(value)
   let (res, typeinfo-or-err) = if type(type_) == type {
     native.typeinfo(type_)
   } else {
@@ -54,10 +54,10 @@
 
 // Error when a value doesn't conform to a certain cast
 #let generate-cast-error(value, typeinfo, hint: none) = {
-  let message = if "any" not in typeinfo.input and base.typeof(value) not in typeinfo.input {
+  let message = if "any" not in typeinfo.input and base.typeid(value) not in typeinfo.input {
     (
       "expected "
-      + typeinfo.input.map(t => if type(t) == dictionary and type-key in t { t.name } else { str(t) }).join(", ", last: " or ")
+      + typeinfo.input.map(t => if type(t) == dictionary and "name" in t { t.name } else { str(t) }).join(", ", last: " or ")
       + ", found "
       + base.type-name-of(value)
     )
@@ -89,7 +89,7 @@
   } else {
     let value-type = type(value)
     if value-type == dictionary and base.custom-type-key in value {
-      value-type = value.at(base.custom-type-key)
+      value-type = value.at(base.custom-type-key).id
     }
 
     if kind == "literal" and typeinfo.cast == none {
@@ -191,7 +191,7 @@
   assert(
     new-default == ()
     or "any" in new-output
-    or base.typeof(new-default.first()) in new-output,
+    or base.typeid(new-default.first()) in new-output,
 
     message: "types.wrap: new default (currently " + repr(if new-default == () { none } else { new-default.first() }) + ") must have a type within possible 'output' types of the new type (currently " + if new-output == () { "empty" } else { new-output.map(t => if type(t) == dictionary { t.name } else { str(t) }).join(", ", last: " or ") } + "), since it is itself an output\n  hint: you can either change the default, or update possible output types with 'output: (new, list)' to indicate which native or custom types your wrapped type might end up as after casts (if there are casts)."
   )
@@ -309,9 +309,9 @@
           a => a.all(x => type(x) in input and check(x))
         }
       } else if param.check == none {
-        a => a.all(x => base.typeof(x) in param.input)
+        a => a.all(x => base.typeid(x) in param.input)
       } else {
-        a => a.all(x => base.typeof(x) in param.input and check(x))
+        a => a.all(x => base.typeid(x) in param.input and check(x))
       }
     },
 
@@ -326,7 +326,7 @@
     error: if param.check == none {
       a => {
         let (count, message) = a.enumerate().fold((0, ""), ((count, message), (i, element)) => {
-          if "any" not in param.input and base.typeof(element) not in param.input {
+          if "any" not in param.input and base.typeid(element) not in param.input {
             (count + 1, message + "\n  hint: at position " + str(i) + ": " + generate-cast-error(element, param))
           } else {
             (count, message)
@@ -339,7 +339,7 @@
     } else {
       a => {
         let (count, message) = a.enumerate().fold((0, ""), ((count, message), (i, element)) => {
-          if "any" not in param.input and base.typeof(element) not in param.input or not (param.check)(element) {
+          if "any" not in param.input and base.typeid(element) not in param.input or not (param.check)(element) {
             (count + 1, message + "\n  hint: at position " + str(i) + ": " + generate-cast-error(element, param))
           } else {
             (count, message)

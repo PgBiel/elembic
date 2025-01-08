@@ -1,4 +1,4 @@
-#import "types/base.typ": type-key
+#import "types/base.typ": type-key, custom-type-key
 #import "types/types.typ"
 
 #let field-key = "__field"
@@ -297,7 +297,7 @@
       if kind != "any" {
         let value-type = type(value)
         if value-type == dictionary and custom-type-key in value {
-          value-type = value.at(custom-type-key)
+          value-type = value.at(custom-type-key).id
         }
         if kind == "literal" and typeinfo.cast == none {
           if (
@@ -308,10 +308,6 @@
             assert(false, message: field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
           }
         } else {
-          let value-type = type(value)
-          if value-type == dictionary and custom-type-key in value {
-            value-type = value.at(custom-type-key)
-          }
           if (
             value-type not in typeinfo.input and "any" not in typeinfo.input
             or typeinfo.check != none and not (typeinfo.check)(value)
@@ -343,7 +339,7 @@
       if kind != "any" {
         let value-type = type(value)
         if value-type == dictionary and custom-type-key in value {
-          value-type = value.at(custom-type-key)
+          value-type = value.at(custom-type-key).id
         }
         if kind == "literal" and typeinfo.cast == none {
           if (

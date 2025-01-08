@@ -60,14 +60,26 @@
   output: (),
 )
 
-// Get the type of a value.
+// Get the type ID of a value.
 // This is usually 'type(value)', unless value has a custom type.
-#let typeof(value) = {
+// In that case, it has the format '(tid: ..., name: ...)'.
+// This is the format expected by 'input' and 'output' arrays.
+#let typeid(value) = {
   let value-type = type(value)
   if value-type == dictionary and custom-type-key in value {
-    value-type = value.at(custom-type-key)
+    value-type = value.at(custom-type-key).id
   }
   value-type
+}
+
+// Returns the name of the value's type as a string.
+#let typename(value) = {
+  let value-type = type(value)
+  if value-type == dictionary and custom-type-key in value {
+    value.at(custom-type-key).id.name
+  } else {
+    str(value-type)
+  }
 }
 
 // Make a unique element or type ID based on prefix and name.
@@ -94,7 +106,7 @@
 // Uses base typeinfo information for information such as casts and whatnot.
 #let literal(value, typeinfo) = {
   let represented = "'" + if type(value) == str { value } else { repr(value) } + "'"
-  let value-type = typeof(value)
+  let value-type = typeid(value)
 
   let check = if typeinfo.check == none { x => x == value } else { x => x == value and (typeinfo.check)(x) }
 
@@ -164,9 +176,9 @@
       let values-inputs-and-checks = checked-types.map(t => (t.data.value, t.input, t.data.typeinfo.check))
       x => {
         let typ = type(x)
-        if typ == dictionary and custom-type-key in typ {
+        if typ == dictionary and custom-type-key in x {
           // Custom type must be checked differently in inputs
-          typ = typ.at(custom-type-key)
+          typ = x.at(custom-type-key).id
         }
         typ in unchecked-inputs or values-inputs-and-checks.any(((v, i, check)) => x == v and (typ in i or "any" in i) and (check == none or check(x)))
       }
@@ -175,9 +187,9 @@
       let checks-and-inputs = checked-types.map(t => (t.input, t.check))
       x => {
         let typ = type(x)
-        if typ == dictionary and custom-type-key in typ {
+        if typ == dictionary and custom-type-key in x {
           // Custom type must be checked differently in inputs
-          typ = typ.at(custom-type-key)
+          typ = x.at(custom-type-key).id
         }
         // If one of the types without checks accepts this type as an input then we don't need
         // to run any checks!
@@ -212,9 +224,9 @@
       // Generic case
       x => {
         let typ = type(x)
-        if typ == dictionary and custom-type-key in typ {
+        if typ == dictionary and custom-type-key in x {
           // Custom type must be checked differently in inputs
-          typ = typ.at(custom-type-key)
+          typ = x.at(custom-type-key).id
         }
         let typeinfo = typeinfos.find(t => (typ in t.input or "any" in t.input) and (t.check == none or (t.check)(x)))
         if typeinfo.cast == none {
@@ -365,10 +377,4 @@
     error: error,
     default: default,
   )
-}
-
-// Returns the name of the value's type as a string.
-#let type-name-of(value) = {
-  // TODO: Custom element name
-  str(type(value))
 }
