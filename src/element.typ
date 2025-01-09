@@ -216,6 +216,26 @@
   }
 }
 
+// Obtain the fields of a type instance or element instance (custom or not).
+//
+// SAMPLE USAGE:
+//
+// #show e.selector(elem): it => {
+//   let fields = e.fields(it)
+//   [Hello #fields.name!]
+// }
+#let fields(it) = {
+  let info = data(it)
+
+  if type(info) == dictionary and "data-kind" in info {
+    if info.data-kind in ("content", "element-instance", "type-instance") {
+      return info.fields
+    }
+  }
+
+  (:)
+}
+
 // Changes stateful mode settings within a certain scope.
 // This function will sync all data between all modes (data from normal mode
 // goes to state and data from stateful mode goes to normal mode).

@@ -19,6 +19,9 @@
   let (body, fields) = e.data(it)
   assert.eq(fields.color, red)
   assert.eq(fields.inner, [Updated])
+  let fields = e.fields(it)
+  assert.eq(fields.color, red)
+  assert.eq(fields.inner, [Updated])
   circle(radius: 3pt, fill: fields.color)
 }
 #wock(inner: [Updated])
