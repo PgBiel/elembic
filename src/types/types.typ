@@ -129,8 +129,8 @@
 // Expected types for each typeinfo key.
 #let overridable-typeinfo-types = (
   name: (check: a => type(a) == str, error: "string or function old name => new name"),
-  input: (check: a => type(a) == array and a.all(x => x == "any" or type(x) == type or (type(x) == dictionary and "tid" in x)), error: "array of 'any', type, or custom type id (tid: ...), or function old input => new input"),
-  output: (check: a => type(a) == array and a.all(x => x == "any" or type(x) == type or (type(x) == dictionary and "tid" in x)), error: "array of 'any', type, or custom type id (tid: ...), or function old output => new output"),
+  input: (check: a => type(a) == array and a.all(x => x == "any" or x == "custom type" or type(x) == type or (type(x) == dictionary and "tid" in x)), error: "array of \"any\", \"custom type\", type, or custom type id (tid: ...), or function old input => new input"),
+  output: (check: a => type(a) == array and a.all(x => x == "any" or x == "custom type" or type(x) == type or (type(x) == dictionary and "tid" in x)), error: "array of \"any\", \"custom type\", type, or custom type id (tid: ...), or function old output => new output"),
   check: (check: a => a == none or type(a) == function, error: "none or function receiving old function and returning a function value => bool"),
   cast: (check: a => a == none or type(a) == function, error: "none or function receiving old function and returning a function checked input => output"),
   error: (check: a => a == none or type(a) == function, error: "none or function receiving old function and returning a function checked input => error string"),
@@ -302,6 +302,7 @@
       } else if param.input.all(i => type(i) == type) and dictionary not in param.input {
         // No custom types accepted (the check above excludes '(tid: ..., name: ...)' as well as "any")
         // If this is a custom type, it will return type(x) = dictionary, so it will fail
+        // (Also excludes "custom type": the type of custom types)
         // So that suffices
         if input.len() == 1 {
           let input = input.first()

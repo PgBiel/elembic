@@ -63,6 +63,15 @@
   output: (),
 )
 
+// Any custom type
+#let custom-type = (
+  ..base-typeinfo,
+  (type-key): "custom type",
+  name: "custom type",
+  input: ("custom type",),
+  output: ("custom type",),
+)
+
 // Get the type ID of a value.
 // This is usually 'type(value)', unless value has a custom type.
 // In that case, it has the format '(tid: ..., name: ...)'.

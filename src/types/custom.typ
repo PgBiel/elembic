@@ -94,6 +94,20 @@
 
   let type-data = (
     (custom-type-data-key): true,
+    (custom-type-key): (
+        data-kind: "type-instance",
+        fields: (
+          version: custom-type-version,
+          tid: tid,
+          id: typeid,
+        ),
+        func: declare,
+        default-constructor: declare,
+        tid: "b_custom type",
+        id: "custom type",
+        fields-known: true,
+        valid: true
+    ),
     version: custom-type-version,
     tid: tid,
     id: typeid,
