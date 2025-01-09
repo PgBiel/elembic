@@ -8,4 +8,4 @@
 - [Elements](./elements/README.md)
   - [Creating](./elements/creating.md)
 
-- [Types]()
+- [Types](./types/README.md)

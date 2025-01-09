@@ -4,57 +4,172 @@ Please **keep in mind the following limitations** when using Elembic.
 
 ## Rule limit
 
-Elembic has a limit of **up to 30 simultaneous rules by default**. This is due to a limitation in the
-Typst compiler regarding maximum function call depth.
+Elembic, **in its default and most efficient mode,** has a limit of **up to 30 _non-consecutive_ rules by default**. This is due to a limitation in the Typst compiler regarding maximum function call depth, as we use show rules with `context { }` for set rules to work without using `state`.
 
-One **rule** may be a set rule, but also an **`apply` rule**, which has the power of **applying multiple consecutive rules at the cost of one.**
-That is, an `apply` rule can even hold more than 30 rules (maybe 100) at once without a problem as it only counts for one.
+Usually, this isn't a problem unless you hit the infamous **"max show rule depth exceeded"** error. If you ever receive it, you may have to switch to **stateful mode**, which has **no set rule limit,** however **it is slower** as it uses `state`.
 
-Therefore, **always group set rules together into an apply rule whenever possible.** That is, **do as follows:**
+However, there are some easy things to keep in mind that will let you **avoid this error very easily.**
+
+### Grouping rules together with `apply`
+
+First of all, note that, for the purposes of this limit, **rule** may be a set rule, but also an **`apply` rule**, which has the power of **applying multiple consecutive rules at the cost of one.**
+That is, an `apply` rule, by itself, can hold much more than 30 rules (maybe 100, 500, you name it!) at once without a problem as it only counts for one towards the limit.
+
+Therefore, it is recommended to **always group set rules together into a single apply rule** whenever possible.
+
+Note that **elembic is smart enough to do this automatically** whenever it is **absolutely safe to do so** - that is, **when they are consecutive** (there are **no elements or text between them**, only whitespace or show/set rules).
+
+That is, **doing either of those is OK:**
 
 ```rs
 #import "@preview/elembic:X.X.X" as e
 
-// OK: Only paying for the cost of a single rule
+// OK: Explicitly paying for the cost of only a single rule
 #show: e.apply(
   e.set_(elem, fieldA: 1)
   e.set_(elem, fieldB: 2)
   e.set_(elem, fieldC: 3)
 )
+
+// OR
+
+// OK: elembic automatically merges consecutive rules
+// (with nothing or only whitespace / set and show rules inbetween)
+#show: e.set_(elem, fieldA: 1)
+#show: e.set_(elem, fieldB: 1)
+
+#show: e.set_(elem, fieldC: 1)
 ```
 
-but **do not:**
+but **please avoid adding text and other elements between them** - elembic does not merge them as it may be unsafe (text may be converted into custom elements by show rules, and other elements may contain custom elements within them, for example):
 
 ```rs
 #import "@preview/elembic:X.X.X" as e
 
-// Don't do this! Paying for 3 rules instead of 1
-// (There are implicit parbreaks between the rules,
-// so they cannot be grouped together)
+// AVOID THIS! Paying for 3 rules instead of 1
+// (Cannot safely move down the text between the rules
+// automatically)
 #show: e.set_(elem, fieldA: 1)
 
+Some text (please move me below the rules)
+
 #show: e.set_(elem, fieldB: 2)
+
+Some text (please move me below the rules)
 
 #show: e.set_(elem, fieldC: 3)
 ```
 
-Note that Elembic is smart enough to group together rules **if there is absolutely nothing between them:**
+As a general rule of thumb, **prefer using explicit `apply` rules whenever possible.** It's not only safer (it's easy to accidentally disable the automatic merging by adding text like above), it's also easier to write and much cleaner!
+
+### Scoping temporary rules and not misusing `revoke`
+
+Are you only using a set rule for a certain part of your document? Please, **scope it instead of using it and revoking it**. The latter will permanently cost two rules from the limit, while the former will only cost one and only during the scope.
+
+That is, **do this:**
 
 ```rs
-#import "@preview/elembic:X.X.X" as e
+// Default color
+#superbox()
 
-// OK: These 3 are converted into an apply automatically
-// (NOTHING between them)
-#show: e.set_(elem, fieldA: 1)
-#show: e.set_(elem, fieldB: 2)
-#show: e.set_(elem, fieldC: 3)
+#[
+  #show: e.set_(superbox, color: red)
+
+  // All superboxes are temporarily red now
+  #superbox()
+  #superbox()
+  #superbox()
+]
+
+// Back to default color!
+// (The set rule is no longer in effect.)
+#superbox()
 ```
 
-but it is not recommended to rely on this behavior, as **it's easy to accidentally add some content between them,** stopping Elembic from being able to apply this optimization.
+But **do not do this:**
+
+```rs
+// Default color
+#superbox()
+
+#show: e.named("red", e.set_(superbox, color: red))
+
+// All superboxes are red from here onwards
+#superbox()
+#superbox()
+#superbox()
+
+// AVOID THIS!
+// While the rule was revoked and the color is back
+// to the default, BOTH rules are still unnecessarily
+// active and counting towards the limit.
+#show: e.revoke("red")
+
+// Back to default color!
+// However, that is because both rules are in effect.
+#superbox()
+```
+
+A **good usage** of `revoke` is to **only temporarily (for a certain scope) undo a previous set rule:**
+
+```rs
+// Default color
+#superbox()
+
+#show: e.named("red", e.set_(superbox, color: red))
+
+// All superboxes are red from here onwards
+#superbox()
+#superbox()
+#superbox()
+
+#[
+  // OK: This is scoped and only temporary
+  #show: e.revoke("red")
+
+  // Back to default color!
+  // (Only temporary)
+  // Both rules are in effect here
+  // (the second nullifies the first).
+  #superbox()
+]
+
+// This is red again now (the "red" rule is back).
+// The revoke rule is no longer in effect.
+// Only the set rule.
+#superbox()
+```
+
+### Switching to other modes
+
+If those measures are still not enough to fix the error, then you will have to **switch to another mode.**
+
+The easiest solution is to just **switch to stateful mode,** which uses `state` to keep track of set rules.
+It is slower and may trigger document relayouts in some cases, but has no usage limits (other than
+nesting many elements inside each other, which is a limitation shared by native elements as well and is
+unavoidable).
+
+It can be done in a two-step process:
+
+1. Writing `#show: e.stateful.enable()` (note the parentheses) for either a certain scope (to only enable
+it for a certain portion of your document) or at the very top of the document (to enable it for all of
+the document);
+
+2. **Replacing existing set rules with their stateful-only counterparts.** That is, replace all occurrences
+of `e.set_`, `e.apply`, `e.revoke` etc. with `e.stateful.set_`, `e.stateful.apply` and `e.stateful.revoke`,
+respectively, in the scopes where stateful mode was enabled. (The previous rules remain working even under stateful mode, but still have usage limits, albeit a bit larger.)
+    - While a Ctrl+F fixes it, it's a bit of a mouthful, so you may want to consider aliasing `e.stateful`
+    to a variable such as `#import e: stateful as st`, then you can write `st.set_`, `st.apply` etc. instead.
+    - Stateful-only rules have no usage limits, but **they only work in scopes where stateful mode is enabled.**
+    Otherwise, they have no effect, since the `state` changes will be ignored.
+
+The two steps above should be enough to fix the error for good, provided you understand the potential performance consequences. Of course, it just might not be at all significant for your document.
 
 ## Performance
 
-Elembic's performance is, in general, satisfactory, but **may get worse if you use more features:**
+Elembic's performance is, in general, satisfactory, and is logged on CI, but **may get worse if you use more features:**
 
-- **Typechecking** of fields can add some overhead on each element instantiation. You can improve this by overriding Elembic's default argument parser, or even disabling typechecking altogether. (TODO)
-- **Special rules** such as revoke rules may add some overhead. You may want to avoid using them if this harms your performance too much.
+- **Typechecking** of fields can add some overhead on each element instantiation. You can improve this by overriding Elembic's default argument parser, or even disabling typechecking altogether with the `typecheck: false` option on elements.
+- **Special rules** such as revoke rules may add some overhead. However, it shouldn't be noticeable unless you're using a ton of them.
+
+The only way to know whether Elembic is a good suit for you is to give it a try on your own document. Head to `Getting started` to begin!

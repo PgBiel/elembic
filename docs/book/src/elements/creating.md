@@ -1,14 +1,16 @@
 # Creating a custom element
 
+Want to make a reusable and stylable component for your users? You can start by **creating your own element** as described below.
+
 ## First steps
 
-You can use the `element` function to create a custom element.
-It will return the **constructor** and the **data** for this element. Make sure to **export both** from your package:
+You can use the `element.declare` function to create a custom element.
+It will return the **constructor** for this element, which you should export from your package:
 
 ```rs
-#import "@preview/elembic:X.X.X" as e: element
+#import "@preview/elembic:X.X.X" as e
 
-#let (part, part-e) = element(
+#let part = e.element.declare(
   // Element name.
   "part",
 
@@ -37,13 +39,13 @@ Importantly, if you ever change the prefix (say, after a major update to your pa
 
 ## Adding fields
 
-You may want to have your element's appearance be configurable through **fields.**
+You may want to have your element's appearance be **configurable** by end users through **fields.**
 Let's add a color field to change our part's color:
 
 ```rs
-#import "@preview/elembic:X.X.X" as e: element, field
+#import "@preview/elembic:X.X.X" as e
 
-#let (part, part-e) = element(
+#let part = e.element.declare(
   "part",
   prefix: "my-package",
 
@@ -53,7 +55,7 @@ Let's add a color field to change our part's color:
   fields: (
     // Specify field name, type and default.
     // This allows us to override the color if desired.
-    field("fill", color, default: red),
+    e.field("fill", color, default: red),
   )
 )
 
@@ -73,9 +75,9 @@ By default, required fields are **positional**, although one can also force them
 Let's give it a shot:
 
 ```rs
-#import "@preview/elembic:X.X.X" as e: element, field
+#import "@preview/elembic:X.X.X" as e
 
-#let (part, part-e) = element(
+#let part = e.element.declare(
   "part",
   prefix: "my-package",
 
@@ -83,8 +85,8 @@ Let's give it a shot:
 
   fields: (
     // Force this field to be specified.
-    field("body", content, required: true),
-    field("fill", color, default: red),
+    e.field("body", content, required: true),
+    e.field("fill", color, default: red),
   )
 )
 
