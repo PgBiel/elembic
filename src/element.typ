@@ -196,9 +196,16 @@
   ) {
     // Decomposing an element inside a show rule
     it.children.at(1).value
-  } else if it.func() == sequence and it.children != () {
+  } else if it.func() == sequence and it.children.len() >= 2 {
     let last = it.children.last()
-    if last.at("label", default: none) == lbl-tag {
+    if (
+      last.at("label", default: none) == lbl-tag
+      // Workaround for 0.11.0 weirdly placing some 'meta' element sometimes
+      or sys.version < version(0, 12, 0) and {
+        last = it.children.at(it.children.len() - 2)
+        last.at("label", default: none) == lbl-tag
+      }
+    ) {
       // Decomposing a recently-constructed (but not placed) element
       last.value
     } else {
