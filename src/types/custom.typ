@@ -13,6 +13,7 @@
   typecheck: true,
   allow-unknown-fields: false,
   construct: none,
+  casts: none,
 ) = {
   assert(type(fields) == array, message: "types.declare: please specify an array of fields, creating each field with the 'field' function.")
   assert(prefix != none, message: "types.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
@@ -21,6 +22,20 @@
   assert(type(allow-unknown-fields) == bool, message: "types.declare: the 'allow-unknown-fields' argument must be a boolean.")
   assert(construct == none or type(construct) == function, message: "types.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
   assert(default == none or type(default) == function, message: "types.declare: 'default' must be none or a function receiving the constructor and returning the default.")
+  assert(
+    casts == none
+    or type(casts) == array and casts.all(
+      d => (
+        type(d) == dictionary
+        and "from" in d
+        and "with" in d
+        and d.keys().all(k => k in ("from", "with", "check"))
+        and type(d.with) == function
+        and ("check" not in d or type(d.check) == function)
+      )
+    ),
+    message: "types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): casted value => bool, with: constructor => casted value => your type)."
+  )
 
   let tid = base.unique-id("t", prefix, name)
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
@@ -65,6 +80,82 @@
     func: none,
   )
 
+  let process-casts = if casts == none {
+    none
+  } else {
+    // Trick: We assign cast to each cast-from type and create a union,
+    // and use its generated check/cast functions as our own
+    default-constructor => {
+      let typeinfos = casts.map(cast => {
+        let (res, from) = types.validate(cast.from)
+        if not res {
+          assert(false, message: "types.declare: invalid cast-from type: " + from)
+        }
+
+        let with = (cast.with)(default-constructor)
+        if type(with) != function {
+          assert(
+            false,
+            message: "types.declare: cast 'with' must receive the default constructor and return a function 'casted value => your type'. Received " + base.typename(with)
+          )
+        }
+
+        let cast-check = cast.at("check", default: none)
+        let from-cast = from.cast
+
+        types.wrap(
+          from,
+          check: from-check => if from-check == none {
+            if cast-check == none {
+              none
+            } else if from.cast == none {
+              cast-check
+            } else {
+              value => cast-check(from-cast(value))
+            }
+          } else if cast-check == none {
+            from-check
+          } else if from.cast == none {
+            value => from-check(value) and cast-check(value)
+          } else {
+            value => from-check(value) and cast-check(from-cast(value))
+          },
+
+          output: (typeid,),
+
+          cast: from-cast => if from-cast == none {
+            with
+          } else {
+            value => with(from-cast(value))
+          },
+
+          default: (),
+          fold: none,
+        )
+      })
+
+      // Accept our own typeinfo first and foremost
+      let union = base.union((typeinfo,) + typeinfos)
+
+      assert(
+        union.output == (typeid,) and union.default == () and union.fold == none,
+        message: "types.declare: internal error: cast generated invalid union: " + repr(union)
+      )
+
+      (
+        input: union.input,
+        output: union.output,
+        check: union.check,
+        cast: union.cast,
+        error: if union.error == none {
+          _ => "failed to cast to custom type '" + name + "'"
+        } else {
+          x => (union.error)(x).replace("all typechecks for union failed", "all casts to custom type '" + name + "' failed")
+        }
+      )
+    }
+  }
+
   let default-constructor(..args, __elembic_data: none, __elembic_func: auto) = {
     if __elembic_func == auto {
       __elembic_func = default-constructor
@@ -73,13 +164,9 @@
     let default-constructor = default-constructor.with(__elembic_func: __elembic_func)
     if __elembic_data != none {
       return if __elembic_data == special-data-values.get-data {
-        let typeinfo = if default == none {
-          typeinfo
-        } else {
-          (
-            ..typeinfo,
-            default: (default(default-constructor),)
-          )
+        let typeinfo = typeinfo + if process-casts != none { process-casts(default-constructor) } else { (:) }
+        if default != none {
+          typeinfo.default = (default(default-constructor),)
         }
 
         (data-kind: "custom-type-data", ..type-data, typeinfo: typeinfo, func: __elembic_func, default-constructor: default-constructor)
@@ -136,6 +223,9 @@
     (default,)
   }
 
+  if process-casts != none {
+    typeinfo += process-casts(default-constructor)
+  }
   typeinfo.default = default
   type-data.typeinfo = typeinfo
 
