@@ -6,7 +6,7 @@ You can use the `element` function to create a custom element.
 It will return the **constructor** and the **data** for this element. Make sure to **export both** from your package:
 
 ```rs
-#import "@preview/elemmic:X.X.X" as e: element
+#import "@preview/elembic:X.X.X" as e: element
 
 #let (part, part-e) = element(
   // Element name.
@@ -41,7 +41,7 @@ You may want to have your element's appearance be configurable through **fields.
 Let's add a color field to change our part's color:
 
 ```rs
-#import "@preview/elemmic:X.X.X" as e: element, field
+#import "@preview/elembic:X.X.X" as e: element, field
 
 #let (part, part-e) = element(
   "part",
@@ -64,7 +64,7 @@ Let's add a color field to change our part's color:
 #part(fill: blue)
 ```
 
-Note that omitting `default: red` would have caused an error, as Elemmic cannot infer a default value for the color type.
+Note that omitting `default: red` would have caused an error, as Elembic cannot infer a default value for the color type.
 
 However, that isn't a problem if, say, we add a **required** field with `required: true`. These fields do not need a default.
 
@@ -73,7 +73,7 @@ By default, required fields are **positional**, although one can also force them
 Let's give it a shot:
 
 ```rs
-#import "@preview/elemmic:X.X.X" as e: element, field
+#import "@preview/elembic:X.X.X" as e: element, field
 
 #let (part, part-e) = element(
   "part",

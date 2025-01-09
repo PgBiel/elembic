@@ -35,7 +35,7 @@
 // Returns ok(typeinfo), or err(error) if there is no corresponding typeinfo.
 #let validate(type_) = {
   if type(type_) == function {
-    let data = type_(__elemmic_data: base.special-data-values.get-data)
+    let data = type_(__elembic_data: base.special-data-values.get-data)
     let data-kind = data.at("data-kind", default: "unknown")
     if data-kind == "custom-type-data" {
       type_ = data.typeinfo

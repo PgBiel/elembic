@@ -1,8 +1,8 @@
 [package]
-name = "elemmic"
+name = "elembic"
 version = "0.0.1"
 compiler = "0.11.0"
-repository = "https://github.com/PgBiel/elemmic"
+repository = "https://github.com/PgBiel/elembic"
 entrypoint = "src/lib.typ"
 authors = ["PgBiel <https://github.com/PgBiel>"]
 categories = ["scripting", "utility"]

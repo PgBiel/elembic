@@ -65,14 +65,14 @@
     func: none,
   )
 
-  let default-constructor(..args, __elemmic_data: none, __elemmic_func: auto) = {
-    if __elemmic_func == auto {
-      __elemmic_func = default-constructor
+  let default-constructor(..args, __elembic_data: none, __elembic_func: auto) = {
+    if __elembic_func == auto {
+      __elembic_func = default-constructor
     }
 
-    let default-constructor = default-constructor.with(__elemmic_func: __elemmic_func)
-    if __elemmic_data != none {
-      return if __elemmic_data == special-data-values.get-data {
+    let default-constructor = default-constructor.with(__elembic_func: __elembic_func)
+    if __elembic_data != none {
+      return if __elembic_data == special-data-values.get-data {
         let typeinfo = if default == none {
           typeinfo
         } else {
@@ -82,9 +82,9 @@
           )
         }
 
-        (data-kind: "custom-type-data", ..type-data, typeinfo: typeinfo, func: __elemmic_func, default-constructor: default-constructor)
+        (data-kind: "custom-type-data", ..type-data, typeinfo: typeinfo, func: __elembic_func, default-constructor: default-constructor)
       } else {
-        assert(false, message: "types: invalid data key to constructor: " + repr(__elemmic_data))
+        assert(false, message: "types: invalid data key to constructor: " + repr(__elembic_data))
       }
     }
 
@@ -111,7 +111,7 @@
       (
         data-kind: "type-instance",
         fields: final-fields,
-        func: __elemmic_func,
+        func: __elembic_func,
         default-constructor: default-constructor,
         tid: tid,
         id: (tid: tid, name: name),
@@ -145,16 +145,16 @@
       assert(type(test-construct) == function, message: "types.declare: the 'construct' function must receive the default constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
     }
 
-    let final-constructor(..args, __elemmic_data: none) = {
-      if __elemmic_data != none {
-        return if __elemmic_data == special-data-values.get-data {
-          (data-kind: "custom-type-data", ..type-data, func: final-constructor, default-constructor: default-constructor.with(__elemmic_func: final-constructor))
+    let final-constructor(..args, __elembic_data: none) = {
+      if __elembic_data != none {
+        return if __elembic_data == special-data-values.get-data {
+          (data-kind: "custom-type-data", ..type-data, func: final-constructor, default-constructor: default-constructor.with(__elembic_func: final-constructor))
         } else {
-          assert(false, message: "types: invalid data key to constructor: " + repr(__elemmic_data))
+          assert(false, message: "types: invalid data key to constructor: " + repr(__elembic_data))
         }
       }
 
-      construct(default-constructor.with(__elemmic_func: final-constructor))(..args)
+      construct(default-constructor.with(__elembic_func: final-constructor))(..args)
     }
 
     final-constructor
@@ -162,7 +162,7 @@
     default-constructor
   }
 
-  type-data.default-constructor = default-constructor.with(__elemmic_func: final-constructor)
+  type-data.default-constructor = default-constructor.with(__elembic_func: final-constructor)
   type-data.func = final-constructor
 
   final-constructor

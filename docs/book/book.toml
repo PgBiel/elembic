@@ -3,11 +3,11 @@ authors = ["PgBiel"]
 language = "en"
 multilingual = false
 src = "src"
-title = "The Elemmic Handbook"
+title = "The Elembic Handbook"
 
 [output.html]
-git-repository-url = "https://github.com/PgBiel/elemmic"
-edit-url-template = "https://github.com/PgBiel/elemmic/edit/main/docs/book/{path}"
+git-repository-url = "https://github.com/PgBiel/elembic"
+edit-url-template = "https://github.com/PgBiel/elembic/edit/main/docs/book/{path}"
 
 [preprocessor.replace-pkg-version]
 command = "./bin/replace-pkg-version.sh"

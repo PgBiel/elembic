@@ -1,3 +1,3 @@
 # About
 
-Some basic information about Elemmic.
+Some basic information about Elembic.

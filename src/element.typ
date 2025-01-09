@@ -183,7 +183,7 @@
 // The returned 'data-kind' indicates which kind of data was retrieved.
 #let data(it) = {
   if type(it) == function {
-    it(__elemmic_data: special-data-values.get-data)
+    it(__elembic_data: special-data-values.get-data)
   } else if type(it) == dictionary and element-key in it {
     (data-kind: "element", ..it)
   } else if type(it) == dictionary and custom-type-data-key in it {
@@ -318,7 +318,7 @@
   let i = 0
   for filter in filters {
     if type(filter) == function {
-      filter = filter(__elemmic_data: special-data-values.get-where)
+      filter = filter(__elembic_data: special-data-values.get-where)
     }
 
     if type(filter) != dictionary or filter-key not in filter {
@@ -1282,19 +1282,19 @@
     func: none,
   )
 
-  let default-constructor(..args, __elemmic_data: none, __elemmic_func: auto) = {
-    if __elemmic_func == auto {
-      __elemmic_func = default-constructor
+  let default-constructor(..args, __elembic_data: none, __elembic_func: auto) = {
+    if __elembic_func == auto {
+      __elembic_func = default-constructor
     }
 
-    let default-constructor = default-constructor.with(__elemmic_func: __elemmic_func)
-    if __elemmic_data != none {
-      return if __elemmic_data == special-data-values.get-data {
-        (data-kind: "element", ..elem-data, func: __elemmic_func, default-constructor: default-constructor)
-      } else if __elemmic_data == special-data-values.get-where {
+    let default-constructor = default-constructor.with(__elembic_func: __elembic_func)
+    if __elembic_data != none {
+      return if __elembic_data == special-data-values.get-data {
+        (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor)
+      } else if __elembic_data == special-data-values.get-where {
         where(..args)
       } else {
-        assert(false, message: "element: invalid data key to constructor: " + repr(__elemmic_data))
+        assert(false, message: "element: invalid data key to constructor: " + repr(__elembic_data))
       }
     }
 
@@ -1355,7 +1355,7 @@
             data-kind: "element-instance",
             body: none,
             fields: constructed-fields,
-            func: __elemmic_func,
+            func: __elembic_func,
             default-constructor: default-constructor,
             eid: eid,
             fields-known: true,
@@ -1406,7 +1406,7 @@
       data-kind: "element-instance",
       body: inner,
       fields: args,
-      func: __elemmic_func,
+      func: __elembic_func,
       default-constructor: default-constructor,
       eid: eid,
       fields-known: false,
@@ -1420,18 +1420,18 @@
       assert(type(test-construct) == function, message: "element.declare: the 'construct' function must receive original constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
     }
 
-    let final-constructor(..args, __elemmic_data: none) = {
-      if __elemmic_data != none {
-        return if __elemmic_data == special-data-values.get-data {
-          (data-kind: "element", ..elem-data, func: final-constructor, default-constructor: default-constructor.with(__elemmic_func: final-constructor))
-        } else if __elemmic_data == special-data-values.get-where {
+    let final-constructor(..args, __elembic_data: none) = {
+      if __elembic_data != none {
+        return if __elembic_data == special-data-values.get-data {
+          (data-kind: "element", ..elem-data, func: final-constructor, default-constructor: default-constructor.with(__elembic_func: final-constructor))
+        } else if __elembic_data == special-data-values.get-where {
           where(..args)
         } else {
-          assert(false, message: "element: invalid data key to constructor: " + repr(__elemmic_data))
+          assert(false, message: "element: invalid data key to constructor: " + repr(__elembic_data))
         }
       }
 
-      construct(default-constructor.with(__elemmic_func: final-constructor))(..args)
+      construct(default-constructor.with(__elembic_func: final-constructor))(..args)
     }
 
     final-constructor
