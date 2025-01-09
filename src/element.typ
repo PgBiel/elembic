@@ -188,6 +188,8 @@
     (data-kind: "element", ..it)
   } else if type(it) == dictionary and custom-type-data-key in it {
     (data-kind: "custom-type-data", ..it)
+  } else if type(it) == dictionary and custom-type-key in it {
+    it.at(custom-type-key)
   } else if type(it) != content {
     (data-kind: "unknown", body: it, fields: (:), func: none, eid: none, fields-known: false, valid: false)
   } else if (
