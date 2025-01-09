@@ -439,42 +439,42 @@
 }
 
 // Apply set and revoke rules to the current per-element data.
-#let apply-rules(data, rules) = {
+#let apply-rules(rules, elements: none) = {
   for rule in rules {
     let kind = rule.kind
     if kind == "set" {
       let (element, args) = rule
       let (eid, default-data, fields) = element
-      if eid in data {
-        data.at(eid).chain.push(args)
+      if eid in elements {
+        elements.at(eid).chain.push(args)
       } else {
-        data.insert(eid, (..default-data, chain: (args,)))
+        elements.insert(eid, (..default-data, chain: (args,)))
       }
 
       if rule.name != none {
-        let element-data = data.at(eid)
+        let element-data = elements.at(eid)
         let index = element-data.chain.len() - 1
 
         // Lazily fill the data chain with 'none'
-        data.at(eid).data-chain += (none,) * (index - element-data.data-chain.len())
-        data.at(eid).data-chain.push((kind: "set", name: rule.name))
-        data.at(eid).names.insert(rule.name, true)
+        elements.at(eid).data-chain += (none,) * (index - element-data.data-chain.len())
+        elements.at(eid).data-chain.push((kind: "set", name: rule.name))
+        elements.at(eid).names.insert(rule.name, true)
       }
 
       if fields.foldable-fields != (:) and args.keys().any(n => n in fields.foldable-fields) {
         // A foldable field was specified in this set rule, so we need to record the fold
         // data in the corresponding data structures separately for later.
-        let element-data = data.at(eid)
+        let element-data = elements.at(eid)
         let index = element-data.chain.len() - 1
         for (field-name, fold-data) in fields.foldable-fields {
           if field-name in args {
             let value = args.at(field-name)
             let value-data = (index: index, name: rule.name, value: value)
             if field-name in element-data.fold-chain {
-              data.at(eid).fold-chain.at(field-name).values.push(value)
-              data.at(eid).fold-chain.at(field-name).data.push(value-data)
+              elements.at(eid).fold-chain.at(field-name).values.push(value)
+              elements.at(eid).fold-chain.at(field-name).data.push(value-data)
             } else {
-              data.at(eid).fold-chain.insert(
+              elements.at(eid).fold-chain.insert(
                 field-name,
                 (
                   folder: fold-data.folder,
@@ -488,30 +488,30 @@
         }
       }
     } else if kind == "revoke" {
-      for (name, _) in data {
+      for (name, _) in elements {
         // Can only revoke what's before us.
         // If this element has no rules with this name, there is nothing to revoke;
         // we shouldn't revoke names that come after us (inner rules).
         // Note that this potentially includes named revokes as well.
-        if rule.revoking in data.at(name).names {
-          data.at(name).revoke-chain.push((kind: "revoke", name: rule.name, index: data.at(name).chain.len(), revoking: rule.revoking))
+        if rule.revoking in elements.at(name).names {
+          elements.at(name).revoke-chain.push((kind: "revoke", name: rule.name, index: elements.at(name).chain.len(), revoking: rule.revoking))
 
           if rule.name != none {
-            data.at(name).names.insert(rule.name, true)
+            elements.at(name).names.insert(rule.name, true)
           }
         }
       }
     } else if kind == "reset" {
       // Whether the list of elements that this reset applies to is restricted.
       let filtering = rule.eids != ()
-      for (name, element-data) in data {
+      for (name, element-data) in elements {
         // Can only revoke what's before us.
         // If this element has no rules, no need to add a reset.
         if (not filtering or name in rule.eids) and element-data.chain != () {
-          data.at(name).revoke-chain.push((kind: "reset", name: rule.name, index: element-data.chain.len()))
+          elements.at(name).revoke-chain.push((kind: "reset", name: rule.name, index: element-data.chain.len()))
 
           if rule.name != none {
-            data.at(name).names.insert(rule.name, true)
+            elements.at(name).names.insert(rule.name, true)
           }
         }
       }
@@ -520,7 +520,7 @@
     }
   }
 
-  data
+  (elements: elements)
 }
 
 // Prepare rule(s), returning a function `doc => ...` to be used in
@@ -778,7 +778,7 @@
           message: "element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
         )
 
-        global-data.elements = apply-rules(global-data.elements, rules)
+        global-data += apply-rules(rules, elements: global-data.elements)
 
         chain.push(global-data)
         chain
@@ -819,7 +819,7 @@
           }
         }
 
-        global-data.elements = apply-rules(global-data.elements, rules)
+        global-data += apply-rules(rules, elements: global-data.elements)
 
         set bibliography(title: previous-bib-title)
         show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
@@ -869,7 +869,7 @@
           }
         }
 
-        global-data.elements = apply-rules(global-data.elements, rules)
+        global-data += apply-rules(rules, elements: global-data.elements)
 
         set bibliography(title: first-bib-title)
         show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
