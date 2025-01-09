@@ -574,6 +574,7 @@
   doc => {
     let rule = rule
     let rules = rules
+    let mode = rule.mode
 
     // If there are two 'show:' in a row, flatten into a single set of rules
     // instead of running this function multiple times, reducing the
@@ -746,8 +747,21 @@
         rules.push(inner-rule)
       }
 
+      // We assume 'apply' already checked its own rules.
+      // Therefore, we only need to fold a single time.
+      // Don't check all rules every time again.
+      if (
+        inner-rule.mode == style-modes.stateful
+        or mode != style-modes.stateful and inner-rule.mode == style-modes.leaky
+        or mode == auto
+      ) {
+        // Prioritize more explicit modes:
+        // stateful > leaky > normal
+        mode = inner-rule.mode
+      }
+
       // Convert this into an 'apply' rule
-      rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: auto)
+      rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: mode)
 
       // Place what's inside, don't place the context block that would run our code again
       doc = last.value.doc
@@ -763,26 +777,6 @@
           doc = data.join() + doc
         }
       }
-    }
-
-    let mode = if rule.mode != auto {
-      // This is more of an optimization, but, to prevent problems when flattening
-      // 'apply', we expect it to automatically pass its mode to its children.
-      rule.mode
-    } else {
-      rules.fold(auto, (mode, rule) => {
-        if (
-          rule.mode == style-modes.stateful
-          or mode != style-modes.stateful and rule.mode == style-modes.leaky
-          or mode != auto
-        ) {
-          // Prioritize more explicit modes:
-          // stateful > leaky > normal
-          rule.mode
-        } else {
-          mode
-        }
-      })
     }
 
     // Stateful mode: no context, just push in a state at the start of the scope
@@ -951,22 +945,32 @@
 
       if rule-data.kind == "apply" {
         // Flatten 'apply'
-        if mode == auto {
-          // Don't touch its own rules
-          rule-data.rules
-        } else {
-          // Override rule modes
-          rule-data.rules.map(r => { if r.mode != mode { r.mode = mode }; r })
-        }
-      } else if mode == auto or rule-data.mode == mode {
-        (rule-data,)
+        rule-data.rules
       } else {
-        // Forcefully change children's modes if requested
-        rule-data.mode = mode
         (rule-data,)
       }
     }
   ).sum(default: ())
+
+  if mode == auto {
+    mode = rules.fold(auto, (mode, rule) => {
+      if (
+        rule.mode == style-modes.stateful
+        or mode != style-modes.stateful and rule.mode == style-modes.leaky
+        or mode == auto
+      ) {
+        // Prioritize more explicit modes:
+        // stateful > leaky > normal
+        rule.mode
+      } else {
+        mode
+      }
+    })
+  }
+
+  if mode != auto {
+    rules = rules.map(r => r + (mode: mode))
+  }
 
   // Set this apply rule's mode as an optimization, but note that we have forcefully altered
   // its children's modes above.
