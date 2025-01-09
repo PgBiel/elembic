@@ -678,7 +678,7 @@
     // understands that show rules on spacing may cause unexpected behavior.
     let potential-doc = [#doc]
     let wrappers = ()
-    let max-depth = 100
+    let max-depth = 150
     // Acceptable content types for set rule lifting.
     // These are content types that are leaves and we usually don't expect them to
     // be replaced in a show rule by an actual custom element.
@@ -691,7 +691,7 @@
     let loop-children = ()
     let loop-last = none
 
-    while true {
+    while max-depth > 0 {
       // Child is #{
       //    set something(abc: def)
       //    show something: else
