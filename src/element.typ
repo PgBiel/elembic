@@ -1212,8 +1212,13 @@
     }
 
     for (field-name, fold-data) in fold-chain {
-      fold-chain.at(field-name).data = fold-data.data.filter(d => d.name == none or d.name not in active-revokes or d.index >= active-revokes.at(d.name))
-      fold-chain.at(field-name).values = fold-chain.at(field-name).data.map(d => d.value)
+      let filtered-data = fold-data.data.filter(d => d.name == none or d.name not in active-revokes or d.index >= active-revokes.at(d.name))
+      if filtered-data == () {
+        _ = fold-chain.remove(field-name)
+      } else {
+        fold-chain.at(field-name).data = filtered-data
+        fold-chain.at(field-name).values = filtered-data.map(d => d.value)
+      }
     }
   }
 
