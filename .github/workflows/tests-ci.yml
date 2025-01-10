@@ -70,7 +70,10 @@ jobs:
 
       - name: ⚠️ Skip incompatible unit tests (Typst v0.11)
         if: ${{ matrix.typst-version == 'v0.11.0' || matrix.typst-version == 'v0.11.1' }}
-        run: rm -rf test/unit/elements/show-body-order
+        run: |
+          rm -rf test/unit/elements/show-body-order
+          rm -rf test/unit/elements/reference/simple
+          rm -rf test/unit/elements/reference/contextual
 
       - name: 🛠️ Run unit tests
         run: typst-test run
