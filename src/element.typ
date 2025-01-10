@@ -1232,6 +1232,7 @@
   prefix: none,
   typecheck: true,
   allow-unknown-fields: false,
+  template: none,
   construct: none,
   synthesize: none,
   contextual: auto,
@@ -1242,7 +1243,8 @@
   assert(type(prefix) == str, message: "element.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
   assert(type(typecheck) == bool, message: "element.declare: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
   assert(type(allow-unknown-fields) == bool, message: "element.declare: the 'allow-unknown-fields' argument must be a boolean.")
-  assert(synthesize == none or type(synthesize) == function, message: "element:.declare 'synthesize' must be 'none' or a function element fields => element fields.")
+  assert(template == none or type(template) == function, message: "element.declare: 'template' must be 'none' or a function displayed element => content (usually set rules applied on the displayed element). This is used to add a set of overridable set rules to the element, such as paragraph settings.")
+  assert(synthesize == none or type(synthesize) == function, message: "element.declare: 'synthesize' must be 'none' or a function element fields => element fields.")
   assert(contextual == auto or type(contextual) == bool, message: "element.declare: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
   assert(construct == none or type(construct) == function, message: "element.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
 
@@ -1304,6 +1306,7 @@
     fields: fields,
     typecheck: typecheck,
     allow-unknown-fields: allow-unknown-fields,
+    template: template,
     default-constructor: none,
     func: none,
   )
@@ -1428,7 +1431,7 @@
       }#lbl-get]
     }
 
-    inner + [#metadata((
+    let tag = [#metadata((
       data-kind: "element-instance",
       body: inner,
       fields: args,
@@ -1438,6 +1441,12 @@
       fields-known: false,
       valid: true
     ))#lbl-tag]
+
+    if template != none {
+      inner = template[#inner#tag]
+    }
+
+    [#inner#tag]
   }
 
   let final-constructor = if construct != none {
