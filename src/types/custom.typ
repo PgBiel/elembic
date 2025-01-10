@@ -5,6 +5,32 @@
 
 #let custom-type-version = 1
 
+// Default folding procedure for custom types.
+// Combines each inner type individually.
+#let auto-fold(foldable-fields) = if foldable-fields == (:) {
+  // No fields to fold, so 'inner' always fully overwrites 'outer'.
+  // In that case, we can just sum inner with outer, adding its fields
+  // on top.
+  auto
+} else {
+  (outer, inner) => {
+    let combined = outer + inner
+
+    for (field-name, fold-data) in foldable-fields {
+      if field-name in inner {
+        let outer = outer.at(field-name, default: fold-data.default)
+        if fold-data.folder == auto {
+          combined.at(field-name) = outer + inner.at(field-name)
+        } else {
+          combined.at(field-name) = (fold-data.folder)(outer, inner.at(field-name))
+        }
+      }
+    }
+
+    combined
+  }
+}
+
 #let declare(
   name,
   fields: none,
@@ -14,6 +40,7 @@
   allow-unknown-fields: false,
   construct: none,
   casts: none,
+  fold: none,
 ) = {
   assert(type(fields) == array, message: "types.declare: please specify an array of fields, creating each field with the 'field' function.")
   assert(prefix != none, message: "types.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
@@ -36,10 +63,12 @@
     ),
     message: "types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): casted value => bool, with: constructor => casted value => your type)."
   )
+  assert(fold == none or fold == auto or type(fold) == function, message: "types.declare: 'fold' must be 'none' (no folding), 'auto' (fold each field individually) or a function 'default constructor => auto (same as (a, b) => a + b but more efficient) or function (outer, inner) => combined value'.")
 
   let tid = base.unique-id("t", prefix, name)
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
   let (all-fields, foldable-fields) = fields
+  let auto-fold = if fold == auto { auto-fold(foldable-fields) } else { none }
 
   let parse-args = field-internals.generate-arg-parser(
     fields: fields,
@@ -169,6 +198,16 @@
           typeinfo.default = (default(default-constructor),)
         }
 
+        if auto-fold != none {
+          typeinfo.fold = auto-fold
+        } else if type(fold) == function {
+          let fold = fold(default-constructor)
+          if fold != auto and type(fold) != function {
+            assert(false, message: "types: custom type did not specify a valid fold, must be a function default constructor => value, got " + base.typename(fold))
+          }
+          typeinfo.fold = fold
+        }
+
         (data-kind: "custom-type-data", ..type-data, typeinfo: typeinfo, func: __elembic_func, default-constructor: default-constructor)
       } else {
         assert(false, message: "types: invalid data key to constructor: " + repr(__elembic_data))
@@ -223,10 +262,23 @@
     (default,)
   }
 
+  fold = if auto-fold != none {
+    auto-fold
+  } else if type(fold) == function {
+    let fold = fold(default-constructor)
+    if fold != auto and type(fold) != function {
+      assert(false, message: "types.declare: a valid fold was not specified, must be a function default constructor => value, got " + base.typename(fold))
+    }
+    fold
+  } else {
+    none
+  }
+
   if process-casts != none {
     typeinfo += process-casts(default-constructor)
   }
   typeinfo.default = default
+  typeinfo.fold = fold
   type-data.typeinfo = typeinfo
 
   let final-constructor = if construct != none {
