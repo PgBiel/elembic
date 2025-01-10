@@ -8,7 +8,19 @@
 #let lbl-show-head = "__custom_element_shown_"
 
 // Prefix for counters of elements.
+// This is only used if the element isn't 'refable'.
 #let lbl-counter-head = "__custom_element_counter_"
+
+// Prefix for the figure kind used by 'refable' elements.
+// This is not to be confused with figures containing the elements.
+// This is the kind for a hidden figure used for ref purposes.
+#let lbl-ref-figure-kind-head = "__custom_element_refable_"
+
+// Custom label applied to the hidden reference figure when the user specifies their own label.
+#let lbl-ref-figure-label-head = "__custom_element_ref_figure_label_"
+
+// Label for the hidden figure used for references.
+#let lbl-ref-figure = <__custom_element_ref_figure>
 
 // Label for context blocks which have access to the virtual stylechain.
 #let lbl-get = <__custom_element_get>
@@ -255,6 +267,44 @@
     info.counter
   } else {
     assert(false, message: "e.counter: this is not an element")
+  }
+}
+
+#let ref_(..args) = {
+  assert(args.pos().len() > 0, message: "element.ref: expected at least one positional argument (reference or label)")
+  let first-arg = args.pos().first()
+
+  set ref(..args.named())
+  show ref: it => {
+    if (
+      it.element == none
+      or it.element.has("label") and str(it.element.label).starts-with(lbl-ref-figure-label-head)
+      or type(it.target) != label
+    ) {
+      // This is known to be a reference to a custom element
+      // (or the target is not something we can deal with, i.e. not a label)
+      return it
+    }
+
+    let info = data(it.element)
+    if type(info) == dictionary and "data-kind" in info and info.data-kind == "element-instance" {
+      let supplement = if it.has("supplement") and it.supplement != none {
+        (supplement: it.supplement)
+      } else {
+        (:)
+      }
+
+      // Convert into a reference towards the reference figure
+      ref(label(lbl-ref-figure-label-head + str(it.target)), ..supplement)
+    } else {
+      it
+    }
+  }
+
+  if type(first-arg) == content and first-arg.func() == ref {
+    first-arg
+  } else {
+    ref(first-arg)
   }
 }
 
@@ -1255,6 +1305,8 @@
   template: none,
   construct: none,
   count: counter.step,
+  labelable: true,
+  reference: none,
   synthesize: none,
   contextual: auto,
 ) = {
@@ -1269,6 +1321,16 @@
   assert(synthesize == none or type(synthesize) == function, message: "element.declare: 'synthesize' must be 'none' or a function element fields => element fields.")
   assert(contextual == auto or type(contextual) == bool, message: "element.declare: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
   assert(construct == none or type(construct) == function, message: "element.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
+  assert(type(labelable) == bool, message: "element.declare: 'labelable' must be a boolean (true to enable the special 'label' constructor argument, false to disable it)")
+  assert(
+    reference == none
+    or type(reference) == dictionary
+      and reference.keys().all(x => x in ("supplement", "numbering"))
+      and ("supplement", "numbering").all(x => x in reference)
+      and (reference.supplement == none or type(reference.supplement) in (str, content, function))
+      and (reference.numbering == none or type(reference.numbering) in (str, function)),
+    message: "element.declare: 'reference' must be 'none' or a dictionary (supplement: \"Name\" or [Name] or function it => ..., numbering: \"1.\" or function it => (str / function))."
+  )
 
   if contextual == auto {
     // Provide separate context for synthesize.
@@ -1277,9 +1339,23 @@
 
   let eid = base.unique-id("e", prefix, name)
   let lbl-show = label(lbl-show-head + eid)
-  let counter = counter(lbl-counter-head + eid)
-  let count = if count == none { none } else { count(counter) }
+  let ref-figure-kind = if reference == none { none } else { lbl-ref-figure-kind-head + eid }
+  // Use same counter as hidden figure for ease of use
+  let counter-key = if reference == none { lbl-counter-head + eid } else { figure.where(kind: ref-figure-kind) }
+  let element-counter = counter(counter-key)
+  let count = if count == none { none } else { count(element-counter) }
   let count-needs-fields = type(count) == function
+
+  let supplement-type = if reference == none {
+    none
+  } else {
+    type(reference.supplement)
+  }
+  let numbering-type = if reference == none {
+    none
+  } else {
+    type(reference.numbering)
+  }
 
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
   let (all-fields,) = fields
@@ -1323,7 +1399,7 @@
     get: get-rule,
     where: where,
     sel: lbl-show,
-    counter: counter,
+    counter: element-counter,
     parse-args: parse-args,
     default-data: default-data,
     default-global-data: default-global-data,
@@ -1337,7 +1413,11 @@
     func: none,
   )
 
-  let default-constructor(..args, __elembic_data: none, __elembic_func: auto) = {
+  // Sentinel for 'unspecified value'
+  let _missing() = {}
+  let std-label = label
+
+  let default-constructor(..args, __elembic_data: none, __elembic_func: auto, label: _missing) = {
     if __elembic_func == auto {
       __elembic_func = default-constructor
     }
@@ -1347,13 +1427,29 @@
       return if __elembic_data == special-data-values.get-data {
         (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor)
       } else if __elembic_data == special-data-values.get-where {
-        where(..args)
+        if label == _missing {
+          where(..args)
+        } else {
+          where(..args, label: label)
+        }
       } else {
         assert(false, message: "element: invalid data key to constructor: " + repr(__elembic_data))
       }
     }
 
+    if not labelable and label != _missing {
+      // Also parse label as a field if we don't want element to be labelable
+      args = arguments(..args, label: label)
+    }
+
     let args = parse-args(args, include-required: true)
+
+    let (inner-label, ref-label) = if labelable and label != _missing and label != none {
+      assert(type(label) == std-label, message: "element: expected label for 'label', found " + str(type(label)))
+      (label, std-label(lbl-ref-figure-label-head + str(label)))
+    } else {
+      (none, none)
+    }
 
     // Step the counter early if we don't need additional context
     let early-step = if not count-needs-fields { count }
@@ -1417,9 +1513,43 @@
             func: __elembic_func,
             default-constructor: default-constructor,
             eid: eid,
+            reference: reference,
             fields-known: true,
             valid: true
           )
+
+          let ref-figure = (tag-metadata, synthesized-fields) => {
+            let ref-figure = [#figure(
+              supplement: if supplement-type in (str, content, none) {
+                [#reference.supplement]
+              } else if supplement-type == function {
+                (reference.supplement)(synthesized-fields)
+              } else {
+                []
+              },
+
+              numbering: if numbering-type == str {
+                reference.numbering
+              } else if numbering-type == function {
+                let numbering = (reference.numbering)(synthesized-fields)
+                assert(type(numbering) in (str, function), message: "element: 'reference.numbering' must be a function fields => numbering (a string or a function), but returned " + str(type(numbering)))
+                numbering
+              } else {
+                none
+              },
+
+              kind: ref-figure-kind,
+            )[#[]#tag-metadata#lbl-tag]#ref-label]
+
+            let tagged-figure = [#[#ref-figure#tag-metadata#lbl-tag]#lbl-ref-figure]
+
+            show figure: none
+
+            // Ensure we only step as much as 'count' allows
+            counter(figure.where(kind: ref-figure-kind)).update(n => n - 1)
+
+            tagged-figure
+          }
 
           if contextual {
             // Use context for synthesize as well
@@ -1430,8 +1560,9 @@
                 synthesize(constructed-fields)
               }
 
-              let tag = tag
-              tag.fields = synthesized-fields
+              if label != none {
+                synthesized-fields.label = label
+              }
 
               if count-needs-fields {
                 count(synthesized-fields)
@@ -1440,14 +1571,30 @@
                 context {
                   let body = display(synthesized-fields)
                   let tag = tag
+                  tag.fields = synthesized-fields
                   tag.body = body
-                  [#[#body#metadata(tag)]#lbl-show]
+                  let tag-metadata = metadata(tag)
+
+                  if reference != none {
+                    ref-figure(tag-metadata, synthesized-fields)
+                  }
+
+                  let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
+                  [#[#labeled-body#tag-metadata]#lbl-show]
                 }
               } else {
                 let body = display(synthesized-fields)
                 let tag = tag
+                tag.fields = synthesized-fields
                 tag.body = body
-                [#[#body#metadata(tag)]#lbl-show]
+                let tag-metadata = metadata(tag)
+
+                if reference != none {
+                  ref-figure(tag-metadata, synthesized-fields)
+                }
+
+                let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
+                [#[#labeled-body#tag-metadata]#lbl-show]
               }
             }
           } else {
@@ -1456,7 +1603,10 @@
             } else {
               synthesize(constructed-fields)
             }
-            tag.fields = synthesized-fields
+
+            if label != none {
+              synthesized-fields.label = label
+            }
 
             if count-needs-fields {
               count(synthesized-fields)
@@ -1465,14 +1615,29 @@
               context {
                 let body = display(synthesized-fields)
                 let tag = tag
+                tag.fields = synthesized-fields
                 tag.body = body
-                [#[#body#metadata(tag)]#lbl-show]
+                let tag-metadata = metadata(tag)
+
+                if reference != none {
+                  ref-figure(synthesized-fields)
+                }
+
+                let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
+                [#[#labeled-body#tag-metadata]#lbl-show]
               }
             } else {
               let body = display(synthesized-fields)
-              let tag = tag
+              tag.fields = synthesized-fields
               tag.body = body
-              [#[#body#metadata(tag)]#lbl-show]
+              let tag-metadata = metadata(tag)
+
+              if reference != none {
+                ref-figure(tag-metadata, synthesized-fields)
+              }
+
+              let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
+              [#[#labeled-body#tag-metadata]#lbl-show]
             }
           }
         }
@@ -1493,7 +1658,7 @@
       func: __elembic_func,
       default-constructor: default-constructor,
       eid: eid,
-      counter: counter,
+      counter: element-counter,
       fields-known: false,
       valid: true
     ))#lbl-tag]
