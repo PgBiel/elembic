@@ -7,6 +7,9 @@
 // Prefix for the labels added to shown elements.
 #let lbl-show-head = "__custom_element_shown_"
 
+// Prefix for counters of elements.
+#let lbl-counter-head = "__custom_element_counter_"
+
 // Label for context blocks which have access to the virtual stylechain.
 #let lbl-get = <__custom_element_get>
 
@@ -236,6 +239,23 @@
   }
 
   (:)
+}
+
+// Obtain an element's counter.
+//
+// USAGE:
+//
+// #context {
+//   [The element counter value is #e.counter(elem).get().first()]
+// }
+#let counter_(elem) = {
+  let info = data(elem)
+
+  if type(info) == dictionary and "data-kind" in info and info.data-kind == "element" {
+    info.counter
+  } else {
+    assert(false, message: "e.counter: this is not an element")
+  }
 }
 
 // Changes stateful mode settings within a certain scope.
@@ -1234,6 +1254,7 @@
   allow-unknown-fields: false,
   template: none,
   construct: none,
+  count: counter.step,
   synthesize: none,
   contextual: auto,
 ) = {
@@ -1244,6 +1265,7 @@
   assert(type(typecheck) == bool, message: "element.declare: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
   assert(type(allow-unknown-fields) == bool, message: "element.declare: the 'allow-unknown-fields' argument must be a boolean.")
   assert(template == none or type(template) == function, message: "element.declare: 'template' must be 'none' or a function displayed element => content (usually set rules applied on the displayed element). This is used to add a set of overridable set rules to the element, such as paragraph settings.")
+  assert(count == none or type(count) == function, message: "element.declare: 'count' must be 'none', a function counter => counter step/update element, or a function counter => final fields => counter step/update element.")
   assert(synthesize == none or type(synthesize) == function, message: "element.declare: 'synthesize' must be 'none' or a function element fields => element fields.")
   assert(contextual == auto or type(contextual) == bool, message: "element.declare: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
   assert(construct == none or type(construct) == function, message: "element.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
@@ -1255,6 +1277,9 @@
 
   let eid = base.unique-id("e", prefix, name)
   let lbl-show = label(lbl-show-head + eid)
+  let counter = counter(lbl-counter-head + eid)
+  let count = if count == none { none } else { count(counter) }
+  let count-needs-fields = type(count) == function
 
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
   let (all-fields,) = fields
@@ -1298,6 +1323,7 @@
     get: get-rule,
     where: where,
     sel: lbl-show,
+    counter: counter,
     parse-args: parse-args,
     default-data: default-data,
     default-global-data: default-global-data,
@@ -1328,7 +1354,11 @@
     }
 
     let args = parse-args(args, include-required: true)
-    let inner = context {
+
+    // Step the counter early if we don't need additional context
+    let early-step = if not count-needs-fields { count }
+
+    let inner = early-step + context {
       let previous-bib-title = bibliography.title
       [#context {
         set bibliography(title: previous-bib-title)
@@ -1399,13 +1429,26 @@
               } else {
                 synthesize(constructed-fields)
               }
-              let body = display(synthesized-fields)
 
               let tag = tag
               tag.fields = synthesized-fields
-              tag.body = body
 
-              [#[#body#metadata(tag)]#lbl-show]
+              if count-needs-fields {
+                count(synthesized-fields)
+
+                // Wrap in additional context so the counter step is detected
+                context {
+                  let body = display(synthesized-fields)
+                  let tag = tag
+                  tag.body = body
+                  [#[#body#metadata(tag)]#lbl-show]
+                }
+              } else {
+                let body = display(synthesized-fields)
+                let tag = tag
+                tag.body = body
+                [#[#body#metadata(tag)]#lbl-show]
+              }
             }
           } else {
             let synthesized-fields = if synthesize == none {
@@ -1413,12 +1456,24 @@
             } else {
               synthesize(constructed-fields)
             }
-            let body = display(synthesized-fields)
-
             tag.fields = synthesized-fields
-            tag.body = body
 
-            [#[#body#metadata(tag)]#lbl-show]
+            if count-needs-fields {
+              count(synthesized-fields)
+
+              // Wrap in additional context so the counter step is detected
+              context {
+                let body = display(synthesized-fields)
+                let tag = tag
+                tag.body = body
+                [#[#body#metadata(tag)]#lbl-show]
+              }
+            } else {
+              let body = display(synthesized-fields)
+              let tag = tag
+              tag.body = body
+              [#[#body#metadata(tag)]#lbl-show]
+            }
           }
         }
 
@@ -1438,6 +1493,7 @@
       func: __elembic_func,
       default-constructor: default-constructor,
       eid: eid,
+      counter: counter,
       fields-known: false,
       valid: true
     ))#lbl-tag]
