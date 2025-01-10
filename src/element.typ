@@ -1289,9 +1289,16 @@
   }#lbl-get]
 }
 
-// Obtain a Typst selector to use to match this element in show rules.
-#let selector(elem) = {
-  data(elem).sel
+// Obtain a Typst selector to use to match this element in show rules or in the outline.
+#let selector(elem, outline: false) = {
+  if outline {
+    let elem-data = data(elem)
+    assert("outline-sel" in elem-data, message: "element.selector: this isn't a valid element")
+    assert(elem-data.outline-sel != none, message: "element.selector: this element isn't outlinable\n  hint: try asking its author to define it as such with 'outline: auto', 'outline: (caption: [...])' or 'outline: (caption: it => ...)'")
+    elem-data.outline-sel
+  } else {
+    data(elem).sel
+  }
 }
 
 // Create an element with the given name and constructor.
@@ -1307,6 +1314,7 @@
   count: counter.step,
   labelable: true,
   reference: none,
+  outline: none,
   synthesize: none,
   contextual: auto,
 ) = {
@@ -1331,6 +1339,14 @@
       and (reference.numbering == none or type(reference.numbering) in (str, function)),
     message: "element.declare: 'reference' must be 'none' or a dictionary (supplement: \"Name\" or [Name] or function it => ..., numbering: \"1.\" or function it => (str / function))."
   )
+  assert(
+    outline == none
+    or outline == auto
+    or type(outline) == dictionary
+      and "caption" in outline,
+    message: "element.declare: 'outline' must be 'none', 'auto' (to use data from 'reference') or a dictionary with 'caption'."
+  )
+  assert(outline != auto or reference != none, message: "element.declare: if 'outline' is set to 'auto', 'reference' must be specified and not be 'none'.")
 
   if contextual == auto {
     // Provide separate context for synthesize.
@@ -1339,7 +1355,7 @@
 
   let eid = base.unique-id("e", prefix, name)
   let lbl-show = label(lbl-show-head + eid)
-  let ref-figure-kind = if reference == none { none } else { lbl-ref-figure-kind-head + eid }
+  let ref-figure-kind = if reference == none and outline == none { none } else { lbl-ref-figure-kind-head + eid }
   // Use same counter as hidden figure for ease of use
   let counter-key = lbl-counter-head + eid
   let element-counter = counter(counter-key)
@@ -1355,6 +1371,11 @@
     none
   } else {
     type(reference.numbering)
+  }
+  let caption-type = if outline == none or outline == auto {
+    none
+  } else {
+    type(outline.caption)
   }
 
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
@@ -1399,6 +1420,7 @@
     get: get-rule,
     where: where,
     sel: lbl-show,
+    outline-sel: if outline == none { none } else { figure.where(kind: ref-figure-kind) },
     counter: element-counter,
     parse-args: parse-args,
     default-data: default-data,
@@ -1529,10 +1551,22 @@
               none
             }
 
-            let number = element-counter.display(numbering)
+            let number = if numbering == none { none } else { element-counter.display(numbering) }
+
+            let caption = if caption-type == function {
+              (caption: (outline.caption)(synthesized-fields))
+            } else if caption-type in (str, content) {
+              (caption: [#outline.caption])
+            } else if outline == auto {
+              // Add some caption so it is displayed,
+              // but remove useless separator
+              (caption: figure.caption(separator: "")[])
+            } else {
+              (:)
+            }
 
             let ref-figure = [#figure(
-              supplement: if supplement-type in (str, content, none) {
+              supplement: if supplement-type in (str, content) {
                 [#reference.supplement]
               } else if supplement-type == function {
                 (reference.supplement)(synthesized-fields)
@@ -1540,9 +1574,11 @@
                 []
               },
 
-              numbering: _ => number,
+              numbering: if number == none { none } else { _ => number },
 
               kind: ref-figure-kind,
+
+              ..caption
             )[#[]#tag-metadata#lbl-tag]#ref-label]
 
             let tagged-figure = [#[#ref-figure#tag-metadata#lbl-tag]#lbl-ref-figure]
@@ -1576,7 +1612,7 @@
                   tag.body = body
                   let tag-metadata = metadata(tag)
 
-                  if reference != none {
+                  if reference != none or outline != none {
                     ref-figure(tag-metadata, synthesized-fields)
                   }
 
@@ -1590,7 +1626,7 @@
                 tag.body = body
                 let tag-metadata = metadata(tag)
 
-                if reference != none {
+                if reference != none or outline != none {
                   ref-figure(tag-metadata, synthesized-fields)
                 }
 
@@ -1620,7 +1656,7 @@
                 tag.body = body
                 let tag-metadata = metadata(tag)
 
-                if reference != none {
+                if reference != none or outline != none {
                   ref-figure(synthesized-fields)
                 }
 
@@ -1633,7 +1669,7 @@
               tag.body = body
               let tag-metadata = metadata(tag)
 
-              if reference != none {
+              if reference != none or outline != none {
                 ref-figure(tag-metadata, synthesized-fields)
               }
 
