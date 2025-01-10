@@ -234,7 +234,7 @@
 #let smart(type_) = union(type(auto), type_)
 
 // Force the type to only accept its outputs (disallow casting).
-// Also disables folding.
+// Folding is kept if possible.
 #let exact(type_) = {
   let (res, type_) = validate(type_)
   if not res {
@@ -247,10 +247,16 @@
     union(..type_.data.map(exact))
   } else if type(type_) == type or key == "native" {
     // exact(float) => can only pass float, not int
-    let native-type = if key == "native" { type_.data } else { type_ }
+    // exact(stroke) => can only pass stroke, not length, gradient, dict, etc.
+    let native-type = type_.data
     (
       ..native.generic-typeinfo(native-type),
-      default: if type_.default != () and type(type_.default.first()) == native-type { type_.default } else { () }
+      default: if type_.default != () and type(type_.default.first()) == native-type { type_.default } else { () },
+
+      // Fold is an output => output function. The new output will be just (native-type,),
+      // so if fold previously accepted that native type, it will still accept it, so it
+      // can be kept.
+      fold: if native-type in type_.output { type_.fold } else { none },
     )
   } else if key == "literal" {
     // exact(literal) => literal with base type modified to exact(base type)
@@ -261,12 +267,8 @@
     // exact(any) => any (same)
     // exact(never) => never (same)
     type_
-  } else if key != none {
-    // Unknown
-    // TODO: Custom types / elements and the sort
-    type_
   } else {
-    panic("unexpected type '" + str(type(type_)) + "', please provide an actual type")
+    assert(false, message: "types.exact: unsupported type kind " + key + ", supported kinds include native types, literals, 'any' and 'never'")
   }
 }
 
