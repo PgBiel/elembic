@@ -26,3 +26,5 @@
 #assert.eq(cast(sides(int)(left: 5, right: 10), sides(int)), (true, sides(int)(left: 5, right: 10, top: none, bottom: none)))
 #assert.eq(cast((left: 5, right: 10), sides(int)), (false, "expected sides of integer, found dictionary"))
 #assert.eq(cast(sides(stroke)(top: 5pt, right: black, left: 5pt + black), sides(stroke)), (true, sides(stroke)(top: stroke(5pt), right: stroke(black), left: 5pt + black, bottom: none)))
+#assert.eq(cast(sides(int)(left: 5, right: 10), types.union(sides(int), sides(str))), (true, sides(int)(left: 5, right: 10)))
+#assert.eq(cast(sides(str)(left: "a", right: "b"), types.union(sides(int), sides(str))), (true, sides(str)(left: "a", right: "b")))
