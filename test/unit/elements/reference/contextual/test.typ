@@ -15,7 +15,7 @@
     field("color", color, default: red),
     field("inner", content, default: [Hello!]),
     field("supplement", e.types.option(content), default: [Wock]),
-    field("numbering", e.types.option(e.types.union(str, function)), default: "1."),
+    field("numbering", e.types.option(e.types.union(str, function)), default: "1"),
   ),
   reference: (
     supplement: it => it.supplement,
@@ -26,6 +26,6 @@
 
 #wock(color: blue, label: <my-wock>)
 #wock(color: blue, label: <my-wock2>, supplement: [def])
-#wock(color: blue, label: <my-wock3>, supplement: [def], numbering: "a)")
+#wock(color: blue, label: <my-wock3>, supplement: [def], numbering: "a")
 
 @my-wock ; @my-wock2 ; @my-wock3

@@ -1341,7 +1341,7 @@
   let lbl-show = label(lbl-show-head + eid)
   let ref-figure-kind = if reference == none { none } else { lbl-ref-figure-kind-head + eid }
   // Use same counter as hidden figure for ease of use
-  let counter-key = if reference == none { lbl-counter-head + eid } else { figure.where(kind: ref-figure-kind) }
+  let counter-key = lbl-counter-head + eid
   let element-counter = counter(counter-key)
   let count = if count == none { none } else { count(element-counter) }
   let count-needs-fields = type(count) == function
@@ -1519,6 +1519,18 @@
           )
 
           let ref-figure = (tag-metadata, synthesized-fields) => {
+            let numbering = if numbering-type == str {
+              reference.numbering
+            } else if numbering-type == function {
+              let numbering = (reference.numbering)(synthesized-fields)
+              assert(type(numbering) in (str, function), message: "element: 'reference.numbering' must be a function fields => numbering (a string or a function), but returned " + str(type(numbering)))
+              numbering
+            } else {
+              none
+            }
+
+            let number = element-counter.display(numbering)
+
             let ref-figure = [#figure(
               supplement: if supplement-type in (str, content, none) {
                 [#reference.supplement]
@@ -1528,15 +1540,7 @@
                 []
               },
 
-              numbering: if numbering-type == str {
-                reference.numbering
-              } else if numbering-type == function {
-                let numbering = (reference.numbering)(synthesized-fields)
-                assert(type(numbering) in (str, function), message: "element: 'reference.numbering' must be a function fields => numbering (a string or a function), but returned " + str(type(numbering)))
-                numbering
-              } else {
-                none
-              },
+              numbering: _ => number,
 
               kind: ref-figure-kind,
             )[#[]#tag-metadata#lbl-tag]#ref-label]
@@ -1544,9 +1548,6 @@
             let tagged-figure = [#[#ref-figure#tag-metadata#lbl-tag]#lbl-ref-figure]
 
             show figure: none
-
-            // Ensure we only step as much as 'count' allows
-            counter(figure.where(kind: ref-figure-kind)).update(n => n - 1)
 
             tagged-figure
           }

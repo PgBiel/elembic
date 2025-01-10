@@ -17,7 +17,7 @@
   ),
   reference: (
     supplement: [Wock],
-    numbering: "1."
+    numbering: "1"
   ),
   prefix: ""
 )
