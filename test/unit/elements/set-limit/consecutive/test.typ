@@ -13,105 +13,106 @@
   prefix: ""
 )
 
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 10
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 20
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 30
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 40
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 50
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 60
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 70
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 80
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 90
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red)
-#show: e.set_(wock, color: red) // 100
+#let setter = e.set_(wock, color: red)
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 10
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 20
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 30
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 40
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 50
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 60
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 70
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 80
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 90
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter
+#show: setter // 100
 
 #wock()

@@ -7,7 +7,7 @@
 
 #let wock = e.element.declare(
   "wock",
-  display: it => {},
+  display: it => assert.eq(it.color, blue),
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [])
@@ -15,204 +15,206 @@
   prefix: ""
 )
 
-#show: e.stateful.set_(wock, color: red)
+#let setter = e.stateful.set_(wock, color: blue)
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 10
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter // 10
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 20
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter // 20
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 30
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter // 30
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 40
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter // 40
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 50
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter // 50
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 60
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter // 60
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 70
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter // 70
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 80
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter // 80
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 90
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter // 90
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red)
+#show: setter
 
-#show: e.stateful.set_(wock, color: red) // 100
+#show: setter
+
+#show: setter // 100
 
 #wock()

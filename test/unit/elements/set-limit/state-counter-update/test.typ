@@ -16,546 +16,547 @@
 #let count = counter("abc")
 #let st = state("def", ())
 
-#show: e.set_(wock, color: red)
+#let setter = e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("y",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red) // 10
+#show: setter // 10
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red) // 20
+#show: setter // 20
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red) // 30
+#show: setter // 30
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red) // 40
+#show: setter // 40
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red) // 50
+#show: setter // 50
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red) // 60
+#show: setter // 60
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red) // 70
+#show: setter // 70
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
@@ -563,7 +564,7 @@
 #st.update(x => x + ("x",))
 
 #show: e.apply(
-  e.set_(wock, color: red),
+  setter,
   e.set_(wock, inner: [Road]),
 )
 
@@ -572,140 +573,140 @@
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red) // 80
+#show: setter // 80
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red) // 90
+#show: setter // 90
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Let's update this
 #count.step()
 #v(0.5em)
 #st.update(x => x + ("x",))
 
-#show: e.set_(wock, color: red)
+#show: setter
 #set outline(title: [Roadster])
 #set bibliography(title: [Mount])
 #show: e.set_(wock, color: yellow) // 100

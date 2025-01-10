@@ -13,402 +13,403 @@
   prefix: ""
 )
 
-#show: e.set_(wock, color: red)
+#let setter = e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red) // 10
+#show: setter // 10
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red) // 20
+#show: setter // 20
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red) // 30
+#show: setter // 30
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red) // 40
+#show: setter // 40
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red) // 50
+#show: setter // 50
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red) // 60
+#show: setter // 60
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red) // 70
+#show: setter // 70
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
 #show: e.apply(
-  e.set_(wock, color: red),
+  setter,
   e.set_(wock, inner: [Road]),
 )
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red) // 80
+#show: setter // 80
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red) // 90
+#show: setter // 90
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set table(fill: red)
 #set box(stroke: black)
 #set list(marker: ("a", "b"))
-#show: e.set_(wock, color: red)
+#show: setter
 #set outline(title: [Roadster])
 #set bibliography(title: [Mount])
 #show: e.set_(wock, color: yellow) // 100

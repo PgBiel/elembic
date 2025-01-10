@@ -13,476 +13,477 @@
   prefix: ""
 )
 
-#show: e.set_(wock, color: red)
+#let setter = e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red) // 10
+#show: setter // 10
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red) // 20
+#show: setter // 20
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red) // 30
+#show: setter // 30
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red) // 40
+#show: setter // 40
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red) // 50
+#show: setter // 50
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red) // 60
+#show: setter // 60
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red) // 70
+#show: setter // 70
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
 #show: e.apply(
-  e.set_(wock, color: red),
+  setter,
   e.set_(wock, inner: [Road]),
 )
 
@@ -490,121 +491,121 @@
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red) // 80
+#show: setter // 80
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red) // 90
+#show: setter // 90
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!
 // Hello world!
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 // Hello world!
 // Hello world!

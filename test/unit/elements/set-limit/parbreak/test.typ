@@ -13,206 +13,207 @@
   prefix: ""
 )
 
-#show: e.set_(wock, color: red)
+#let setter = e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red) // 10
+#show: setter // 10
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red) // 20
+#show: setter // 20
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red) // 30
+#show: setter // 30
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red) // 40
+#show: setter // 40
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red) // 50
+#show: setter // 50
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red) // 60
+#show: setter // 60
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red) // 70
+#show: setter // 70
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 #show: e.apply(
-  e.set_(wock, color: red),
+  setter,
   e.set_(wock, inner: [Road]),
 )
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red) // 80
+#show: setter // 80
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red) // 90
+#show: setter // 90
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
-#show: e.set_(wock, color: red)
+#show: setter
 
 #show: e.set_(wock, color: yellow) // 100
 
