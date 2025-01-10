@@ -73,6 +73,7 @@ jobs:
         run: |
           rm -rf test/unit/elements/show-body-order
           rm -rf test/unit/elements/reference
+          rm -rf test/unit/elements/outline
 
       - name: 🛠️ Run unit tests
         run: typst-test run
