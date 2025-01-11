@@ -12,11 +12,13 @@
 #let field(
   name,
   type_,
+  doc: none,
   required: false,
   named: auto,
   default: _missing,
 ) = {
   assert(type(name) == str, message: "field: Field name must be a string, not " + str(type(name)))
+  assert(doc == none or type(doc) == str, message: "field: 'doc' must be none or a string (add documentation)")
 
   let error-prefix = "field '" + name + "': "
   assert(type(required) == bool, message: error-prefix + "'required' must be a boolean")
@@ -76,6 +78,7 @@
     (field-key): true,
     version: current-field-version,
     name: name,
+    doc: doc,
     typeinfo: typeinfo,
     default: default,
     required: required,
