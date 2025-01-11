@@ -4,11 +4,15 @@ Please **keep in mind the following limitations** when using Elembic.
 
 ## Rule limit
 
-Elembic, **in its default and most efficient mode,** has a limit of **up to 30 _non-consecutive_ rules by default**. This is due to a limitation in the Typst compiler regarding maximum function call depth, as we use show rules with `context { }` for set rules to work without using `state`.
+Elembic, **in its default and most efficient mode,** has a limit of **up to 30 _non-consecutive_ rules within the same scope, by default**. This is due to a limitation in the Typst compiler regarding maximum function call depth, as we use show rules with `context { }` for set rules to work without using `state` (see also [typst#4171](https://github.com/typst/typst/issues/4171) for more information).
 
 Usually, this isn't a problem unless you hit the infamous **"max show rule depth exceeded"** error. If you ever receive it, you may have to switch to **stateful mode**, which has **no set rule limit,** however **it is slower** as it uses `state`.
 
-However, there are some easy things to keep in mind that will let you **avoid this error very easily.**
+However, there are some easy things to keep in mind that will let you **avoid this error very easily,** which include:
+
+1. Grouping rules together with `apply`
+2. Scoping temporary rules and not misusing `revoke`
+3. (As a last resort) Switching to either of the other styling modes (`leaky` or `stateful`)
 
 ### Grouping rules together with `apply`
 
@@ -140,9 +144,20 @@ A **good usage** of `revoke` is to **only temporarily (for a certain scope) undo
 #superbox()
 ```
 
-### Switching to other modes
+### Switching to other styling modes
 
-If those measures are still not enough to fix the error, then you will have to **switch to another mode.**
+If those measures are still not enough to fix the error, then you will have to **switch to another styling mode.**
+
+There are three styling modes available for set rules (as well as apply rules, revoke rules and so on):
+
+1. **Normal mode (default):** The safest mode, uses `show: set` rules on existing elements to store set rule data, and then immediately restores the current value of those rules, so it is **fast** (as it only uses show / set, so **it causes no document relayouts**) and **hygienic** (the inner workings of Elembic have no effect on your document in that case).
+    - In this mode, you are limited to **around 30** simultaneous rules in the same scope as each set rule has **two nested function calls** (contributing twice towards the limit of 64, minus 3 due to elements themselves).
+    - It is worth the reminder that this number refers to **ungrouped, non-consecutive set rules**. If you group set rules together, **they are unlimited in number**.
+2. **Leaky mode:** It is as fast as normal mode, but **has double the limit of rules** (**around 60**). However, **it is not hygienic** as it **resets existing `#set bibliography(title: ...)` rules** to their **first known values**. (That is, any `bibliography.title` set rules after the first set rule are lost, and the initial value is reset with each leaky rule.) If this is acceptable to you, then **feel free to use leaky rules** to easily increase the limit.
+    - This mode can be used by packages' internal elements, for example, since that set rule is probably unimportant then.
+3. **Stateful mode:** Rules in this mode **do not have any usage limits.** You can nest them as much as you want, even if you don't group them. However, the downside is that **this mode uses `state`,** which can cause **document relayouts and be slower**.
+    - Note that you can restrict this mode change to a single scope and use other modes elsewhere in the document.
+    - Other rule modes are **compatible with stateful mode**. You can still use non-stateful set rules when stateful mode is enabled; while they will still have a limit, they will read and update set rule data using `state` as well, so they stay in sync. In addition, **the limit of normal-mode rules is doubled** just by enabling stateful mode in the containing scope, since they will automatically switch to a more lightweight code path. Therefore, **package authors can use normal-mode rules without problems**.
 
 The easiest solution is to just **switch to stateful mode,** which uses `state` to keep track of set rules.
 It is slower and may trigger document relayouts in some cases, but has no usage limits (other than
