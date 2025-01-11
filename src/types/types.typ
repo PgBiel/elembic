@@ -376,3 +376,6 @@
     }
   )
 }
+
+// Native paint type. Can be used for fills, strokes and so on.
+#let paint = union(color, gradient, native.tiling_)

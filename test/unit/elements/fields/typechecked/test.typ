@@ -53,6 +53,7 @@
   field("stroke", stroke),
   field("singleton-array", singleton-array),
   field("owner", person),
+  field("fill", types.paint, default: red),
 )
 
 #let door = e.element.declare(
@@ -122,6 +123,29 @@
     assert(type(get(door).float-or-content) == float and get(door).float-or-content == 50.0)
     assert(type(get(door).just-float) == float and get(door).just-float == 5)
     assert(get(door).just-content == [abc])
+  })
+]
+
+// Paint type
+#[
+  #show: e.set_(door, fill: yellow)
+
+  #e.get(get => {
+    assert.eq(get(door).fill, yellow)
+  })
+
+  #let red-blue-gradient = gradient.linear(red, blue)
+  #show: e.set_(door, fill: red-blue-gradient)
+
+  #e.get(get => {
+    assert.eq(repr(get(door).fill), repr(red-blue-gradient))
+  })
+
+  #let abc-tiling = types.native.tiling[abc]
+  #show: e.set_(door, fill: abc-tiling)
+
+  #e.get(get => {
+    assert.eq(repr(get(door).fill), repr(abc-tiling))
   })
 ]
 
