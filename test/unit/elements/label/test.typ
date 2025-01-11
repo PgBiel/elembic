@@ -32,6 +32,22 @@
 
 #wock(color: blue, label: none)
 
+#[
+  #show e.selector(wock): it => {
+    assert("label" not in e.fields(it))
+    it
+  }
+  #wock(color: green)
+]
+
+#[
+  #show e.selector(wock): it => {
+    assert("label" not in e.fields(it))
+    it
+  }
+  #wock(color: blue, label: none)
+]
+
 // Non-labelable elements can have a 'label' field
 #let non-labelable = e.element.declare(
   "has label field",

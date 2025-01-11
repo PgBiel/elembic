@@ -1706,7 +1706,7 @@
                 new-fields
               }
 
-              if label != _missing and labelable {
+              if labelable and label != none and label != _missing {
                 synthesized-fields.label = label
               }
 
@@ -1788,7 +1788,7 @@
               new-fields
             }
 
-            if label != _missing and labelable {
+            if labelable and label != none and label != _missing {
               synthesized-fields.label = label
             }
 
