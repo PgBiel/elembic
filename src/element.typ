@@ -1479,7 +1479,7 @@
     if not allow-unknown-fields {
       // Note: 'where' on synthesized fields is legal,
       // so we check 'all-fields' rather than 'user-fields'.
-      let unknown-fields = args.keys().filter(k => k not in all-fields)
+      let unknown-fields = args.keys().filter(k => k not in all-fields and (not labelable or k != "label"))
       if unknown-fields != () {
         let s = if unknown-fields.len() == 1 { "" } else { "s" }
         assert(false, message: "element.where: element '" + name + "': unknown field" + s + " " + unknown-fields.map(f => "'" + f + "'").join(", "))

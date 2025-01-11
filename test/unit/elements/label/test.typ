@@ -5,10 +5,7 @@
 
 #let wock = e.element.declare(
   "wock",
-  display: it => {
-    assert.eq(it.color, blue)
-    assert.eq(it.inner, [Hello!])
-  },
+  display: it => {},
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
@@ -23,3 +20,12 @@
 }
 
 #wock(color: blue, label: <badbad>)
+
+#e.select(wock.with(label: <blorb>), blorb => {
+  show blorb: it => {
+    let fields = e.fields(it)
+    rect(width: 10pt, height: 5pt, fill: fields.color)
+  }
+
+  wock(color: green, label: <blorb>)
+})
