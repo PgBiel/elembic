@@ -1406,7 +1406,9 @@
   contextual: false,
 ) = {
   assert(type(display) == function, message: "element.declare: please specify a show rule in 'display:' to determine how your element is displayed.")
-  assert(type(fields) == array, message: "element.declare: please specify an array of fields, creating each field with the 'field' function.")
+
+  let fields-hint = if type(fields) == dictionary { "\n  hint: check if you didn't forget to add a trailing comma for a single field: write 'fields: (field,)', not 'fields: (field)'" } else { "" }
+  assert(type(fields) == array, message: "element.declare: please specify an array of fields, creating each field with the 'field' function. It can be empty with '()'." + fields-hint)
   assert(prefix != none, message: "element.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
   assert(type(prefix) == str, message: "element.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
   assert(parse-args == auto or type(parse-args) == function, message: "element.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function receiving (arguments, include-required: true (required fields must be specified - in constructor) / false (required fields must be omitted - in set rules)) => dictionary with parsed fields.")
