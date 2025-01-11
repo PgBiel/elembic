@@ -7,6 +7,10 @@
 // Prefix for the labels added to shown elements.
 #let lbl-show-head = "__custom_element_shown_"
 
+// Prefix for the labels added outside shown elements.
+// This is used to be able to effectively apply show-set rules to them.
+#let lbl-outer-head = "__custom_element_outer_"
+
 // Prefix for counters of elements.
 // This is only used if the element isn't 'refable'.
 #let lbl-counter-head = "__custom_element_counter_"
@@ -233,6 +237,11 @@
     } else {
       (data-kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
     }
+  } else if (
+    it.has("label")
+    and str(it.label).starts-with(lbl-outer-head)
+  ) {
+    (data-kind: "incomplete-element-instance", body: it, fields: (:), func: (:), eid: str(it.label).slice(lbl-outer-head.len()), fields-known: false, valid: false)
   } else {
     (data-kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
   }
@@ -1354,12 +1363,15 @@
 }
 
 // Obtain a Typst selector to use to match this element in show rules or in the outline.
-#let selector(elem, outline: false) = {
+#let selector(elem, outline: false, outer: false) = {
   if outline {
+    assert(not outer, message: "element.selector: cannot have 'outline: true' and 'outer: true' at the same time, please pick one selector")
     let elem-data = data(elem)
     assert("outline-sel" in elem-data, message: "element.selector: this isn't a valid element")
     assert(elem-data.outline-sel != none, message: "element.selector: this element isn't outlinable\n  hint: try asking its author to define it as such with 'outline: auto', 'outline: (caption: [...])' or 'outline: (caption: it => ...)'")
     elem-data.outline-sel
+  } else if outer {
+    data(elem).outer-sel
   } else {
     data(elem).sel
   }
@@ -1465,6 +1477,7 @@
 
   let eid = base.unique-id("e", prefix, name)
   let lbl-show = label(lbl-show-head + eid)
+  let lbl-outer = label(lbl-outer-head + eid)
   let ref-figure-kind = if reference == none and outline == none { none } else { lbl-ref-figure-kind-head + eid }
   // Use same counter as hidden figure for ease of use
   let counter-key = lbl-counter-head + eid
@@ -1543,6 +1556,7 @@
     get: get-rule,
     where: where,
     sel: lbl-show,
+    outer-sel: lbl-outer,
     outline-sel: if outline == none { none } else { figure.where(kind: ref-figure-kind) },
     counter: element-counter,
     parse-args: parse-args,
@@ -1601,7 +1615,7 @@
     // Step the counter early if we don't need additional context
     let early-step = if not count-needs-fields { count }
 
-    let inner = early-step + context {
+    let inner = early-step + [#context {
       let previous-bib-title = bibliography.title
       [#context {
         set bibliography(title: previous-bib-title)
@@ -1910,7 +1924,7 @@
           shown
         }
       }#lbl-get]
-    }
+    }#lbl-outer]
 
     let tag = [#metadata((
       data-kind: "element-instance",
