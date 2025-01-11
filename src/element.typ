@@ -1552,7 +1552,7 @@
     let args = parse-args(args, include-required: true)
 
     let (inner-label, ref-label) = if labelable and label != _missing and label != none {
-      assert(type(label) == std-label, message: "element: expected label for 'label', found " + str(type(label)))
+      assert(type(label) == std-label, message: "element: expected label or 'none' for 'label', found " + str(type(label)))
       (label, std-label(lbl-ref-figure-label-head + str(label)))
     } else {
       (none, none)
@@ -1706,7 +1706,7 @@
                 new-fields
               }
 
-              if label != none {
+              if label != _missing and labelable {
                 synthesized-fields.label = label
               }
 
@@ -1788,7 +1788,7 @@
               new-fields
             }
 
-            if label != none {
+            if label != _missing and labelable {
               synthesized-fields.label = label
             }
 

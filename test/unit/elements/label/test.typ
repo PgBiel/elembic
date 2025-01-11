@@ -30,10 +30,14 @@
   wock(color: green, label: <blorb>)
 })
 
+#wock(color: blue, label: none)
+
 // Non-labelable elements can have a 'label' field
-#let _ = e.element.declare(
+#let non-labelable = e.element.declare(
   "has label field",
-  display: it => {},
+  display: it => {
+    assert.eq(it.label, [ABC])
+  },
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [Hello!]),
@@ -42,3 +46,6 @@
   labelable: false,
   prefix: ""
 )
+
+// Should properly cast to [ABC]
+#non-labelable(label: "ABC")
