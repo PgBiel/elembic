@@ -34,7 +34,7 @@
     default = value
   }
 
-  let accepted-default = if required {
+  default = if required {
     // This value should be ignored in that case
     auto
   } else {
@@ -77,7 +77,7 @@
     version: current-field-version,
     name: name,
     typeinfo: typeinfo,
-    default: accepted-default,
+    default: default,
     required: required,
     named: named,
     fold: fold,
