@@ -1402,11 +1402,14 @@
     reference == none
     or type(reference) == dictionary
       and reference.keys().all(x => x in ("supplement", "numbering", "custom"))
-      and ("supplement", "numbering").all(x => x in reference)
-      and (reference.supplement == none or type(reference.supplement) in (str, content, function))
-      and (reference.numbering == none or type(reference.numbering) in (str, function))
+      and ("supplement" not in reference or reference.supplement == none or type(reference.supplement) in (str, content, function))
+      and ("numbering" not in reference or reference.numbering == none or type(reference.numbering) in (str, function))
       and ("custom" not in reference or reference.custom == none or type(reference.custom) == function),
     message: "element.declare: 'reference' must be 'none' or a dictionary (supplement: \"Name\" or [Name] or function fields => supplement, numbering: \"1.\" or function fields => (str / function numbers => content), custom (optional): none (default) or function fields => content)."
+  )
+  assert(
+    reference == none or "supplement" in reference and "numbering" in reference or "custom" in reference,
+    message: "element.declare: reference must either have 'custom', or have both 'supplement' and 'numbering' (or all three, though 'custom' has priority when displaying references)."
   )
   assert(
     outline == none
@@ -1434,12 +1437,12 @@
   let count-needs-fields = type(count) == function
   let custom-ref = if reference != none and "custom" in reference and type(reference.custom) == function { reference.custom } else { none }
 
-  let supplement-type = if reference == none {
+  let supplement-type = if reference == none or "supplement" not in reference {
     none
   } else {
     type(reference.supplement)
   }
-  let numbering-type = if reference == none {
+  let numbering-type = if reference == none or "numbering" not in reference {
     none
   } else {
     type(reference.numbering)
@@ -1639,7 +1642,7 @@
             valid: true
           )
 
-          let ref-figure = (tag-metadata, synthesized-fields) => {
+          let ref-figure = (tag-metadata, tag, synthesized-fields) => {
             let numbering = if numbering-type == str {
               reference.numbering
             } else if numbering-type == function {
@@ -1657,9 +1660,19 @@
             } else if caption-type in (str, content) {
               (caption: [#outline.caption])
             } else if outline == auto {
-              // Add some caption so it is displayed,
-              // but remove useless separator
-              (caption: figure.caption(separator: "")[])
+              if (
+                "supplement" in reference and "numbering" in reference
+                or "custom-ref" not in tag
+                or tag.custom-ref == none
+              ) {
+                // Add some caption so it is displayed with the supplement and
+                // number, but remove useless separator
+                (caption: figure.caption(separator: "")[])
+              } else {
+                // No supplement or number, but there are custom reference
+                // contents, so we display that
+                (caption: tag.custom-ref)
+              }
             } else {
               (:)
             }
@@ -1740,7 +1753,7 @@
                     let synthesized-fields = synthesized-fields
                     synthesized-fields.at(stored-data-key) = tag
 
-                    ref-figure(tag-metadata, synthesized-fields)
+                    ref-figure(tag-metadata, tag, synthesized-fields)
                   }
 
                   let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
@@ -1764,7 +1777,7 @@
                   // Update with custom-ref
                   synthesized-fields.at(stored-data-key) = tag
 
-                  ref-figure(tag-metadata, synthesized-fields)
+                  ref-figure(tag-metadata, tag, synthesized-fields)
                 }
 
                 let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
@@ -1821,7 +1834,7 @@
                   let synthesized-fields = synthesized-fields
                   synthesized-fields.at(stored-data-key) = tag
 
-                  ref-figure(tag-metadata, synthesized-fields)
+                  ref-figure(tag-metadata, tag, synthesized-fields)
                 }
 
                 let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
@@ -1844,7 +1857,7 @@
                 // Update with custom-ref
                 synthesized-fields.at(stored-data-key) = tag
 
-                ref-figure(tag-metadata, synthesized-fields)
+                ref-figure(tag-metadata, tag, synthesized-fields)
               }
 
               let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
