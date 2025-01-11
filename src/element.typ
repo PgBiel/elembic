@@ -1321,7 +1321,7 @@
   reference: none,
   outline: none,
   synthesize: none,
-  contextual: auto,
+  contextual: false,
 ) = {
   assert(type(display) == function, message: "element.declare: please specify a show rule in 'display:' to determine how your element is displayed.")
   assert(type(fields) == array, message: "element.declare: please specify an array of fields, creating each field with the 'field' function.")
@@ -1355,6 +1355,7 @@
 
   if contextual == auto {
     // Provide separate context for synthesize.
+    // By default, assume it isn't needed.
     contextual = synthesize != none
   }
 
@@ -1662,7 +1663,7 @@
                 let tag-metadata = metadata(tag)
 
                 if reference != none or outline != none {
-                  ref-figure(synthesized-fields)
+                  ref-figure(tag-metadata, synthesized-fields)
                 }
 
                 let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
