@@ -1450,7 +1450,7 @@
   }
 
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
-  let (all-fields, foldable-fields) = fields
+  let (all-fields, user-fields, foldable-fields) = fields
 
   let parse-args = if parse-args == auto {
     field-internals.generate-arg-parser(
@@ -1463,7 +1463,7 @@
     parse-args
   }
 
-  let default-fields = fields.all-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
+  let default-fields = fields.user-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
 
   let set-rule = set_.with((parse-args: parse-args, eid: eid, default-data: default-data, fields: fields))
 
@@ -1477,6 +1477,8 @@
     let args = args.named()
 
     if not allow-unknown-fields {
+      // Note: 'where' on synthesized fields is legal,
+      // so we check 'all-fields' rather than 'user-fields'.
       let unknown-fields = args.keys().filter(k => k not in all-fields)
       if unknown-fields != () {
         let s = if unknown-fields.len() == 1 { "" } else { "s" }
@@ -1503,6 +1505,7 @@
     default-data: default-data,
     default-global-data: default-global-data,
     default-fields: default-fields,
+    user-fields: user-fields,
     all-fields: all-fields,
     fields: fields,
     typecheck: typecheck,

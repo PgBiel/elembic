@@ -71,7 +71,7 @@
 
   let tid = base.unique-id("t", prefix, name)
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
-  let (all-fields, foldable-fields) = fields
+  let (all-fields, user-fields, foldable-fields) = fields
   let auto-fold = if fold == auto { auto-fold(foldable-fields) } else { none }
 
   let parse-args = if parse-args == auto {
@@ -85,7 +85,7 @@
     parse-args
   }
 
-  let default-fields = fields.all-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
+  let default-fields = fields.user-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
 
   let typeid = (tid: tid, name: name)
 
@@ -125,6 +125,7 @@
     scope: scope,
     parse-args: parse-args,
     default-fields: default-fields,
+    user-fields: user-fields,
     all-fields: all-fields,
     fields: fields,
     typecheck: typecheck,

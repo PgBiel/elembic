@@ -15,12 +15,14 @@
   doc: none,
   required: false,
   named: auto,
+  synthesized: false,
   default: _missing,
 ) = {
   assert(type(name) == str, message: "field: Field name must be a string, not " + str(type(name)))
-  assert(doc == none or type(doc) == str, message: "field: 'doc' must be none or a string (add documentation)")
 
   let error-prefix = "field '" + name + "': "
+  assert(doc == none or type(doc) == str, message: error-prefix + "'doc' must be none or a string (add documentation)")
+  assert(type(synthesized) == bool, message: error-prefix + "'synthesized' must be a boolean (true: field is automatically synthesized and cannot be specified or overridden by the user; false: field can be manually specified and overridden by the user)")
   assert(type(required) == bool, message: error-prefix + "'required' must be a boolean")
   assert(named == auto or type(named) == bool, message: error-prefix + "'named' must be a boolean or auto")
   let typeinfo = {
@@ -36,7 +38,7 @@
     default = value
   }
 
-  default = if required {
+  default = if required or synthesized {
     // This value should be ignored in that case
     auto
   } else {
@@ -48,8 +50,8 @@
     value
   }
 
-  let fold = if "fold" in typeinfo and typeinfo.fold != none {
-    assert(typeinfo.fold == auto or type(typeinfo.fold) == function, message: "field: type '" + typeinfo.name + "' doesn't appear to have a valid fold field (must be auto or function)")
+  let fold = if not synthesized and "fold" in typeinfo and typeinfo.fold != none {
+    assert(typeinfo.fold == auto or type(typeinfo.fold) == function, message: error-prefix + "type '" + typeinfo.name + "' doesn't appear to have a valid fold field (must be auto or function)")
     let fold-default = if required {
       // No field default, use the type's own default to begin folding
       let (res, value) = types.default(typeinfo)
@@ -74,6 +76,10 @@
     named = not required
   }
 
+  if synthesized and (required or not named) {
+    assert(false, message: error-prefix + "synthesized field cannot be required or positional, since it cannot be specified by the user")
+  }
+
   (
     (field-key): true,
     version: current-field-version,
@@ -82,6 +88,7 @@
     typeinfo: typeinfo,
     default: default,
     required: required,
+    synthesized: synthesized,
     named: named,
     fold: fold,
   )
@@ -95,8 +102,10 @@
   let required-named-fields = ()
   let optional-named-fields = ()
   let all-fields = (:)
-  let named-fields = (:)
+  let user-named-fields = (:)
   let foldable-fields = (:)
+  let user-fields = (:)
+  let synthesized-fields = (:)
 
   for field in fields {
     assert(type(field) == dictionary and field.at(field-key, default: none) == true, message: "element.fields: Invalid field received, please use the 'e.fields.field' constructor.")
@@ -119,8 +128,14 @@
       foldable-fields.insert(field.name, field.fold)
     }
 
-    if field.named {
-      named-fields.insert(field.name, field)
+    if field.synthesized {
+      synthesized-fields.insert(field.name, field)
+    } else {
+      user-fields.insert(field.name, field)
+
+      if field.named {
+        user-named-fields.insert(field.name, field)
+      }
     }
 
     all-fields.insert(field.name, field)
@@ -134,7 +149,8 @@
     required-named-fields: required-named-fields,
     optional-named-fields: optional-named-fields,
     foldable-fields: foldable-fields,
-    named-fields: named-fields,
+    user-named-fields: user-named-fields,
+    user-fields: user-fields,
     all-fields: all-fields,
     allow-unknown-fields: allow-unknown-fields,
   )
@@ -173,7 +189,7 @@
     assert(false, message: "generate-arg-parser: 'field-term' must either be a string (plural with 's') or a two-element array of strings (singular, plural).")
   }
 
-  let (required-pos-fields, optional-pos-fields, required-named-fields, optional-named-fields, all-fields, named-fields, allow-unknown-fields) = fields
+  let (required-pos-fields, optional-pos-fields, required-named-fields, optional-named-fields, all-fields, user-fields, user-named-fields, allow-unknown-fields) = fields
   let required-pos-fields-amount = required-pos-fields.len()
   let optional-pos-fields-amount = optional-pos-fields.len()
   let total-pos-fields-amount = required-pos-fields-amount + optional-pos-fields-amount
@@ -182,18 +198,20 @@
   let has-required-fields = required-pos-fields-amount + required-named-fields.len() != 0
 
   // If we allow unknown named fields, we still need to check whether a
-  // positional field was accidentally specified as a named field.
+  // positional or synthesized field was accidentally specified as a named field.
   let is-unknown-named-field = if allow-unknown-fields {
-    f => f in all-fields and f not in named-fields
+    f => f in all-fields and f not in user-named-fields
   } else {
-    f => f not in named-fields
+    f => f not in user-named-fields
   }
 
   // Disable typechecking anyway if all fields are 'any'
   //
   // Have a separate typecheck option so type information can be kept in fields
   // even if typechecking is undesirable
-  let typecheck = typecheck and all-fields.values().any(f => f.typeinfo.type-kind != "any")
+  // Note: we don't parse args for synthesized fields, so we can exclude them when
+  // checking whether we will typecheck when parsing args
+  let typecheck = typecheck and user-fields.values().any(f => f.typeinfo.type-kind != "any")
 
   // Parse args (no typechecking)
   let parse-args-no-typechecking(args, include-required: true) = {
@@ -232,8 +250,9 @@
       let field-name = named-args.keys().find(is-unknown-named-field)
       let field = all-fields.at(field-name, default: none)
       let expected-pos-hint = if field == none or field.named { "" } else { "\n  hint: this " + field-singular + " must be specified positionally" }
+      let is-synthesized-hint = if field != none and field.synthesized { "\n  hint: this " + field-singular + " is synthesized and cannot be specified manually" } else { "" }
 
-      assert(false, message: general-error-prefix + "unknown named " + field-singular + " '" + field-name + "'" + expected-pos-hint)
+      assert(false, message: general-error-prefix + "unknown named " + field-singular + " '" + field-name + "'" + expected-pos-hint + is-synthesized-hint)
     }
 
     let pos-fields = if include-required { all-pos-fields } else { optional-pos-fields }
@@ -283,10 +302,11 @@
 
       let field = all-fields.at(field-name)
 
-      if field == none or not field.named {
+      if field == none or field.synthesized or not field.named {
         let expected-pos-hint = if field == none or field.named { "" } else { "\n  hint: this " + field-singular + " must be specified positionally" }
+        let is-synthesized-hint = if field != none and field.synthesized { "\n  hint: this " + field-singular + " is synthesized and cannot be specified manually" } else { "" }
 
-        assert(false, message: general-error-prefix + "unknown named " + field-singular + " '" + field-name + "'" + expected-pos-hint)
+        assert(false, message: general-error-prefix + "unknown named " + field-singular + " '" + field-name + "'" + expected-pos-hint + is-synthesized-hint)
       }
 
       if not include-required and field.required {
