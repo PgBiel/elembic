@@ -295,7 +295,16 @@
       }
 
       // Convert into a reference towards the reference figure
-      ref(label(lbl-ref-figure-label-head + str(it.target)), ..supplement)
+      let converted-label = label(lbl-ref-figure-label-head + str(it.target))
+      let reference = ref(converted-label, ..supplement)
+
+      if "custom-ref" in info and info.custom-ref != none {
+        show ref.where(target: converted-label): [#info.custom-ref]
+
+        reference
+      } else {
+        reference
+      }
     } else {
       it
     }
@@ -304,7 +313,7 @@
   if type(first-arg) == content and first-arg.func() == ref {
     first-arg
   } else {
-    ref(first-arg)
+    ref(..args)
   }
 }
 
@@ -1338,11 +1347,12 @@
   assert(
     reference == none
     or type(reference) == dictionary
-      and reference.keys().all(x => x in ("supplement", "numbering"))
+      and reference.keys().all(x => x in ("supplement", "numbering", "custom"))
       and ("supplement", "numbering").all(x => x in reference)
       and (reference.supplement == none or type(reference.supplement) in (str, content, function))
-      and (reference.numbering == none or type(reference.numbering) in (str, function)),
-    message: "element.declare: 'reference' must be 'none' or a dictionary (supplement: \"Name\" or [Name] or function it => ..., numbering: \"1.\" or function it => (str / function))."
+      and (reference.numbering == none or type(reference.numbering) in (str, function))
+      and ("custom" not in reference or reference.custom == none or type(reference.custom) == function),
+    message: "element.declare: 'reference' must be 'none' or a dictionary (supplement: \"Name\" or [Name] or function fields => supplement, numbering: \"1.\" or function fields => (str / function numbers => content), custom (optional): none (default) or function fields => content)."
   )
   assert(
     outline == none
@@ -1367,6 +1377,7 @@
   let element-counter = counter(counter-key)
   let count = if count == none { none } else { count(element-counter) }
   let count-needs-fields = type(count) == function
+  let custom-ref = if reference != none and "custom" in reference and type(reference.custom) == function { reference.custom } else { none }
 
   let supplement-type = if reference == none {
     none
@@ -1541,7 +1552,9 @@
             func: __elembic_func,
             default-constructor: default-constructor,
             eid: eid,
+            counter: element-counter,
             reference: reference,
+            custom-ref: none,
             fields-known: true,
             valid: true
           )
@@ -1616,6 +1629,11 @@
                   let tag = tag
                   tag.fields = synthesized-fields
                   tag.body = body
+
+                  if custom-ref != none {
+                    tag.custom-ref = custom-ref(synthesized-fields)
+                  }
+
                   let tag-metadata = metadata(tag)
 
                   if reference != none or outline != none {
@@ -1630,6 +1648,11 @@
                 let tag = tag
                 tag.fields = synthesized-fields
                 tag.body = body
+
+                if custom-ref != none {
+                  tag.custom-ref = custom-ref(synthesized-fields)
+                }
+
                 let tag-metadata = metadata(tag)
 
                 if reference != none or outline != none {
@@ -1660,6 +1683,11 @@
                 let tag = tag
                 tag.fields = synthesized-fields
                 tag.body = body
+
+                if custom-ref != none {
+                  tag.custom-ref = custom-ref(synthesized-fields)
+                }
+
                 let tag-metadata = metadata(tag)
 
                 if reference != none or outline != none {
@@ -1673,6 +1701,11 @@
               let body = display(synthesized-fields)
               tag.fields = synthesized-fields
               tag.body = body
+
+              if custom-ref != none {
+                tag.custom-ref = custom-ref(synthesized-fields)
+              }
+
               let tag-metadata = metadata(tag)
 
               if reference != none or outline != none {
@@ -1702,6 +1735,8 @@
       default-constructor: default-constructor,
       eid: eid,
       counter: element-counter,
+      reference: reference,
+      custom-ref: none,
       fields-known: false,
       valid: true
     ))#lbl-tag]
