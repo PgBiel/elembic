@@ -263,7 +263,7 @@
 #let counter_(elem) = {
   let info = data(elem)
 
-  if type(info) == dictionary and "data-kind" in info and info.data-kind == "element" {
+  if type(info) == dictionary and "data-kind" in info and (info.data-kind == "element" or info.data-kind == "element-instance") {
     info.counter
   } else {
     assert(false, message: "e.counter: this is not an element")
@@ -1396,7 +1396,7 @@
   }
 
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
-  let (all-fields,) = fields
+  let (all-fields, foldable-fields) = fields
 
   let parse-args = field-internals.generate-arg-parser(
     fields: fields,
@@ -1520,7 +1520,14 @@
 
         let element-data = global-data.elements.at(eid, default: default-data)
 
-        let constructed-fields = if element-data.revoke-chain == default-data.revoke-chain and element-data.fold-chain == default-data.fold-chain {
+        let constructed-fields = if (
+          element-data.revoke-chain == default-data.revoke-chain
+          and (
+            foldable-fields == (:)
+            or element-data.fold-chain == default-data.fold-chain
+            and args.keys().all(f => f not in foldable-fields)
+          )
+        ) {
           // Sum the chain of dictionaries so that the latest value specified for
           // each property wins.
           default-fields + element-data.chain.sum(default: (:)) + args
@@ -1530,8 +1537,8 @@
           let outer-chain = default-fields + fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
           let finalized-chain = outer-chain + args
 
-          // Fold with received arguments
-          for (field-name, fold-data) in element-data.fold-chain {
+          // Fold received arguments with outer chain or defaults
+          for (field-name, fold-data) in foldable-fields {
             if field-name in args {
               let outer = outer-chain.at(field-name, default: fold-data.default)
               if fold-data.folder == auto {

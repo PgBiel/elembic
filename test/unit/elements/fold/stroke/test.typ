@@ -35,6 +35,12 @@
 
 #rect()
 
+#wock(border: 10pt, it => {
+  assert.eq(it.border, red + 10pt)
+  assert.eq(it.second-border, stroke())
+})
+
+
 // Testing required folding field
 #dock(5pt, it => assert.eq(it.required-stroke, stroke(5pt)))
 
