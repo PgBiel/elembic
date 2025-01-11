@@ -1365,6 +1365,27 @@
   }
 }
 
+// A show rule which prepares the document for custom elements.
+//
+// For example, ensures references to custom elements work.
+#let prepare(
+  ..args
+) = {
+  assert(args.named() == (:), message: "element.prepare: unexpected named arguments")
+  let elems = args.pos().map(data)
+  if elems.len() == 1 and type(args.pos().first()) == content {
+    assert(false, message: "element.prepare: expected (optional) element functions as arguments, not the document\n  hint: write '#show: e.prepare()', not '#show: e.prepare' - note the parentheses")
+  }
+
+  assert(elems.all(it => data(it).data-kind == "element"), message: "element.prepare: positional arguments must be elements")
+
+  doc => {
+    show ref: ref_
+
+    doc
+  }
+}
+
 // Create an element with the given name and constructor.
 #let declare(
   name,

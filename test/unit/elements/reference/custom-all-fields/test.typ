@@ -4,7 +4,7 @@
 
 #import "/src/lib.typ" as e: field
 
-#show ref: e.ref
+#show: e.prepare()
 
 #let wock = e.element.declare(
   "wock",
