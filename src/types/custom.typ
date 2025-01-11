@@ -85,7 +85,7 @@
   // We will specify default in a bit, once we declare the constructor
   let typeinfo = (
     ..base.base-typeinfo,
-    (type-key): "custom",
+    type-kind: "custom",
     name: name,
     input: (typeid,),
     output: (typeid,),

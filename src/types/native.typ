@@ -6,7 +6,7 @@
 
 #let native-base = (
   ..base-typeinfo,
-  (type-key): "native",
+  type-kind: "native",
 )
 
 // Generic typeinfo for a native type.

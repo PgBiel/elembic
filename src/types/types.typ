@@ -5,7 +5,7 @@
 // The default value for a type.
 #let default(type_) = {
   if type_.default == () {
-    let prefix = if type_.at(type-key) in ("native", "union") { type_.at(type-key) + " " } else { "" }
+    let prefix = if type_.type-kind in ("native", "union") { type_.type-kind + " " } else { "" }
     err(prefix + "type '" + type_.name + "' has no known default, please specify an explicit 'default: value' or set 'required: true' for the field")
   } else {
     ok(type_.default.first())
@@ -96,7 +96,7 @@
     typeinfo = typeinfo-or-err
   }
 
-  let kind = typeinfo.at(type-key)
+  let kind = typeinfo.type-kind
   if kind == "any" {
     (true, value)
   } else {
@@ -241,7 +241,7 @@
     assert(false, message: "types.exact: " + type_)
   }
 
-  let key = if type(type_) == dictionary { type_.at(type-key, default: none) } else { none }
+  let key = if type(type_) == dictionary and "type-kind" in type_ { type_.type-kind } else { none }
   if key == "union" {
     // exact(union(A, B)) === union(exact(A), exact(B))
     union(..type_.data.map(exact))
@@ -278,7 +278,7 @@
     assert(false, message: "types.array: " + param)
   }
 
-  let kind = param.at(type-key)
+  let kind = param.type-kind
 
   base.collection(
     "array",

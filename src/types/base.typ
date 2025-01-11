@@ -20,7 +20,8 @@
 // - fold: none, auto (equivalent to (a, b) => a + b but more efficient) or function (prev, next) => folded value:
 //         determines how to combine two consecutive values of this type in the stylechain
 #let base-typeinfo = (
-  (type-key): "base",
+  (type-key): true,
+  type-kind: "base",
   version: type-version,
   name: "unknown",
   input: (),
@@ -46,7 +47,7 @@
 // input and output have "any".
 #let any = (
   ..base-typeinfo,
-  (type-key): "any",
+  type-kind: "any",
   name: "any",
   input: ("any",),
   output: ("any",),
@@ -56,7 +57,7 @@
 // input and output are empty.
 #let never = (
   ..base-typeinfo,
-  (type-key): "never",
+  type-kind: "never",
   name: "never",
   input: (),
   output: (),
@@ -114,7 +115,7 @@
 
   (
     ..typeinfo,
-    (type-key): "literal",
+    type-kind: "literal",
     name: "literal " + represented,
     data: (value: value, typeinfo: typeinfo, represented: represented),
     check: check,
@@ -129,7 +130,7 @@
 // Does not check the validity of typeinfos.
 #let union(typeinfos) = {
   // Flatten nested unions
-  let typeinfos = typeinfos.map(t => if t.at(type-key) == "union" { t.data } else { (t,) }).sum(default: ()).dedup()
+  let typeinfos = typeinfos.map(t => if t.type-kind == "union" { t.data } else { (t,) }).sum(default: ()).dedup()
   if typeinfos == () {
     // No inputs accepted...
     return never
@@ -138,7 +139,7 @@
     // Simplify union if there's nothing else
     return typeinfos.first()
   }
-  if typeinfos.any(x => x.at(type-key) == "any") {
+  if typeinfos.any(x => x.type-kind == "any") {
     // Union with 'any' is just any
     return any
   }
@@ -170,7 +171,7 @@
       // Note that this check also works for input reduced to just "any". If "any" is an
       // unchecked input, then checks will never fail.
       none
-    } else if checked-types.all(t => t.at(type-key) == "literal") {
+    } else if checked-types.all(t => t.type-kind == "literal") {
       // From here onwards, we can assume unchecked-inputs doesn't contain "any",
       // since it is a subset of input, therefore input would be just ("any",) and
       // the check above would have had to pass in that case.
@@ -211,7 +212,7 @@
       // accept their "cast-from" types, then we can fast track to a simple check:
       // if within the 'cast-from' types, then cast, otherwise don't.
       casting-types != ()
-      and casting-types.all(t => t.at(type-key) == "native" and t.data in (float, content))
+      and casting-types.all(t => t.type-kind == "native" and t.data in (float, content))
       and typeinfos.find(t => t.input.any(i => i == "any" or i in first-casting-type.input)) == first-casting-type
       and (casting-types.len() == 1 or typeinfos.find(t => t.input.any(i => i == "any" or i in casting-types.at(1).input)) == casting-types.at(1))
     ) {
@@ -242,7 +243,7 @@
 
   let error = if typeinfos.all(t => t.error == none) {
     none
-  } else if typeinfos.all(t => t.at(type-key) == "literal") {
+  } else if typeinfos.all(t => t.type-kind == "literal") {
     let literals = typeinfos.map(t => str(t.data.represented)).join(", ", last: " or ")
     let message = "given value wasn't equal to literals " + literals
     x => message
@@ -253,8 +254,8 @@
     }
   }
 
-  let is-option = typeinfos.first().at(type-key) == "native" and typeinfos.first().data == type(none)
-  let is-smart = typeinfos.first().at(type-key) == "native" and typeinfos.first().data == type(auto)
+  let is-option = typeinfos.first().type-kind == "native" and typeinfos.first().data == type(none)
+  let is-smart = typeinfos.first().type-kind == "native" and typeinfos.first().data == type(auto)
 
   let default = if is-option or is-smart {
     // Default of 'none' for option(...)
@@ -294,7 +295,7 @@
 
   (
     ..base-typeinfo,
-    (type-key): "union",
+    type-kind: "union",
     name: name,
     data: typeinfos,
     input: input,
@@ -326,9 +327,9 @@
 // Mostly unchecked variant of 'types.wrap'.
 #let wrap(typeinfo, overrides) = {
   (
-    (..typeinfo, (type-key): "wrapped", data: (base: typeinfo, extra: none))
+    (..typeinfo, type-kind: "wrapped", data: (base: typeinfo, extra: none))
     + for (key, default) in base-typeinfo {
-      if key == type-key {
+      if key == type-key or key == "type-kind" {
         continue
       }
 
@@ -371,7 +372,7 @@
 
   (
     ..base,
-    (type-key): "collection",
+    type-kind: "collection",
     name: name + if parameters != () { " of " + parameters.map(t => t.name).join(", ", last: " and ") },
     data: (base: base, parameters: parameters),
     check: check,

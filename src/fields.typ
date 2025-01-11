@@ -190,7 +190,7 @@
   //
   // Have a separate typecheck option so type information can be kept in fields
   // even if typechecking is undesirable
-  let typecheck = typecheck and all-fields.values().any(f => f.typeinfo.at(type-key) != "any")
+  let typecheck = typecheck and all-fields.values().any(f => f.typeinfo.type-kind != "any")
 
   // Parse args (no typechecking)
   let parse-args-no-typechecking(args, include-required: true) = {
@@ -291,7 +291,7 @@
       }
 
       let typeinfo = field.typeinfo
-      let kind = typeinfo.at(type-key)
+      let kind = typeinfo.type-kind
 
       // Inlined version of 'types.cast'
       if kind != "any" {
@@ -332,7 +332,7 @@
     for value in pos {
       let pos-field = pos-fields.at(i)
       let typeinfo = pos-field.typeinfo
-      let kind = typeinfo.at(type-key)
+      let kind = typeinfo.type-kind
       let casted = value
 
       // Inlined version of 'types.cast'
