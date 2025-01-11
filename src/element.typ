@@ -289,6 +289,20 @@
   }
 }
 
+// Obtain an element's or type's scope (usually a module with important definitions).
+//
+// SAMPLE USAGE:
+//
+// #let subelem = e.scope(elem).subelem
+#let scope(it) = {
+  let info = data(it)
+  if type(info) == dictionary and "scope" in info {
+    info.scope
+  } else {
+    none
+  }
+}
+
 // Obtain an element's counter.
 //
 // USAGE:
@@ -1362,6 +1376,7 @@
   allow-unknown-fields: false,
   template: none,
   construct: none,
+  scope: none,
   count: counter.step,
   labelable: true,
   reference: none,
@@ -1381,6 +1396,7 @@
   assert(synthesize == none or type(synthesize) == function, message: "element.declare: 'synthesize' must be 'none' or a function element fields => element fields.")
   assert(contextual == auto or type(contextual) == bool, message: "element.declare: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
   assert(construct == none or type(construct) == function, message: "element.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
+  assert(scope == none or type(scope) in (dictionary, module), message: "element.declare: 'scope' must be either 'none', a dictionary or a module")
   assert(type(labelable) == bool, message: "element.declare: 'labelable' must be a boolean (true to enable the special 'label' constructor argument, false to disable it)")
   assert(
     reference == none
@@ -1476,6 +1492,7 @@
     version: element-version,
     name: name,
     eid: eid,
+    scope: scope,
     set_: set-rule,
     get: get-rule,
     where: where,
@@ -1600,6 +1617,7 @@
             body: none,
             fields: constructed-fields,
             func: __elembic_func,
+            scope: scope,
             default-constructor: default-constructor,
             eid: eid,
             ctx: (
@@ -1839,6 +1857,7 @@
     let tag = [#metadata((
       data-kind: "element-instance",
       body: inner,
+      scope: scope,
       fields: args,
       func: __elembic_func,
       default-constructor: default-constructor,
