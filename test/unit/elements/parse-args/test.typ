@@ -8,6 +8,7 @@
 #let wock-parser-req(run, color: missing, inner: missing, some-extra-thing: missing) = {
   let res = (:)
   if run != missing {
+    assert(type(run) == function, message: "field 'run' of element 'wock': must be a function, got " + e.types.typename(run))
     res.run = run
   }
   if color != missing {
@@ -15,7 +16,7 @@
     res.color = color
   }
   if inner != missing {
-    assert(type(inner) in (str, content, type(none)), message: "field 'inner' of element 'wock': must be content, got " + e.types.typename(color))
+    assert(type(inner) in (str, content, type(none)), message: "field 'inner' of element 'wock': must be content, got " + e.types.typename(inner))
     res.inner = [#inner]
   }
   if some-extra-thing != missing {
