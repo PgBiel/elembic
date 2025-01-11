@@ -29,3 +29,16 @@
 
   wock(color: green, label: <blorb>)
 })
+
+// Non-labelable elements can have a 'label' field
+#let _ = e.element.declare(
+  "has label field",
+  display: it => {},
+  fields: (
+    field("color", color, default: red),
+    field("inner", content, default: [Hello!]),
+    field("label", content, default: [Hello!])
+  ),
+  labelable: false,
+  prefix: ""
+)

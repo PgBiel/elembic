@@ -1416,6 +1416,7 @@
     message: "element.declare: 'outline' must be 'none', 'auto' (to use data from 'reference') or a dictionary with 'caption'."
   )
   assert(outline != auto or reference != none, message: "element.declare: if 'outline' is set to 'auto', 'reference' must be specified and not be 'none'.")
+  assert(labelable or reference == none, message: "element.declare: 'labelable' must be true for 'reference' to not be 'none'")
 
   if contextual == auto {
     // Provide separate context for synthesize.
@@ -1451,6 +1452,10 @@
 
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
   let (all-fields, user-fields, foldable-fields) = fields
+
+  if labelable and "label" in all-fields {
+    assert(false, message: "element.declare: labelable element cannot have a conflicting 'label' field\n  hint: you can set 'labelable: false' to disable the special label parameter, but note that it will then be impossible to refer to your element")
+  }
 
   let parse-args = if parse-args == auto {
     field-internals.generate-arg-parser(
