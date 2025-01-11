@@ -5,12 +5,14 @@
 
 #let wock = e.element.declare(
   "wock",
-  display: it => {},
+  display: _ => {},
   fields: (
     field("color", color, default: red),
+    field("thing", color, default: blue),
   ),
-  prepare: doc => {
+  prepare: (wock, doc) => {
     set text(red)
+    show: e.set_(wock, thing: yellow)
     doc
   },
   prefix: ""
@@ -18,11 +20,9 @@
 
 #let dock = e.element.declare(
   "dock",
-  display: it => {},
-  fields: (
-    field("color", color, default: red),
-  ),
-  prepare: doc => {
+  display: _ => {},
+  fields: (),
+  prepare: (_, doc) => {
     show: e.set_(wock, color: blue)
     doc
   },
@@ -33,3 +33,4 @@
 
 #context assert.eq(text.fill, red)
 #e.get(get => assert.eq(get(wock).color, blue))
+#e.get(get => assert.eq(get(wock).thing, yellow))

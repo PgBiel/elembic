@@ -1389,7 +1389,7 @@
   }
 
   assert(elems.all(it => it.data-kind == "element"), message: "element.prepare: positional arguments must be elements")
-  let prepares = elems.filter(elem => "prepare" in elem and elem.prepare != none).map(elem => elem.prepare)
+  let prepares = elems.filter(elem => "prepare" in elem and elem.prepare != none).map(elem => elem.prepare.with(elem.func))
 
   doc => {
     show: default-rules
@@ -1427,7 +1427,7 @@
   assert(type(typecheck) == bool, message: "element.declare: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
   assert(type(allow-unknown-fields) == bool, message: "element.declare: the 'allow-unknown-fields' argument must be a boolean.")
   assert(template == none or type(template) == function, message: "element.declare: 'template' must be 'none' or a function displayed element => content (usually set rules applied on the displayed element). This is used to add a set of overridable set rules to the element, such as paragraph settings.")
-  assert(prepare == none or type(prepare) == function, message: "element.declare: 'prepare' must be 'none' or a function document => styled document (used to apply show and set rules to the document).")
+  assert(prepare == none or type(prepare) == function, message: "element.declare: 'prepare' must be 'none' or a function (element, document) => styled document (used to apply show and set rules to the document).")
   assert(count == none or type(count) == function, message: "element.declare: 'count' must be 'none', a function counter => counter step/update element, or a function counter => final fields => counter step/update element.")
   assert(synthesize == none or type(synthesize) == function, message: "element.declare: 'synthesize' must be 'none' or a function element fields => element fields.")
   assert(contextual == auto or type(contextual) == bool, message: "element.declare: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
