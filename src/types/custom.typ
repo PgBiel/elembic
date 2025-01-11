@@ -39,6 +39,7 @@
   typecheck: true,
   allow-unknown-fields: false,
   construct: none,
+  scope: none,
   casts: none,
   fold: none,
 ) = {
@@ -49,6 +50,7 @@
   assert(type(allow-unknown-fields) == bool, message: "types.declare: the 'allow-unknown-fields' argument must be a boolean.")
   assert(construct == none or type(construct) == function, message: "types.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
   assert(default == none or type(default) == function, message: "types.declare: 'default' must be none or a function receiving the constructor and returning the default.")
+  assert(scope == none or type(scope) in (dictionary, module), message: "types.declare: 'scope' must be either 'none', a dictionary or a module")
   assert(
     casts == none
     or type(casts) == array and casts.all(
@@ -114,6 +116,7 @@
     id: typeid,
     // We will add this here once the constructor is declared
     typeinfo: none,
+    scope: scope,
     parse-args: parse-args,
     default-fields: default-fields,
     all-fields: all-fields,
@@ -256,6 +259,7 @@
         default-constructor: default-constructor,
         tid: tid,
         id: (tid: tid, name: name),
+        scope: scope,
         fields-known: true,
         valid: true
       )
