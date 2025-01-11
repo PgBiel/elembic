@@ -1,7 +1,7 @@
 #import "/test/unit/base.typ": empty
 #show: empty
 
-#import "/src/lib.typ": types, field
+#import "/src/lib.typ" as e: types, field
 #import types: native
 #import "/src/types/types.typ": cast
 
@@ -23,8 +23,10 @@
   )
 }
 
-#assert.eq(types.typeid(sides(int)), "custom type")
-#assert.eq(cast(sides(int), types.custom-type), (true, sides(int)))
-#assert.eq(cast(sides(red), types.literal(sides(int), sides(red)), (true, sides(red))))
-#assert.eq(cast(sides(red), dictionary), (false, "expected dictionary, found custom type"))
-#assert.eq(cast(sides(red), types.union(dictionary, stroke, types.custom-type)), (true, sides(red)))
+#assert.eq(types.typeid(e.data(sides(int))), "custom type")
+#assert.eq(cast(e.data(sides(int)), types.custom-type), (true, e.data(sides(int))))
+#assert.eq(cast(e.data(sides(red)), types.union(types.literal(e.data(sides(int))), types.literal(e.data(sides(red))))), (true, e.data(sides(red))))
+#assert.eq(cast(e.data(sides(red)), dictionary), (false, "expected dictionary, found custom type"))
+#assert.eq(cast(e.data(sides(red)), types.union(dictionary, stroke, types.custom-type)), (true, e.data(sides(red))))
+#assert.eq(cast(e.data(sides(red)), types.literal(e.data(sides(red)))), (true, e.data(sides(red))))
+#assert.eq(cast(e.data(sides(blue)), types.literal(e.data(sides(red)))), (false, "given value wasn't equal to literal 'custom-type(name: \"sides of literal 'rgb(\\\"#ff4136\\\")'\"', tid: \"t__---_sides of literal 'rgb(\\\"#ff4136\\\")'\")'"))

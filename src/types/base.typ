@@ -88,7 +88,12 @@
 #let typename(value) = {
   let value-type = type(value)
   if value-type == dictionary and custom-type-key in value {
-    value.at(custom-type-key).id.name
+    let id = value.at(custom-type-key).id
+    if "name" in id {
+      id.name
+    } else {
+      str(id)
+    }
   } else {
     str(value-type)
   }
@@ -111,13 +116,59 @@
   )
 }
 
+#let _letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
+
+// Alternative 'repr' considering custom types.
+#let repr_(value, depth: 0) = {
+  if depth < 10 and type(value) == dictionary {
+    let dict = value
+    if custom-type-key in value {
+      let type-data = value.at(custom-type-key)
+      dict = type-data.fields
+
+      let id = type-data.id
+      if "name" in id {
+        id.name
+      } else if id == "custom type" {
+        return if custom-type-data-key in value {
+          "custom-type(name: " + repr(value.name) + "', tid: " + repr(value.tid) + ")"
+        } else {
+          "custom-type()"
+        }
+      } else {
+        str(id)
+      }
+    }
+
+    "("
+    dict.pairs().map(((k, v)) => {
+      if k.codepoints().all(c => c in _letters) {
+        k
+      } else {
+        repr(k)
+      }
+
+      ": "
+
+      repr_(v, depth: depth + 1)
+    }).join(", ")
+    ")"
+  } else if depth < 10 and type(value) == array {
+    "("
+    value.map(repr_.with(depth: depth + 1)).join(", ")
+    ")"
+  } else {
+    repr(value)
+  }
+}
+
 // Literal type
 // Only accepted if value is equal to the literal.
 // Input and output are equal to the value.
 //
 // Uses base typeinfo information for information such as casts and whatnot.
 #let literal(value, typeinfo) = {
-  let represented = "'" + if type(value) == str { value } else { repr(value) } + "'"
+  let represented = "'" + if type(value) == str { value } else { repr_(value) } + "'"
   let value-type = typeid(value)
 
   let check = if typeinfo.check == none { x => x == value } else { x => x == value and (typeinfo.check)(x) }

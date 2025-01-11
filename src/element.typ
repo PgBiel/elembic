@@ -1432,6 +1432,7 @@
   let elem-data = (
     (element-key): true,
     version: element-version,
+    name: name,
     eid: eid,
     set_: set-rule,
     get: get-rule,

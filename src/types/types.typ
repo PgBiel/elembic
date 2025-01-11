@@ -12,22 +12,30 @@
   }
 }
 
+#let typeof(value) = {
+  if type(value) == dictionary and custom-type-key in value {
+    if custom-type-data-key in value {
+      base.custom-type
+    } else {
+      (value.at(custom-type-key).func)(__elembic_data: base.special-data-values.get-data).typeinfo
+    }
+  } else {
+    let (res, typeinfo) = native.typeinfo(type(value))
+    if not res {
+      assert(false, message: "types.typeof: " + typeinfo)
+    }
+
+    typeinfo
+  }
+}
+
 // Literal type
 // Only accepted if value is equal to the literal.
 // Input and output are equal to the value.
 //
 // Uses base typeinfo information for information such as casts and whatnot.
 #let literal(value) = {
-  let type_ = base.typeid(value)
-  let (res, typeinfo-or-err) = if type(type_) == type {
-    native.typeinfo(type_)
-  } else {
-    // TODO: Custom types
-    (true, type_)
-  }
-  assert(res, message: if not res { "types.literal: " + typeinfo-or-err } else { "" })
-
-  base.literal(value, typeinfo-or-err)
+  base.literal(value, typeof(value))
 }
 
 // Obtain the typeinfo for a type.

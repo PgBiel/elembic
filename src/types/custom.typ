@@ -109,6 +109,7 @@
         valid: true
     ),
     version: custom-type-version,
+    name: name,
     tid: tid,
     id: typeid,
     // We will add this here once the constructor is declared
