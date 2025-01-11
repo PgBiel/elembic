@@ -48,6 +48,9 @@
 // Special dictionary key to indicate this is a prepared rule.
 #let prepared-rule-key = "__prepared-rule"
 
+// Special dictionary key which stores element context and other data.
+#let stored-data-key = "__elembic_stored_element_data"
+
 #let element-key = "__custom_element"
 #let element-data-key = "__custom_element_data"
 #let global-data-key = "__custom_element_global_data"
@@ -205,6 +208,8 @@
     (data-kind: "custom-type-data", ..it)
   } else if type(it) == dictionary and custom-type-key in it {
     it.at(custom-type-key)
+  } else if type(it) == dictionary and stored-data-key in it {
+    it.at(stored-data-key)
   } else if type(it) != content {
     (data-kind: "unknown", body: it, fields: (:), func: none, eid: none, fields-known: false, valid: false)
   } else if (
@@ -251,6 +256,37 @@
   }
 
   (:)
+}
+
+// Obtain context at an element's site.
+//
+// SAMPLE USAGE:
+//
+// 1. In show rules:
+//
+// #show e.selector(elem): it => {
+//   let (get, ..) = e.ctx(it)
+//   let other-elem-ctx = get(other-elem)
+//   [The other element field was set to #other-elem-ctx.field at that point!]
+// }
+//
+// 2. In element declarations:
+//
+// #e.element.declare(
+//   ...
+//   synthesize: it => {
+//     // Get context for other element
+//     it.some-field = (e.ctx(it).get)(other-elem).field
+//   },
+//   ...
+// )
+#let ctx(it) = {
+  let info = data(it)
+  if type(info) == dictionary and "ctx" in info {
+    info.ctx
+  } else {
+    none
+  }
 }
 
 // Obtain an element's counter.
@@ -1560,6 +1596,10 @@
             func: __elembic_func,
             default-constructor: default-constructor,
             eid: eid,
+            ctx: (
+              global-data: global-data,
+              get: get-styles.with(elements: global-data.elements),
+            ),
             counter: element-counter,
             reference: reference,
             custom-ref: none,
@@ -1621,12 +1661,28 @@
               let synthesized-fields = if synthesize == none {
                 constructed-fields
               } else {
-                synthesize(constructed-fields)
+                // Pass contextual information to synthesize
+                // Remove it afterwards to ensure the final tag's 'fields' won't
+                // have its own copy of the tag
+                let new-fields = synthesize(constructed-fields + ((stored-data-key): tag))
+                if type(new-fields) != dictionary {
+                  assert(false, message: "element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
+                }
+                if stored-data-key in new-fields {
+                  _ = new-fields.remove(stored-data-key)
+                }
+                new-fields
               }
 
               if label != none {
                 synthesized-fields.label = label
               }
+
+              let tag = tag
+              tag.fields = synthesized-fields
+
+              // Store contextual information in synthesize
+              synthesized-fields.insert(stored-data-key, tag)
 
               if count-needs-fields {
                 count(synthesized-fields)
@@ -1635,16 +1691,23 @@
                 context {
                   let body = display(synthesized-fields)
                   let tag = tag
-                  tag.fields = synthesized-fields
                   tag.body = body
 
                   if custom-ref != none {
+                    // Update with body
+                    let synthesized-fields = synthesized-fields
+                    synthesized-fields.at(stored-data-key) = tag
+
                     tag.custom-ref = custom-ref(synthesized-fields)
                   }
 
                   let tag-metadata = metadata(tag)
 
                   if reference != none or outline != none {
+                    // Update with custom-ref
+                    let synthesized-fields = synthesized-fields
+                    synthesized-fields.at(stored-data-key) = tag
+
                     ref-figure(tag-metadata, synthesized-fields)
                   }
 
@@ -1654,16 +1717,21 @@
               } else {
                 let body = display(synthesized-fields)
                 let tag = tag
-                tag.fields = synthesized-fields
                 tag.body = body
 
                 if custom-ref != none {
+                  // Update with body
+                  synthesized-fields.at(stored-data-key) = tag
+
                   tag.custom-ref = custom-ref(synthesized-fields)
                 }
 
                 let tag-metadata = metadata(tag)
 
                 if reference != none or outline != none {
+                  // Update with custom-ref
+                  synthesized-fields.at(stored-data-key) = tag
+
                   ref-figure(tag-metadata, synthesized-fields)
                 }
 
@@ -1675,12 +1743,27 @@
             let synthesized-fields = if synthesize == none {
               constructed-fields
             } else {
-              synthesize(constructed-fields)
+              // Pass contextual information to synthesize
+              // Remove it afterwards to ensure the final tag's 'fields' won't
+              // have its own copy of the tag
+              let new-fields = synthesize(constructed-fields + ((stored-data-key): tag))
+              if type(new-fields) != dictionary {
+                assert(false, message: "element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
+              }
+              if stored-data-key in new-fields {
+                _ = new-fields.remove(stored-data-key)
+              }
+              new-fields
             }
 
             if label != none {
               synthesized-fields.label = label
             }
+
+            tag.fields = synthesized-fields
+
+            // Store contextual information in synthesize
+            synthesized-fields.insert(stored-data-key, tag)
 
             if count-needs-fields {
               count(synthesized-fields)
@@ -1689,16 +1772,23 @@
               context {
                 let body = display(synthesized-fields)
                 let tag = tag
-                tag.fields = synthesized-fields
                 tag.body = body
 
                 if custom-ref != none {
+                  // Update with body
+                  let synthesized-fields = synthesized-fields
+                  synthesized-fields.at(stored-data-key) = tag
+
                   tag.custom-ref = custom-ref(synthesized-fields)
                 }
 
                 let tag-metadata = metadata(tag)
 
                 if reference != none or outline != none {
+                  // Update with custom-ref
+                  let synthesized-fields = synthesized-fields
+                  synthesized-fields.at(stored-data-key) = tag
+
                   ref-figure(tag-metadata, synthesized-fields)
                 }
 
@@ -1707,16 +1797,21 @@
               }
             } else {
               let body = display(synthesized-fields)
-              tag.fields = synthesized-fields
               tag.body = body
 
               if custom-ref != none {
+                // Update with body
+                synthesized-fields.at(stored-data-key) = tag
+
                 tag.custom-ref = custom-ref(synthesized-fields)
               }
 
               let tag-metadata = metadata(tag)
 
               if reference != none or outline != none {
+                // Update with custom-ref
+                synthesized-fields.at(stored-data-key) = tag
+
                 ref-figure(tag-metadata, synthesized-fields)
               }
 
@@ -1742,6 +1837,7 @@
       func: __elembic_func,
       default-constructor: default-constructor,
       eid: eid,
+      ctx: none,
       counter: element-counter,
       reference: reference,
       custom-ref: none,
