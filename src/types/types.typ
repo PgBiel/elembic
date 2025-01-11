@@ -275,8 +275,14 @@
     // exact(any) => any (same)
     // exact(never) => never (same)
     type_
+  } else if key == "custom" {
+    if type_.data.pre-casts == none {
+      type_
+    } else {
+      type_.data.pre-casts
+    }
   } else {
-    assert(false, message: "types.exact: unsupported type kind " + key + ", supported kinds include native types, literals, 'any' and 'never'")
+    assert(false, message: "types.exact: unsupported type kind " + key + ", supported kinds include native types, literals, custom types, 'any' and 'never'")
   }
 }
 

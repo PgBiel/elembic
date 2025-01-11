@@ -97,7 +97,14 @@
     name: name,
     input: (typeid,),
     output: (typeid,),
-    data: (id: typeid)
+    data: (
+      id: typeid,
+
+      // Original type before adding casts
+      // or none if this is already the type before casts
+      // (used for 'exact()')
+      pre-casts: none
+    )
   )
 
   let type-data = (
@@ -205,7 +212,8 @@
           _ => "failed to cast to custom type '" + name + "'"
         } else {
           x => (union.error)(x).replace("all typechecks for union failed", "all casts to custom type '" + name + "' failed")
-        }
+        },
+        data: typeinfo.data + (pre-casts: typeinfo)
       )
     }
   }
