@@ -153,8 +153,10 @@ There are three styling modes available for set rules (as well as apply rules, r
 1. **Normal mode (default):** The safest mode, uses `show: set` rules on existing elements to store set rule data, and then immediately restores the current value of those rules, so it is **fast** (as it only uses show / set, so **it causes no document relayouts**) and **hygienic** (the inner workings of Elembic have no effect on your document in that case).
     - In this mode, you are limited to **around 30** simultaneous rules in the same scope as each set rule has **two nested function calls** (contributing twice towards the limit of 64, minus 3 due to elements themselves).
     - It is worth the reminder that this number refers to **ungrouped, non-consecutive set rules**. If you group set rules together, **they are unlimited in number**.
+    - This is the default mode when using `e.set_(...)`, `e.revoke(...)` and others.
 2. **Leaky mode:** It is as fast as normal mode, but **has double the limit of rules** (**around 60**). However, **it is not hygienic** as it **resets existing `#set bibliography(title: ...)` rules** to their **first known values**. (That is, any `bibliography.title` set rules after the first set rule are lost, and the initial value is reset with each leaky rule.) If this is acceptable to you, then **feel free to use leaky rules** to easily increase the limit.
     - This mode can be used by packages' internal elements, for example, since that set rule is probably unimportant then.
+    - To switch to this mode, **replace all set rules with their `e.leaky` counterparts**. For example, you'd replace `e.set_(element, field: value)` with `e.leaky.set_(element, field: value)`. (You can create an alias such as `import e: leaky as lk` and then `lk.set_(...)` for ease of use.)
 3. **Stateful mode:** Rules in this mode **do not have any usage limits.** You can nest them as much as you want, even if you don't group them. However, the downside is that **this mode uses `state`,** which can cause **document relayouts and be slower**.
     - Note that you can restrict this mode change to a single scope and use other modes elsewhere in the document.
     - Other rule modes are **compatible with stateful mode**. You can still use non-stateful set rules when stateful mode is enabled; while they will still have a limit, they will read and update set rule data using `state` as well, so they stay in sync. In addition, **the limit of normal-mode rules is doubled** just by enabling stateful mode in the containing scope, since they will automatically switch to a more lightweight code path. Therefore, **package authors can use normal-mode rules without problems**.
@@ -164,11 +166,13 @@ It is slower and may trigger document relayouts in some cases, but has no usage 
 nesting many elements inside each other, which is a limitation shared by native elements as well and is
 unavoidable).
 
-It can be done in a two-step process:
+To do this, **there are two steps** (unlike the single step for leaky mode):
 
-1. Writing `#show: e.stateful.enable()` (note the parentheses) for either a certain scope (to only enable
-it for a certain portion of your document) or at the very top of the document (to enable it for all of
+1. **Enabling stateful mode:** Writing `#show: e.stateful.enable()` (note the parentheses) for either **a certain scope** (to only enable
+it for a certain portion of your document) or **at the very top of the document** (to enable it for all of
 the document);
+    - This is used to inform rules in normal mode that they should read and write to the `state`. It also increases their limits by doing so.
+    - Without this step, stateful-only set rules (below) don't do anything.
 
 2. **Replacing existing set rules with their stateful-only counterparts.** That is, replace all occurrences
 of `e.set_`, `e.apply`, `e.revoke` etc. with `e.stateful.set_`, `e.stateful.apply` and `e.stateful.revoke`,
