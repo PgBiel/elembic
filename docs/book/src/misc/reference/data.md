@@ -2,12 +2,12 @@
 
 Functions used to retrieve data from custom elements, custom types, and their instances.
 
-## Main function
+## Main functions
 
 ### `e.data`
 
 This is the main function used to retrieve data from custom elements and custom types and their instances.
-The other functions listed here are convenient wrappers over this function to reduce typing.
+The other functions listed under "Helper functions" are convenient wrappers over this function to reduce typing.
 It receives any input and returns a dictionary with one of the following values for the `data-kind` key:
 
 1. `"element"`: dictionary with an element's relevant parameters and data generated it was declared.
@@ -95,6 +95,29 @@ It receives any input and returns a dictionary with one of the following values 
 
 // Equivalent to e.data(my-type(a: 5, b: 6)).fields
 #assert.eq(e.fields(my-type(a: 5, b: 6)), (a: 5, b: 6))
+```
+
+### `e.repr`
+
+This is used to obtain a debug representation of custom types.
+
+In the future, this will support elements as well.
+
+Also supports native types (just calls `repr()` for them).
+
+**Signature:**
+
+```rs
+#e.repr(
+  any
+) -> str
+```
+
+**Example:**
+
+```rs
+// -> "person(name: \"John\", age: 40)"
+#e.repr(person(name: "John", age: 40))
 ```
 
 ## Helper functions

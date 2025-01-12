@@ -118,7 +118,11 @@
 
 #let _letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
 
-// Alternative 'repr' considering custom types.
+/// This is used to obtain a debug representation of custom types.
+///
+/// In the future, this will support elements as well.
+///
+/// Also supports native types (just calls `repr()` for them).
 #let repr_(value, depth: 0) = {
   if depth < 10 and type(value) == dictionary {
     let dict = value
