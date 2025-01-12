@@ -1,4 +1,4 @@
-# Elements
+# Element functions
 
 At the moment, all of the functions in this module are exported exclusively at the top-level of the package, other than `declare` which must be used as `e.element.declare`.
 
@@ -29,7 +29,7 @@ Creates a new element, returning its constructor. Read the ["Creating custom ele
   outline: none | auto | (caption: content) = none,
   synthesize: none | function(fields) -> synthesized fields,
   contextual: bool = false,
-) = {
+) -> function
 ```
 
 **Arguments:**
@@ -102,7 +102,7 @@ Note that Elembic will automatically wrap consecutive rules (only whitespace or 
 #e.apply(
   ..rules: e.apply(...) | e.set_(...) | e.revoke(...) | e.reset(...),
   mode: auto | style-modes.normal | style-modes.leaky | style-modes.stateful = auto
-)
+) -> function
 ```
 
 **Example:**
@@ -124,8 +124,8 @@ The callback receives a 'get' function which can be used to read the values for 
 
 ```rs
 #e.get(
-    receiver: function(function) -> content
-)
+  receiver: function(function) -> content
+) -> content
 ```
 
 **Example:**
@@ -152,7 +152,7 @@ However, more than one rule can have the same name, allowing both to be revoked 
 #e.named(
   name: str,
   rule: e.apply(...) | e.set_(...) | e.revoke(...) | e.reset(...),
-)
+) -> function
 ```
 
 **Example:**
@@ -174,7 +174,7 @@ As an example, an element may use its own `prepare` function to apply some speci
 ```rs
 #e.prepare(
   ..elems: function
-)
+) -> function
 ```
 
 **Example:**
@@ -198,7 +198,7 @@ Please use [`e.prepare`](#eprepare) as it does that automatically, and more if n
 ```rs
 #e.ref(
   ref: content
-)
+) -> content
 ```
 
 **Example:**
@@ -217,7 +217,7 @@ Please use [`e.prepare`](#eprepare) as it does that automatically, and more if n
 #e.reset(
   ..elems: function,
   mode: auto | style-modes.normal | style-modes.leaky | style-modes.stateful = auto
-)
+) -> function
 ```
 
 **Example:**
@@ -248,7 +248,7 @@ You should use [`e.named`](#enamed) to add names to rules.
 #e.revoke(
   name: str,
   mode: auto | style-modes.normal | style-modes.leaky | style-modes.stateful = auto
-)
+) -> function
 ```
 
 **Example:**
@@ -297,7 +297,7 @@ are not matched by the selectors, even if their fields' values match.
 #e.select(
   ..filters: element.with(one-field: expected-value, another-field: expected-value),
   receiver: function(..selectors) -> content
-)
+) -> content
 ```
 
 **Example:**
@@ -366,12 +366,3 @@ You will normally not use these values directly, but rather e.g.
 use `e.stateful.set_(...)` to use a stateful-only rule.
 
 Read [limitations](../../about/limitations.md) for more information.
-
-## Data extraction
-
-### `e.counter`
-### `e.ctx`
-### `e.data`
-### `e.fields`
-### `e.scope`
-### `e.selector`
