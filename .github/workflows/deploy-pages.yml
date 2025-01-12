@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: 📥 Install mdBook
         run: |
-          mkdir bin
+          mkdir -p bin
           curl -sSL https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=bin
         working-directory: "docs/book"
       - name: 📄 Setup Pages
