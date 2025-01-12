@@ -123,3 +123,27 @@ Note that this also allows users to **override the default values of fields** th
 // This theorem will display "Impressed!" in green.
 #theorem[Impressed!]
 ```
+
+## Setting overridable default styles with `template`
+
+You can have a custom template for your element with the `template` option. It's a function `displayed element => content` where you're supposed to apply **default styles,** such as `#set par(justify: true)`, which the user can then override using the element's **outer selector** (`e.selector(elem, outer: true)`) in a show-set rule:
+
+```rs
+#let elem = e.element.declare(
+  "elem",
+  // ...
+  template: it => {
+    set par(justify: true)
+    it
+  },
+)
+
+// Par justify is enabled
+#elem()
+
+// Overriding:
+#show e.selector(elem, outer: true): set par(justify: false)
+
+// Par justify is disabled
+#elem()
+```
