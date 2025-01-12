@@ -9,6 +9,7 @@
 
 - [Creating elements](./elements/creating/README.md)
   - [Declaring](./elements/creating/declaring.md)
+  - [Custom constructor and parsing](./elements/creating/overriding-constr.md)
   - [Labels and references](./elements/creating/labels-refs.md)
   - [Outline](./elements/creating/outline.md)
 
