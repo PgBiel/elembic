@@ -9,8 +9,8 @@
 
 - [Creating elements](./elements/creating/README.md)
   - [Declaring](./elements/creating/declaring.md)
-  - [Labels and references]()
-  - [Outline]()
+  - [Labels and references](./elements/creating/labels-refs.md)
+  - [Outline](./elements/creating/outline.md)
 
 - [Using elements](./elements/using/README.md)
   - [Placing and styling](./elements/using/styling.md)
