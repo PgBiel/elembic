@@ -12,6 +12,7 @@
   - [Custom constructor and parsing](./elements/creating/overriding-constr.md)
   - [Labels and references](./elements/creating/labels-refs.md)
   - [Outline](./elements/creating/outline.md)
+  - [Extra options](./elements/creating/extra-options.md)
 
 - [Using elements](./elements/using/README.md)
   - [Placing and styling](./elements/using/styling.md)

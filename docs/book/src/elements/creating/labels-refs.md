@@ -1,6 +1,6 @@
 # Labels and references
 
-Labelable elements (with `labelable: true`, the default) can be labelled with `#elem(label: <label-name>)`. Compared to what would be a more usual syntax (`#elem() <label-name>`, which is wrong), using `label` as an argument not only allows accessing the element's final fields in show rules, it also allows **references** to work, when properly setup.
+Labelable elements (with `labelable: true`, the default) can be labelled with `#elem(label: <label-name>)`. Compared to what would be a more usual syntax (`#elem() <label-name>`, which **should not be used**), using `label` as an argument not only allows accessing the element's final fields in show rules, it also allows **references** to work, when properly setup.
 
 To add reference support to an element, add `reference: (...)` in the element's declaration. It requires the keys `supplement` and `numbering`, which can be their usual values (content and string) or functions `final fields => value`, if you want the user to be able to override those values through `supplement` and `numbering` fields in the element. However, your reference can also be fully customized with `(custom: fields => content)`.
 
@@ -11,6 +11,7 @@ By default, the number used by references is the element's own counter (accessib
 ```rs
 #import "@preview/elembic:X.X.X" as e: field
 
+// The line below must be written by the END USER for references to work!
 #show: e.prepare()
 
 #let theorem = e.element.declare(

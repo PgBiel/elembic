@@ -126,26 +126,6 @@ Note that this also allows users to **override the default values of fields** th
 #theorem[Impressed!]
 ```
 
-## Setting overridable default styles with `template`
+## Accessing context
 
-You can have a custom template for your element with the `template` option. It's a function `displayed element => content` where you're supposed to apply **default styles,** such as `#set par(justify: true)`, which the user can then override using the element's **outer selector** (`e.selector(elem, outer: true)`) in a show-set rule:
-
-```rs
-#let elem = e.element.declare(
-  "elem",
-  // ...
-  template: it => {
-    set par(justify: true)
-    it
-  },
-)
-
-// Par justify is enabled
-#elem()
-
-// Overriding:
-#show e.selector(elem, outer: true): set par(justify: false)
-
-// Par justify is disabled
-#elem()
-```
+If you need to access the current context within `display` (or other element functions receiving fields), you can use [`e.data` or its related functions](../../misc/reference/data.md). In particular, `e.counter(it)` provides the element's counter, whereas `e.func(it)` provides the element constructor itself. Check the [page about custom references](./labels-refs.md) for more information.
