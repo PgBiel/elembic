@@ -1,4 +1,4 @@
-# Types
+# Type system
 
 In order to ensure type-safety for your element's fields, Elembic has its own **type system** which is worth being aware about. It not only allows you to customize how types are checked for each field, but even **create your own, brand new types**, much like you can create elements!
 

@@ -66,7 +66,9 @@ Let's add a color field to change the fill of text inside our theorem:
 #theorem(fill: blue)
 ```
 
-Here we use `e.types.paint` instead of just `color` because the `fill` could be a gradient or tiling as well, for example; `paint` is a shorthand for `e.types.union(color, gradient, tiling)`. (You can read more in the chapters about types.)
+Here we use `e.types.paint` instead of just `color` because the `fill` could be a gradient or tiling as well, for example; `paint` is a shorthand for `e.types.union(color, gradient, tiling)`.
+
+To read more about the types that can be used for fields, read the [Type system](../../types/type-system) chapter.
 
 Note that omitting `default: red` in the field creation would have caused an error, as Elembic cannot infer a default value for the color type.
 
