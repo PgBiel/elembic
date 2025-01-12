@@ -1574,6 +1574,65 @@
     func: none,
   )
 
+  // Figure placed for referencing to work.
+  let ref-figure(tag, synthesized-fields, ref-label) = {
+    let numbering = if numbering-type == str {
+      reference.numbering
+    } else if numbering-type == function {
+      let numbering = (reference.numbering)(synthesized-fields)
+      assert(type(numbering) in (str, function), message: "element: 'reference.numbering' must be a function fields => numbering (a string or a function), but returned " + str(type(numbering)))
+      numbering
+    } else {
+      none
+    }
+
+    let number = if numbering == none { none } else { element-counter.display(numbering) }
+
+    let caption = if caption-type == function {
+      (caption: (outline.caption)(synthesized-fields))
+    } else if caption-type in (str, content) {
+      (caption: [#outline.caption])
+    } else if outline == auto {
+      if (
+        "supplement" in reference and "numbering" in reference
+        or "custom-ref" not in tag
+        or tag.custom-ref == none
+      ) {
+        // Add some caption so it is displayed with the supplement and
+        // number, but remove useless separator
+        (caption: figure.caption(separator: "")[])
+      } else {
+        // No supplement or number, but there are custom reference
+        // contents, so we display that
+        (caption: tag.custom-ref)
+      }
+    } else {
+      (:)
+    }
+
+    let ref-figure = [#figure(
+      supplement: if supplement-type in (str, content) {
+        [#reference.supplement]
+      } else if supplement-type == function {
+        (reference.supplement)(synthesized-fields)
+      } else {
+        []
+      },
+
+      numbering: if number == none { none } else { _ => number },
+
+      kind: ref-figure-kind,
+
+      ..caption
+    )[#[]#metadata(tag)#lbl-tag]#ref-label]
+
+    let tagged-figure = [#[#ref-figure#metadata(tag)#lbl-tag]#lbl-ref-figure]
+
+    show figure: none
+
+    tagged-figure
+  }
+
   // Sentinel for 'unspecified value'
   let _missing() = {}
   let std-label = label
@@ -1598,19 +1657,25 @@
       }
     }
 
-    if not labelable and label != _missing {
+    let labeling = false
+    let ref-label = none
+    if labelable {
+      if label == _missing {
+        label = none
+      } else if type(label) == std-label {
+        ref-label = std-label(lbl-ref-figure-label-head + str(label))
+        labeling = true
+      } else if label != none {
+        assert(false, message: "element '" + name + "': expected label or 'none' for 'label', found " + base.typename(label))
+      }
+    } else if label == _missing {
+      label = none
+    } else {
       // Also parse label as a field if we don't want element to be labelable
       args = arguments(..args, label: label)
     }
 
     let args = parse-args(args, include-required: true)
-
-    let (inner-label, ref-label) = if labelable and label != _missing and label != none {
-      assert(type(label) == std-label, message: "element: expected label or 'none' for 'label', found " + str(type(label)))
-      (label, std-label(lbl-ref-figure-label-head + str(label)))
-    } else {
-      (none, none)
-    }
 
     // Step the counter early if we don't need additional context
     let early-step = if not count-needs-fields { count }
@@ -1682,74 +1747,15 @@
             scope: scope,
             default-constructor: default-constructor,
             eid: eid,
-            ctx: (
-              global-data: global-data,
-              get: get-styles.with(elements: global-data.elements),
-            ),
+            ctx: if contextual {
+              (get: get-styles.with(elements: global-data.elements))
+            } else { none },
             counter: element-counter,
             reference: reference,
             custom-ref: none,
             fields-known: true,
             valid: true
           )
-
-          let ref-figure = (tag-metadata, tag, synthesized-fields) => {
-            let numbering = if numbering-type == str {
-              reference.numbering
-            } else if numbering-type == function {
-              let numbering = (reference.numbering)(synthesized-fields)
-              assert(type(numbering) in (str, function), message: "element: 'reference.numbering' must be a function fields => numbering (a string or a function), but returned " + str(type(numbering)))
-              numbering
-            } else {
-              none
-            }
-
-            let number = if numbering == none { none } else { element-counter.display(numbering) }
-
-            let caption = if caption-type == function {
-              (caption: (outline.caption)(synthesized-fields))
-            } else if caption-type in (str, content) {
-              (caption: [#outline.caption])
-            } else if outline == auto {
-              if (
-                "supplement" in reference and "numbering" in reference
-                or "custom-ref" not in tag
-                or tag.custom-ref == none
-              ) {
-                // Add some caption so it is displayed with the supplement and
-                // number, but remove useless separator
-                (caption: figure.caption(separator: "")[])
-              } else {
-                // No supplement or number, but there are custom reference
-                // contents, so we display that
-                (caption: tag.custom-ref)
-              }
-            } else {
-              (:)
-            }
-
-            let ref-figure = [#figure(
-              supplement: if supplement-type in (str, content) {
-                [#reference.supplement]
-              } else if supplement-type == function {
-                (reference.supplement)(synthesized-fields)
-              } else {
-                []
-              },
-
-              numbering: if number == none { none } else { _ => number },
-
-              kind: ref-figure-kind,
-
-              ..caption
-            )[#[]#tag-metadata#lbl-tag]#ref-label]
-
-            let tagged-figure = [#[#ref-figure#tag-metadata#lbl-tag]#lbl-ref-figure]
-
-            show figure: none
-
-            tagged-figure
-          }
 
           if contextual {
             // Use context for synthesize as well
@@ -1804,11 +1810,14 @@
                     let synthesized-fields = synthesized-fields
                     synthesized-fields.at(stored-data-key) = tag
 
-                    ref-figure(tag-metadata, tag, synthesized-fields)
+                    ref-figure(tag, synthesized-fields, ref-label)
                   }
 
-                  let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
-                  [#[#labeled-body#tag-metadata]#lbl-show]
+                  if labeling {
+                    [#[#[#body#metadata(tag)#lbl-tag]#label#metadata(tag)]#lbl-show]
+                  } else {
+                    [#[#body#metadata(tag)]#lbl-show]
+                  }
                 }
               } else {
                 let body = display(synthesized-fields)
@@ -1828,11 +1837,14 @@
                   // Update with custom-ref
                   synthesized-fields.at(stored-data-key) = tag
 
-                  ref-figure(tag-metadata, tag, synthesized-fields)
+                  ref-figure(tag, synthesized-fields, ref-label)
                 }
 
-                let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
-                [#[#labeled-body#tag-metadata]#lbl-show]
+                if labeling {
+                  [#[#[#body#metadata(tag)#lbl-tag]#label#metadata(tag)]#lbl-show]
+                } else {
+                  [#[#body#metadata(tag)]#lbl-show]
+                }
               }
             }
           } else {
@@ -1885,11 +1897,14 @@
                   let synthesized-fields = synthesized-fields
                   synthesized-fields.at(stored-data-key) = tag
 
-                  ref-figure(tag-metadata, tag, synthesized-fields)
+                  ref-figure(tag, synthesized-fields, ref-label)
                 }
 
-                let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
-                [#[#labeled-body#tag-metadata]#lbl-show]
+                if labeling {
+                  [#[#[#body#metadata(tag)#lbl-tag]#label#metadata(tag)]#lbl-show]
+                } else {
+                  [#[#body#metadata(tag)]#lbl-show]
+                }
               }
             } else {
               let body = display(synthesized-fields)
@@ -1908,11 +1923,14 @@
                 // Update with custom-ref
                 synthesized-fields.at(stored-data-key) = tag
 
-                ref-figure(tag-metadata, tag, synthesized-fields)
+                ref-figure(tag, synthesized-fields, ref-label)
               }
 
-              let labeled-body = [#[#body#tag-metadata#lbl-tag]#inner-label]
-              [#[#labeled-body#tag-metadata]#lbl-show]
+              if labeling {
+                [#[#[#body#metadata(tag)#lbl-tag]#label#metadata(tag)]#lbl-show]
+              } else {
+                [#[#body#metadata(tag)]#lbl-show]
+              }
             }
           }
         }

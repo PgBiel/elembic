@@ -11,6 +11,7 @@
     field("border", stroke, default: red),
     field("inner", content, default: [Hello!])
   ),
+  contextual: true,
   prefix: ""
 )
 
@@ -50,6 +51,7 @@
     custom: it => { assert-ctx(it, body: true, custom-ref: false); [] },
   ),
   outline: (caption: assert-ctx.with(body: true, custom-ref: true)),
+  contextual: true,
   prefix: ""
 )
 

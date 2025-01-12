@@ -42,6 +42,7 @@
     // Context provides the element's counter
     numbering: it => _ => e.counter(it).display("A"),
   ),
+  contextual: true,
   prefix: ""
 )
 
