@@ -312,6 +312,72 @@
   }
 }
 
+/// Obtain an element's or custom type's constructor function.
+/// For native elements, this will be equivalent to `it.func()`.
+///
+/// Useful in custom element show rules, for example.
+///
+/// This is equivalent to `e.data(it).func`.
+///
+/// SAMPLE USAGE:
+///
+/// ```typ
+/// #show selector.or(e.selector(elem1), e.selector(elem2)): it => {
+///   // Will be either elem1 or elem2
+///   let elem = e.func(it)
+///   // 'elem == elem1' works, but comparing 'eid's is recommended
+///   if e.eid(elem) == e.eid(elem1) {
+///     [This is elem1]
+///   } else {
+///     [This is elem2]
+///   }
+/// }
+/// ```
+///
+/// - it (any): element/custom type instance (or element/custom type itself) to get the constructor from
+/// -> function | none
+#let func(it) = {
+  let info = data(it)
+  if type(info) == dictionary and "func" in info {
+    info.func
+  } else {
+    none
+  }
+}
+
+/// Obtain an element's eid. It uniquely distinguishes this element from others,
+/// even if they have the same name, by including both its prefix and name.
+///
+/// This is equivalent to `e.data(elem).eid`.
+///
+/// - elem (any): custom element (or an instance of it) to get 'eid' from
+/// -> function | none
+#let eid(it) = {
+  let info = data(it)
+  if type(info) == dictionary and "eid" in info {
+    info.eid
+  } else {
+    none
+  }
+}
+
+/// Obtain a custom type's tid. It uniquely distinguishes a custom type from
+/// others, even if they have the same name, by including both its prefix and
+/// name. Returns `none` on invalid input.
+///
+/// This is equivalent to `e.data(typ).tid`.
+///
+/// - typ (any): custom type (or an instance of it) to get 'tid' from
+/// -> function | none
+#let tid(it) = {
+  let info = data(it)
+  if type(info) == dictionary and "tid" in info {
+    info.tid
+  } else {
+    none
+  }
+}
+
 // Obtain an element's counter.
 //
 // USAGE:
