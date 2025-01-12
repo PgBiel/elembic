@@ -129,9 +129,15 @@ You can create a scope with `#[]`:
 #container[Hello world!]
 ```
 
+### Show-set rules
+
+You can conditionally apply **native set rules** using `#show e.selector(element, outer: true): set something(..fields)`. The **outer selector** ensures that any accesses to style context within the element's code will return the updated field values.
+
+However, **there is currently no support for conditional custom element set rules**. While writing `#show selector: e.set_(...)` will "work", **the set (or revoke, reset...) rules will apply in reverse order** that way due to how Typst's show rules work. A fix is expected to come in the future, but for now, such rules must be written in reverse (which is unfortunately not possible when nesting scopes as opposed to just applying rules in the same scope).
+
 ## Revoke and reset rules: temporarily reverting the effect of a set rule
 
-Now, about the opposite situation: what if you want to ensure a particular set rule **has no effect for a limited part** of the document? For example, you might be setting all container borders to red, but maybe there's this particular, small section of the document where you want them to use the default border instead.
+Now, about the opposite situation of set rule scoping: what if you want to ensure a particular set rule **has no effect for a limited part** of the document? For example, you might be setting all container borders to red, but maybe there's this particular, small section of the document where you want them to use the default border instead.
 
 To do this, you can **give a name to the set rule** which you can then **revoke in a limited scope**, with `elembic`'s **revoke rules**:
 
