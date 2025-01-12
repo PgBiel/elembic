@@ -31,8 +31,8 @@ Native types (such as `int`) or `any` are not the only types which can be specif
 
 1. `type-kind`: The **kind** of a type - `"native"` for native types, `"custom"` for custom types, and other values for other special types (such as `"any"`, `"never"`, `"union"` for the output of `types.union`, `"wrapped"` as the output of `types.wrap`, `"collection"` for `types.array`, and so on);
 2. `name`: the **name** of a type;
-3. `input`: which **basic types** may **be cast to it** (e.g.: integer or string);
-4. `output`: which **basic types** the input may **be cast to** (e.g.: just string);
+3. `input`: which **basic types** may **be cast to it** (e.g.: integer or string). This uses the [**type ID format** for custom types](./helper-functions.md), obtained with `types.typeid(value)`, of the form `(tid: ..., name: ...)`. For native types, the output of `type(value)` is used;
+4. `output`: which **basic types** the input may **be cast to** (e.g.: just string). This uses the same format as `input`;
 5. `check`: an extra check (function `input value => true / false`) that tells **whether a basic input type may be cast** to this type, or `none` for no such check;
 6. `cast`: an optional function to cast an input value that passed the check to an output value (function `input value => output value`). Must always succeed, or panic. If `none`, the input type is kept unchanged as an output after casting to this type. An integer would remain an integer without a cast, for example (which may be the intention).
 7. `error`: an optional function that is called when the check fails (`input value => string`), indicating why the check may have failed.

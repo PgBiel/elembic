@@ -18,7 +18,13 @@
 
 # Types
 
-- [Types](./types/README.md)
+- [Type system](./types/type-system/README.md)
+  - [Special types](./types/type-system/special-types.md)
+  - [Type combinators](./types/type-system/type-combinators.md)
+  - [Wrapping types](./types/type-system/wrapping-types.md)
+  - [Helper functions](./types/type-system/helper-functions.md)
+- [Custom types](./types/custom-types/README.md)
+  - [Declaring](./types/custom-types/declaring.md)
 
 # Misc
 
