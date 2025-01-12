@@ -2135,7 +2135,7 @@
 
                   let tag-metadata = metadata(tag)
 
-                  if reference != none or outline != none {
+                  if reference != none and ref-label != none or outline != none {
                     // Update with custom-ref
                     let synthesized-fields = synthesized-fields
                     synthesized-fields.at(stored-data-key) = tag
@@ -2163,7 +2163,7 @@
 
                 let tag-metadata = metadata(tag)
 
-                if reference != none or outline != none {
+                if reference != none and ref-label != none or outline != none {
                   // Update with custom-ref
                   synthesized-fields.at(stored-data-key) = tag
 
@@ -2222,7 +2222,7 @@
 
                 let tag-metadata = metadata(tag)
 
-                if reference != none or outline != none {
+                if reference != none and ref-label != none or outline != none {
                   // Update with custom-ref
                   let synthesized-fields = synthesized-fields
                   synthesized-fields.at(stored-data-key) = tag
@@ -2249,7 +2249,7 @@
 
               let tag-metadata = metadata(tag)
 
-              if reference != none or outline != none {
+              if reference != none and ref-label != none or outline != none {
                 // Update with custom-ref
                 synthesized-fields.at(stored-data-key) = tag
 
