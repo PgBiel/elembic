@@ -44,7 +44,10 @@
   casts: none,
   fold: none,
 ) = {
-  assert(type(fields) == array, message: "types.declare: please specify an array of fields, creating each field with the 'field' function.")
+
+  let fields-hint = if type(fields) == dictionary { "\n  hint: check if you didn't forget to add a trailing comma for a single field: write 'fields: (field,)', not 'fields: (field)'" } else { "" }
+  let casts-hint = if type(casts) == dictionary { "\n  hint: check if you didn't forget to add a trailing comma for a single cast: write 'casts: ((from: ..., with: ...),)', not 'casts: ((from: ..., with: ...))'" } else { "" }
+  assert(type(fields) == array, message: "types.declare: please specify an array of fields, creating each field with the 'field' function." + fields-hint)
   assert(prefix != none, message: "types.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
   assert(type(prefix) == str, message: "types.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
   assert(parse-args == auto or type(parse-args) == function, message: "types.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function receiving (arguments, include-required: true (required fields must be specified) / false (required fields must be omitted - currently unused)) => dictionary with parsed fields.")
@@ -65,7 +68,7 @@
         and ("check" not in d or type(d.check) == function)
       )
     ),
-    message: "types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): casted value => bool, with: constructor => casted value => your type)."
+    message: "types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): casted value => bool, with: constructor => casted value => your type)." + casts-hint
   )
   assert(fold == none or fold == auto or type(fold) == function, message: "types.declare: 'fold' must be 'none' (no folding), 'auto' (fold each field individually) or a function 'default constructor => auto (same as (a, b) => a + b but more efficient) or function (outer, inner) => combined value'.")
 
