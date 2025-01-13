@@ -279,6 +279,40 @@
   }
 }
 
+/// Get the name of a content's constructor function as a string.
+///
+/// Returns 'none' on invalid input.
+///
+/// USAGE:
+///
+/// ```typ
+/// assert.eq(func-name(my-elem()), "my-elem")
+/// assert.eq(func-name([= abc]), "heading")
+/// ```
+///
+/// - c (content): content to get the constructor function of
+/// -> function | none
+#let func-name(c) = {
+  if type(c) == function {
+    let func-data = data(c)
+    return if "name" in func-data {
+      func-data.name
+    } else {
+      none
+    }
+  } else if type(c) != content {
+    return none
+  }
+  let name = repr(c.func())
+  if c.func() == sequence {
+    let element-data = data(c)
+    if "eid" in element-data and element-data.eid != none {
+      name = if "name" in element-data and type(element-data.name) == str { element-data.name } else { "unknown custom element" }
+    }
+  }
+  name
+}
+
 #let _letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
 
 /// This is used to obtain a debug representation of custom elements and types.

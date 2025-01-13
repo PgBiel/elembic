@@ -1,5 +1,5 @@
 // The shared fundamentals of the type system.
-#import "../data.typ": data, type-key, custom-type-key, custom-type-data-key, repr_
+#import "../data.typ": data, type-key, custom-type-key, custom-type-data-key, repr_, func-name
 
 #let type-version = 1
 
@@ -70,17 +70,7 @@
   output: (content,),
   check: c => c.func() == _sequence and data(c).eid == eid,
   data: (name: name, eid: eid),
-  error: c => {
-    let got = repr(c.func())
-    if c.func() == _sequence {
-      let element-data = data(c)
-      if "eid" in element-data and element-data.eid != none {
-        got = if "name" in element-data and type(element-data.name) == str { element-data.name } else { "unknown custom element" }
-      }
-    }
-
-    "expected element " + name + ", found " + got
-  }
+  error: c => "expected element " + name + ", found " + func-name(c),
 )
 
 #let native-elem(func) = {
@@ -94,17 +84,7 @@
     output: (content,),
     check: if func == _sequence { c => c.func() == _sequence and data(c).eid == none } else { c => c.func() == func },
     data: (func: func),
-    error: c => {
-      let got = repr(c.func())
-      if c.func() == _sequence {
-        let element-data = data(c)
-        if "eid" in element-data and element-data.eid != none {
-          got = if "name" in element-data and type(element-data.name) == str { element-data.name } else { "unknown custom element" }
-        }
-      }
-
-      "expected native element " + repr(func) + ", found " + got
-    }
+    error: c => "expected native element " + repr(func) + ", found " + func-name(c),
   )
 }
 
