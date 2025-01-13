@@ -7,7 +7,7 @@ entrypoint = "src/lib.typ"
 authors = ["PgBiel <https://github.com/PgBiel>"]
 categories = ["scripting", "utility"]
 license = "MIT OR Apache-2.0"
-description = "Custom elements and types in pure Typst"
+description = "Framework for custom elements and types in Typst"
 keywords = ["element", "type", "validation", "styling"]
 
 [tool.typst-test]
