@@ -60,6 +60,54 @@
   output: ("custom type",),
 )
 
+#let _sequence = [].func()
+
+#let element(name, eid) = (
+  ..base-typeinfo,
+  type-kind: "element",
+  name: "element '" + name + "'",
+  input: (content,),
+  output: (content,),
+  check: c => c.func() == _sequence and data(c).eid == eid,
+  data: (name: name, eid: eid),
+  error: c => {
+    let got = repr(c.func())
+    if c.func() == _sequence {
+      let element-data = data(c)
+      if "eid" in element-data and element-data.eid != none {
+        got = if "name" in element-data and type(element-data.name) == str { element-data.name } else { "unknown custom element" }
+      }
+    }
+
+    "expected element " + name + ", got " + got
+  }
+)
+
+#let native-elem(func) = {
+  assert(type(func) == function, message: "types.native-elem: expected native element constructor, got " + str(type(func)))
+
+  (
+    ..base-typeinfo,
+    type-kind: "native-element",
+    name: "native element '" + repr(func) + "'",
+    input: (content,),
+    output: (content,),
+    check: if func == _sequence { c => c.func() == _sequence and data(c).eid == none } else { c => c.func() == func },
+    data: (func: func),
+    error: c => {
+      let got = repr(c.func())
+      if c.func() == _sequence {
+        let element-data = data(c)
+        if "eid" in element-data and element-data.eid != none {
+          got = if "name" in element-data and type(element-data.name) == str { element-data.name } else { "unknown custom element" }
+        }
+      }
+
+      "expected native element " + repr(func) + ", got " + got
+    }
+  )
+}
+
 // Get the type ID of a value.
 // This is usually 'type(value)', unless value has a custom type.
 // In that case, it has the format '(tid: ..., name: ...)'.

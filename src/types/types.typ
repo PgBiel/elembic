@@ -49,7 +49,7 @@
     if data-kind == "custom-type-data" {
       type_ = data.typeinfo
     } else if data-kind == "element" {
-      return (false, "cannot use elements as types")
+      type_ = base.element(data.name, data.eid)
     } else {
       return (false, "Received invalid type: " + repr(type_) + "\n  hint: use 'types.literal(value)' to indicate only that particular value is valid")
     }
