@@ -5,6 +5,8 @@ Framework for custom elements and types in Typst. **Supports Typst 0.11.0 or lat
 
 **Read the book:** https://pgbiel.github.io/elembic
 
+**Mirrors:** [GitHub (pgbiel/elembic)](https://github.com/PgBiel/elembic); [Codeberg (pgbiel/elembic)](https://codeberg.org/PgBiel/elembic)
+
 ## About
 
 Elembic lets you create **custom elements,** which are **reusable document components,** with support for **typechecked fields, show and set rules** (without using any `state` by default), **revoke and reset rules, reference and outline support,** and more. In addition, Elembic lets you create **custom types,** which also support **typechecked fields** but also **custom casting**, and can be used in element fields or by themselves in arbitrary Typst code.

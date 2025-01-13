@@ -25,3 +25,7 @@ Elembic ships with a **considerably flexible type system** through its `types` m
 Not only does Elembic support **using and combining Typst-native types** (e.g. a field can take `e.types.union(int, stroke)` to support integers or strokes), but it also supports **declaring your own custom, nominal types**. They are represented as dictionaries, but **are strongly-typed,** such that a dictionary with the same fields won't cast to your custom type and vice-versa by default (unless you specify otherwise). For example, a data type representing a `person` won't cast to another type `owner` even if they share the same fields.
 
 Custom types optionally support **arbitrary casting from other types.** For example, you may allow automatic casts from integers and floats to your custom type. This is mostly useful when creating "ad-hoc" types for certain elements with fully customized behavior. You can read more in the ["Custom types" chapter](./types/custom-types/.).
+
+## License
+
+Elembic is licensed under MIT or Apache-2.0, at your option.
