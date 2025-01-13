@@ -23,18 +23,25 @@ Here's how you'd use this to implement a positional argument sink:
     field("inner", content, default: [Hello!]),
   ),
   parse-args: (default-parser, fields: none, typecheck: none) => (args, include-required: true) => {
-    let pos = args.pos()
-    let values = if include-required {
-      pos
+    let args = if include-required {
+      // Convert positional arguments into a single 'values' argument
+      let values = args.pos()
+      arguments(values, ..args.named())
+    } else if args.pos() == () {
+      // 'include-required' is always true for types, but keeping these here
+      // just for completeness
+      args
     } else {
-      // include-required is always true for types, but keep this here just for completeness
-      assert(false, message: "type 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
+      assert(false, message: "element 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
     }
 
-    default-parser(arguments(values, ..args.named()), include-required: include-required)
+    default-parser(args, include-required: include-required)
   },
   prefix: ""
 )
 
-#assert.eq(e.fields(sunk(5pt, black, 5pt + black, inner: [A])), (values: (stroke(5pt), stroke(black), 5pt + black), inner: [A], color: red))
+#assert.eq(
+  e.fields(sunk(5pt, black, 5pt + black, inner: [Inner])),
+  (values: (stroke(5pt), stroke(black), 5pt + black), inner: [Inner], color: red)
+)
 ```

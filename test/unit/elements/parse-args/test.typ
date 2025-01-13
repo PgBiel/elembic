@@ -93,16 +93,25 @@
     field("inner", content, default: [Hello!]),
   ),
   parse-args: (default-parser, fields: none, typecheck: none) => (args, include-required: false) => {
-    let pos = args.pos()
-    let values = if include-required {
-      pos
+    let args = if include-required {
+      // Convert positional arguments into a single 'values' argument
+      let values = args.pos()
+      arguments(values, ..args.named())
+    } else if args.pos() == () {
+      args
     } else {
       assert(false, message: "element 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
     }
 
-    default-parser(arguments(values, ..args.named()), include-required: include-required)
+    default-parser(args, include-required: include-required)
   },
   prefix: ""
 )
 
-#sunk(5pt, 10pt, black, 5pt + black, run: it => assert.eq(it.values, (5pt, 10pt, black, 5pt + black).map(stroke)))
+#show: e.set_(sunk, 3, color: blue)
+
+#sunk(5pt, 10pt, black, 5pt + black, run: it => {
+  let fields = e.fields(it)
+  _ = fields.remove("run")
+  assert.eq(fields, (values: (5pt, 10pt, black, 5pt + black).map(stroke), color: blue, inner: [Hello!]))
+})
