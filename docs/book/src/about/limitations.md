@@ -186,9 +186,10 @@ The two steps above should be enough to fix the error for good, provided you und
 
 ## Performance
 
-Elembic's performance is, in general, satisfactory, and is logged on CI, but **may get worse if you use more features:**
+Elembic's performance is, in general, satisfactory, and is logged on CI, but **may get worse if you use more features.** Here's a brief discussion about potential offenders:
 
-- **Typechecking** of fields can add some overhead on each element instantiation. You can improve this by overriding Elembic's default argument parser, or even disabling typechecking altogether with the `typecheck: false` option on elements.
-- **Special rules** such as revoke rules may add some overhead. However, it shouldn't be noticeable unless you're using a ton of them.
+- **[Elements with `contextual: true`](../elements/creating/extra-options.md#making-more-context-available-with-contextual-true) have reduced benefits from memoization.** As such, if too many of them are placed (say, in the hundreds), they can cause a noticeable performance penalty. However, it is not a problem if only a few of them are placed.
+- **Typechecking** of fields can add some overhead on each element instantiation, however this is expected to be mostly irrelevant in the average case (when using mostly native types or combinations of them) compared to Elembic's other features. Still, you can improve this by [overriding Elembic's default argument parser](../elements/creating/overriding-constr.md), or even disabling typechecking altogether with the `typecheck: false` option on elements, if that proves to be a bottleneck for your particular element.
+- **Special rules** such as revoke rules could potentially add some overhead. However, that overhead is expected to be **very insignificant,** especially if you aren't using hundreds of them.
 
-The only way to know whether Elembic is a good suit for you is to give it a try on your own document. Head to `Getting started` to begin!
+The only way to know whether Elembic is a good fit for you is to give it a try on your own document!

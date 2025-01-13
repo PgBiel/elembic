@@ -131,9 +131,11 @@ You can create a scope with `#[]`:
 
 ### Show-set rules
 
-You can conditionally apply **native set rules** using `#show e.selector(element, outer: true): set something(..fields)`. The **outer selector** ensures that any accesses to style context within the element's code will return the updated field values.
+You can conditionally apply **native set rules on custom elements** using `#show e.selector(element, outer: true): set something(..fields)`. The **outer selector** ensures that any accesses to style context within the element's code will return the updated field values.
 
-However, **there is currently no support for conditional custom element set rules**. While writing `#show selector: e.set_(...)` will "work", **the set (or revoke, reset...) rules will apply in reverse order** that way due to how Typst's show rules work. A fix is expected to come in the future, but for now, such rules must be written in reverse (which is unfortunately not possible when nesting scopes as opposed to just applying rules in the same scope).
+However, **there is currently no support for conditional custom element set rules**. While writing `#show selector: e.set_(...)` might appear to work, with `selector` either being a native selector or a non-native selector coming from either [`e.selector`](../../misc/reference/data.md#eselector) or [`e.select`](../../misc/reference/elements.md#eselect), **the set (or revoke, reset...) rules will apply in reverse order** that way due to how Typst's show rules work. A fix is expected to come in the future, but for now, such rules must be written in reverse (which is unfortunately not possible when nesting scopes as opposed to just applying rules in the same scope).
+
+Note, however, that `#show selector: e.apply(e.set_(...), e.set_(...), e.revoke(...))` will apply _those particular rules_ in the correct order (first the two sets then the revoke, rather than the revoke first), which is an alternative if you have no other option.
 
 ## Revoke and reset rules: temporarily reverting the effect of a set rule
 
