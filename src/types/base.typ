@@ -1,10 +1,7 @@
 // The shared fundamentals of the type system.
-#let type-key = "__type"
-#let type-version = 1
+#import "../data.typ": data, type-key, custom-type-key, custom-type-data-key
 
-// To be used by any custom types in the future
-#let custom-type-key = "__custom_type"
-#let custom-type-data-key = "__custom_type_data"
+#let type-version = 1
 
 // Typeinfo structure:
 // - type-key: kind of type
@@ -32,15 +29,6 @@
   error: none,
   default: (),
   fold: none,
-)
-
-// Special values that can be passed to a type or element's constructor to retrieve some data or show
-// some behavior.
-#let special-data-values = (
-  // Indicate that the constructor should return the type or element's data.
-  get-data: 0,
-  // Indicate that the constructor should return an element filter.
-  get-where: 1,
 )
 
 // Top type

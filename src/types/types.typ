@@ -1,5 +1,6 @@
 // The type system used by fields.
-#import "base.typ" as base: type-key, ok, err, custom-type-key, custom-type-data-key
+#import "../data.typ": special-data-values, type-key, custom-type-key, custom-type-data-key
+#import "base.typ" as base: ok, err
 #import "native.typ"
 
 // The default value for a type.
@@ -17,7 +18,7 @@
     if custom-type-data-key in value {
       base.custom-type
     } else {
-      (value.at(custom-type-key).func)(__elembic_data: base.special-data-values.get-data).typeinfo
+      (value.at(custom-type-key).func)(__elembic_data: special-data-values.get-data).typeinfo
     }
   } else {
     let (res, typeinfo) = native.typeinfo(type(value))
@@ -43,7 +44,7 @@
 // Returns ok(typeinfo), or err(error) if there is no corresponding typeinfo.
 #let validate(type_) = {
   if type(type_) == function {
-    let data = type_(__elembic_data: base.special-data-values.get-data)
+    let data = type_(__elembic_data: special-data-values.get-data)
     let data-kind = data.at("data-kind", default: "unknown")
     if data-kind == "custom-type-data" {
       type_ = data.typeinfo
@@ -113,8 +114,8 @@
     (true, value)
   } else {
     let value-type = type(value)
-    if value-type == dictionary and base.custom-type-key in value {
-      value-type = value.at(base.custom-type-key).id
+    if value-type == dictionary and custom-type-key in value {
+      value-type = value.at(custom-type-key).id
     }
 
     if kind == "literal" and typeinfo.cast == none {

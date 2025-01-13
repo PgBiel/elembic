@@ -1,5 +1,6 @@
 // Custom types!
-#import "base.typ" as base: custom-type-key, custom-type-data-key, type-key, special-data-values
+#import "../data.typ": special-data-values, custom-type-key, custom-type-data-key, type-key
+#import "base.typ"
 #import "types.typ"
 #import "../fields.typ" as field-internals
 
