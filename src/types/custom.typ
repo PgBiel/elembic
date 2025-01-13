@@ -92,7 +92,6 @@
 
   let typeid = (tid: tid, name: name)
 
-  // TODO: casts
   // We will specify default in a bit, once we declare the constructor
   let typeinfo = (
     ..base.base-typeinfo,

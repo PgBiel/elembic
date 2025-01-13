@@ -4,7 +4,8 @@
 #import "/src/lib.typ": types
 #import "/src/types/types.typ": cast
 
-// TODO: test custom types
+#let person = types.declare("person", prefix: "", fields: ())
+
 #assert.eq(cast(red, types.any), (true, red))
 #assert.eq(cast(none, types.any), (true, none))
 #assert.eq(cast(auto, types.any), (true, auto))
@@ -17,3 +18,4 @@
 #assert.eq(cast(5%, types.any), (true, 5%))
 #assert.eq(cast(5pt + 5%, types.any), (true, 5pt + 5%))
 #assert.eq(cast(1pt + black, types.any), (true, 1pt + black))
+#assert.eq(cast(person(), types.any), (true, person()))
