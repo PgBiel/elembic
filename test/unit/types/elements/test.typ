@@ -37,14 +37,18 @@
   prefix: ""
 )
 
-#assert.eq(cast([a *abc*], wock), (false, "expected element wock, got sequence"))
-#assert.eq(cast([abc], wock), (false, "expected element wock, got text"))
+#assert.eq(cast([a *abc*], wock), (false, "expected element wock, found sequence"))
+#assert.eq(cast([abc], wock), (false, "expected element wock, found text"))
 #assert.eq(cast(wock(), wock), (true, wock()))
 #assert.eq(cast(wock(color: black), wock), (true, wock(color: black)))
-#assert.eq(cast(dock(), wock), (false, "expected element wock, got dock"))
-#assert.eq(cast(wock(), dock), (false, "expected element dock, got wock"))
+#assert.eq(cast(dock(), wock), (false, "expected element wock, found dock"))
+#assert.eq(cast(wock(), dock), (false, "expected element dock, found wock"))
 
 #assert.eq(cast(wock(), types.union(wock, dock)), (true, wock()))
 #assert.eq(cast(dock(), types.union(wock, dock)), (true, dock()))
-#assert.eq(cast([abc], types.union(wock, dock)), (false, "all typechecks for union failed\n  hint (element 'wock'): expected element wock, got text\n  hint (element 'dock'): expected element dock, got text"))
-#assert.eq(cast(stock(), types.union(wock, dock)), (false, "all typechecks for union failed\n  hint (element 'wock'): expected element wock, got stock\n  hint (element 'dock'): expected element dock, got stock"))
+#assert.eq(cast([abc], types.union(wock, dock)), (false, "all typechecks for union failed\n  hint (element 'wock'): expected element wock, found text\n  hint (element 'dock'): expected element dock, found text"))
+#assert.eq(cast(stock(), types.union(wock, dock)), (false, "all typechecks for union failed\n  hint (element 'wock'): expected element wock, found stock\n  hint (element 'dock'): expected element dock, found stock"))
+
+#assert.eq(cast(wock(), types.literal(wock())), (true, wock()))
+#assert.eq(cast(wock(), types.literal(wock(color: black))), (false, "given value wasn't equal to literal 'wock(color: luma(0%))'"))
+#assert.eq(cast(wock(color: black), types.literal(wock(color: black))), (true, wock(color: black)))

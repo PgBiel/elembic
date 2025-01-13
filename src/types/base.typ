@@ -79,7 +79,7 @@
       }
     }
 
-    "expected element " + name + ", got " + got
+    "expected element " + name + ", found " + got
   }
 )
 
@@ -103,7 +103,7 @@
         }
       }
 
-      "expected native element " + repr(func) + ", got " + got
+      "expected native element " + repr(func) + ", found " + got
     }
   )
 }
