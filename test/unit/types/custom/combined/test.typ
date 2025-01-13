@@ -3,7 +3,7 @@
 
 #import "/src/lib.typ": types, field
 #import types: native
-#import "/src/types/base.typ": custom-type-key
+#import "/src/data.typ": custom-type-key
 #import "/src/types/types.typ": cast
 
 #let sides(t) = {
@@ -39,7 +39,7 @@
 #assert.eq(cast((a: 50, b: 6), many-types), (true, (a: 50, b: 6, yep: "i am a dict")))
 #assert.eq(cast(int, many-types), (true, int))
 #assert.eq(cast(cast, many-types), (true, cast))
-// #panic(sides(stroke)().at(custom-type-key))
+
 #assert.eq(
   cast(sides(stroke)(top: 5pt, right: black, left: 5pt + black), many-types),
   (false, "expected integer, color, sides of integer, sides of literal '" + repr(red) + "', dictionary, type or function, found sides of stroke")
