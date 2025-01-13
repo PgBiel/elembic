@@ -108,7 +108,7 @@
   prefix: ""
 )
 
-#show: e.set_(sunk, 3, color: blue)
+#show: e.set_(sunk, color: blue)
 
 #sunk(5pt, 10pt, black, 5pt + black, run: it => {
   let fields = e.fields(it)
