@@ -25,6 +25,7 @@
   - [Type combinators](./types/type-system/type-combinators.md)
   - [Wrapping types](./types/type-system/wrapping-types.md)
   - [Native types](./types/type-system/native-types.md)
+  - [Element types](./types/type-system/element-types.md)
   - [Helper functions](./types/type-system/helper-functions.md)
 - [Custom types](./types/custom-types/README.md)
   - [Declaring](./types/custom-types/declaring.md)

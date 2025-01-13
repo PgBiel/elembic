@@ -239,6 +239,27 @@ This is a wrapper over `e.data(arg).func`.
 ) -> function | none
 ```
 
+### `e.func-name`
+
+Get the name of a content's constructor function as a string.
+
+Returns `none` on invalid input.
+
+**Signature:**
+
+```rs
+#e.func-name(
+  content | custom element function
+) -> function | none
+```
+
+**Example:**
+
+```rs
+assert.eq(func-name(my-elem()), "my-elem")
+assert.eq(func-name([= abc]), "heading")
+```
+
 ### `e.scope`
 
 Helper function to obtain an element or custom type's associated scope.
