@@ -39,7 +39,7 @@
     field("color", color, default: red),
     field("inner", content, default: [Hello!]),
   ),
-  parse-args: (args, include-required: false) => {
+  parse-args: (..) => (args, include-required: false) => {
     if include-required {
       wock-parser-req(..args)
     } else {
@@ -80,3 +80,29 @@
   assert.eq(get(wock).some-extra-thing, 10)
   assert("run" not in get(wock))
 })
+
+#let sunk = e.element.declare(
+  "sunk",
+  display: it => {
+    (it.run)(it)
+  },
+  fields: (
+    field("values", e.types.array(stroke), required: true),
+    field("run", function, required: true, named: true),
+    field("color", color, default: red),
+    field("inner", content, default: [Hello!]),
+  ),
+  parse-args: (default-parser, fields: none, typecheck: none) => (args, include-required: false) => {
+    let pos = args.pos()
+    let values = if include-required {
+      pos
+    } else {
+      assert(false, message: "element 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
+    }
+
+    default-parser(arguments(values, ..args.named()), include-required: include-required)
+  },
+  prefix: ""
+)
+
+#sunk(5pt, 10pt, black, 5pt + black, run: it => assert.eq(it.values, (5pt, 10pt, black, 5pt + black).map(stroke)))

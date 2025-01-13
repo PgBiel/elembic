@@ -36,7 +36,7 @@
     field("color", color, default: red),
     field("inner", content, default: [Hello!]),
   ),
-  parse-args: (args, include-required: false) => {
+  parse-args: (..) => (args, include-required: false) => {
     if include-required {
       boxed-parser-req(..args)
     } else {
@@ -50,3 +50,25 @@
 #assert.eq(e.fields(boxed(100, color: blue)), (value: 100, color: blue, inner: [Hello!]))
 #assert.eq(e.fields(boxed(100, color: blue, inner: "a")), (value: 100, color: blue, inner: [a]))
 #assert.eq(e.fields(boxed(100, color: blue, inner: "a", some-extra-thing: 900)), (value: 100, color: blue, inner: [a], some-extra-thing: 10))
+
+#let sunk = e.types.declare(
+  "sunk",
+  fields: (
+    field("values", e.types.array(stroke), required: true),
+    field("color", color, default: red),
+    field("inner", content, default: [Hello!]),
+  ),
+  parse-args: (default-parser, fields: none, typecheck: none) => (args, include-required: true) => {
+    let pos = args.pos()
+    let values = if include-required {
+      pos
+    } else {
+      assert(false, message: "type 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
+    }
+
+    default-parser(arguments(values, ..args.named()), include-required: include-required)
+  },
+  prefix: ""
+)
+
+#assert.eq(e.fields(sunk(5pt, black, 5pt + black, inner: [A])), (values: (stroke(5pt), stroke(black), 5pt + black), inner: [A], color: red))

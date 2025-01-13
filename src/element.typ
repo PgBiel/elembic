@@ -1509,7 +1509,7 @@
   assert(type(fields) == array, message: "element.declare: please specify an array of fields, creating each field with the 'field' function. It can be empty with '()'." + fields-hint)
   assert(prefix != none, message: "element.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
   assert(type(prefix) == str, message: "element.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
-  assert(parse-args == auto or type(parse-args) == function, message: "element.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function receiving (arguments, include-required: true (required fields must be specified - in constructor) / false (required fields must be omitted - in set rules)) => dictionary with parsed fields.")
+  assert(parse-args == auto or type(parse-args) == function, message: "element.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function (default arg parser, fields: dictionary, typecheck: bool) => (user arguments, include-required: true (required fields must be specified - in constructor) / false (required fields must be omitted - in set rules)) => dictionary with parsed fields.")
   assert(type(typecheck) == bool, message: "element.declare: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
   assert(type(allow-unknown-fields) == bool, message: "element.declare: the 'allow-unknown-fields' argument must be a boolean.")
   assert(template == none or type(template) == function, message: "element.declare: 'template' must be 'none' or a function displayed element => content (usually set rules applied on the displayed element). This is used to add a set of overridable set rules to the element, such as paragraph settings.")
@@ -1583,14 +1583,21 @@
     assert(false, message: "element.declare: labelable element cannot have a conflicting 'label' field\n  hint: you can set 'labelable: false' to disable the special label parameter, but note that it will then be impossible to refer to your element")
   }
 
+  let default-arg-parser = field-internals.generate-arg-parser(
+    fields: fields,
+    general-error-prefix: "element '" + name + "': ",
+    field-error-prefix: field-name => "field '" + field-name + "' of element '" + name + "': ",
+    typecheck: typecheck
+  )
+
   let parse-args = if parse-args == auto {
-    field-internals.generate-arg-parser(
-      fields: fields,
-      general-error-prefix: "element '" + name + "': ",
-      field-error-prefix: field-name => "field '" + field-name + "' of element '" + name + "': ",
-      typecheck: typecheck
-    )
+    default-arg-parser
   } else {
+    let parse-args = parse-args(default-arg-parser, fields: fields, typecheck: typecheck)
+    if type(parse-args) != function {
+      assert(false, message: "element.declare: 'parse-args', when specified as a function, receives the default arg parser alongside `fields: fields dictionary` and `typecheck: bool`, and must return a function (the new arg parser), and not " + base.typename(parse-args))
+    }
+
     parse-args
   }
 
