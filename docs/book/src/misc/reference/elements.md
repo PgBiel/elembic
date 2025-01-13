@@ -165,7 +165,7 @@ However, more than one rule can have the same name, allowing both to be revoked 
 
 Applies necessary show rules to the entire document so that custom elements behave properly. This is usually only needed for elements which have custom references, since, in that case, the document-wide rule `#show ref: e.ref` is required. **It is recommended to always use `e.prepare` when using Elembic.**
 
-However, **some custom elements also have their own `prepare` functions.** (Read their documentation to know if that's the case.) Then, you may specify their functions as parameters to this function, and this function will run the `prepare` function of each element. Not specifying any elements will just run the default rules, which may still be important.
+However, **some custom elements also have their own `prepare` functions.** (Read their documentation to know if that's the case.) Then, you may specify their constructors as parameters to this function, and this function will run the `prepare` function of each element. Not specifying any elements will just run the default rules, which may still be important.
 
 As an example, an element may use its own `prepare` function to apply some special behavior to its `outline`.
 
@@ -183,7 +183,7 @@ As an example, an element may use its own `prepare` function to apply some speci
 // Apply default rules + special rules for these elements (if they need it)
 #show: e.prepare(elemA, elemB)
 
-// Apply default rules only
+// Apply default rules only (enable custom references for all elements)
 #show: e.prepare()
 ```
 

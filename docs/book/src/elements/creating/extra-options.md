@@ -10,6 +10,7 @@ You can have a custom template for your element with the `template` option. It's
 #let elem = e.element.declare(
   "elem",
   // ...
+  display: _ => [Hello world!]
   template: it => {
     set par(justify: true)
     it

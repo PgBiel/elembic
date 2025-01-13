@@ -17,13 +17,13 @@ However, there are some easy things to keep in mind that will let you **avoid th
 ### Grouping rules together with `apply`
 
 First of all, note that, for the purposes of this limit, **rule** may be a set rule, but also an **`apply` rule**, which has the power of **applying multiple consecutive rules at the cost of one.**
-That is, an `apply` rule, by itself, can hold much more than 30 rules (maybe 100, 500, you name it!) at once without a problem as it only counts for one towards the limit.
+That is, an `apply` rule, by itself, can hold way more than 30 rules (maybe 100, 500, you name it!) at once without a problem as it only counts for one towards the limit.
 
 Therefore, it is recommended to **always group set rules together into a single apply rule** whenever possible.
 
 Note that **elembic is smart enough to do this automatically** whenever it is **absolutely safe to do so** - that is, **when they are consecutive** (there are **no elements or text between them**, only whitespace or show/set rules).
 
-That is, **doing either of those is OK:**
+That is, **doing either of these is OK:**
 
 ```rs
 #import "@preview/elembic:X.X.X" as e

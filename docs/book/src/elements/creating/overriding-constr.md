@@ -6,7 +6,7 @@ You can use `typecheck: false` to generate an argument parser that doesn't check
 
 ## Custom constructor
 
-You can use `construct: default-constructor => (..args) => value` to override the default constructor for your custom type. **You should use `construct:` rather than creating a wrapper function** to ensure that data retrieval functions, such as `e.data(func)`, still work.
+You can use `construct: default-constructor => (..args) => value` to override the default constructor for your custom type. **You should use `construct:` rather than creating a wrapper function** to ensure that [data retrieval functions](../../misc/reference/data.md), such as `e.data(func)`, still work.
 
 ## Custom argument parsing
 
