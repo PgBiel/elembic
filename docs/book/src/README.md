@@ -4,6 +4,8 @@
 
 > **WARNING:** Elembic is currently experimental. Expect breaking changes before 0.1.0 is released and it is published to the package manager.
 
+Elembic supports **Typst 0.11.0 or later.**
+
 ## Elements
 
 Elembic allows you to create custom **elements,** which are **reusable visual components** of the document with **configurable properties** (through **styling**).
