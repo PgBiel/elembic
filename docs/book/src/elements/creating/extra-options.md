@@ -56,3 +56,11 @@ Note that `e.prepare`, with or without arguments, is also used to enable referen
 // Now the generated figure has red text
 #elem()
 ```
+
+## Making more context available with `contextual: true`
+
+Some elements may need to access values from other elements' set rules in their `display` functions or in the functions used to generate `reference` supplements or `outline` captions, for example. If that is the case, you will need to enable `contextual: true`, which enables the usage of `(e.ctx(it).get)(elem).field-name` to get the latest value for that field considering set rules.
+
+In addition, this option might also need to be enabled particularly in the off-chance you need to access the currently set value specifically of `bibliography.title` from context, due to how Elembic uses that property in its inner workings. Other values - such as `text.fill` or `par.justify` -, however, are already available to `display` and other functions by default, so you do not have to enable this option in those cases.
+
+Regardless, **this option should be avoided if possible:** it decreases the benefits from memoization, which can lead to a **significant performance penalty** in the case where the element is **used too many times** (say, several hundred). If the element isn't meant to be used too many times (maybe once or twice, in the case of template-internal elements, for example), then that shouldn't be a concern. (Otherwise, this option would be enabled by default.)
