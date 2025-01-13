@@ -52,3 +52,5 @@
 #assert.eq(cast(wock(), types.literal(wock())), (true, wock()))
 #assert.eq(cast(wock(), types.literal(wock(color: black))), (false, "given value wasn't equal to literal 'wock(color: luma(0%))'"))
 #assert.eq(cast(wock(color: black), types.literal(wock(color: black))), (true, wock(color: black)))
+
+#assert.eq(types.option(types.typeof(wock())), types.option(wock))

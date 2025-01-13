@@ -1,5 +1,5 @@
 // The type system used by fields.
-#import "../data.typ": special-data-values, type-key, custom-type-key, custom-type-data-key
+#import "../data.typ": data, special-data-values, type-key, custom-type-key, custom-type-data-key
 #import "base.typ" as base: ok, err
 #import "native.typ"
 
@@ -13,12 +13,23 @@
   }
 }
 
+#let sequence_ = [].func()
 #let typeof(value) = {
+  let element-data
   if type(value) == dictionary and custom-type-key in value {
     if custom-type-data-key in value {
       base.custom-type
     } else {
       (value.at(custom-type-key).func)(__elembic_data: special-data-values.get-data).typeinfo
+    }
+  } else if type(value) == content and value.func() == sequence_ and {
+    element-data = data(value)
+    element-data.eid != none
+  } {
+    if "name" in element-data and type(element-data.name) == str {
+      base.element(element-data.name, element-data.eid)
+    } else {
+      base.element("unknown-element", element-data.eid)
     }
   } else {
     let (res, typeinfo) = native.typeinfo(type(value))
