@@ -29,7 +29,7 @@
 
 #let stock = e.element.declare(
   "stock",
-  display: it => {},
+  display: it => box[],
   fields: (
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
@@ -78,3 +78,10 @@
 #assert.eq(cast(wock(color: black), types.literal(wock(color: black))), (true, wock(color: black)))
 
 #assert.eq(types.option(types.typeof(wock())), types.option(wock))
+
+#show e.selector(stock): it => {
+  assert.eq(cast(it, stock), (true, it))
+  assert.eq(e.fields(it), e.fields(stock(color: red, inner: [Hello!])))
+}
+
+#stock()

@@ -31,4 +31,6 @@
 #assert.eq(e.func-name(w), "wock")
 #assert.eq(e.repr(w), "wock(border: luma(0%))")
 
+#assert.eq(e.func-name[= abc], "heading")
+
 #w
