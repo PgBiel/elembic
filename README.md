@@ -1,5 +1,5 @@
 # elembic
-Framework for custom elements and types in Typst
+Framework for custom elements and types in Typst. Supports Typst 0.11.0 or later.
 
 **WARNING:** elembic is currently experimental. Expect breaking changes before 0.1.0 is released and it is published to the package manager.
 
