@@ -9,7 +9,7 @@ Framework for custom elements and types in Typst. Supports Typst 0.11.0 or later
 
 Elembic lets you create **custom elements,** which are **reusable document components,** with support for **typechecked fields, show and set rules** (without using any `state` by default), **revoke and reset rules, reference and outline support,** and more. In addition, Elembic lets you create **custom types,** which also support **typechecked fields** but also **custom casting**, and can be used in element fields or by themselves in arbitrary Typst code.
 
-Elembic's name comes from "element" + "alembic", to indicate that one of Elembic's goals is to experiment with different approaches for this functionality, and to help shape a future update to Typst that includes native custom elements, which will eventually remove the need for using this package.
+Elembic's name comes from "element" + ["alembic"](https://en.wikipedia.org/wiki/Alembic), to indicate that one of Elembic's goals is to experiment with different approaches for this functionality, and to help shape a future update to Typst that includes native custom elements, which will eventually remove the need for using this package.
 
 It has a few limitations which are [appropriately noted in the book.](https://pgbiel.github.io/elembic/about/limitations.html)
 

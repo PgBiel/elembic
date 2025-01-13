@@ -3,7 +3,9 @@
 [Introduction](./README.md)
 
 - [About](./about/README.md)
+  - [Installation](./about/installation.md)
   - [Limitations](./about/limitations.md)
+  - [FAQ](./about/faq.md)
 
 # Elements
 
