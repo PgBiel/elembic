@@ -36,7 +36,13 @@
 //
 // Uses base typeinfo information for information such as casts and whatnot.
 #let literal(value) = {
-  base.literal(value, typeof(value))
+  if value == none {
+    native.none_
+  } else if value == auto {
+    native.auto_
+  } else {
+    base.literal(value, typeof(value))
+  }
 }
 
 // Obtain the typeinfo for a type.
