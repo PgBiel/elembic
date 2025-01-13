@@ -31,7 +31,7 @@ depends on your operating system, as explained in the link.
 #let bigbox = e.element.declare(
   "bigbox",
   prefix: "@preview/my-package,v1",
-  display: it => block([#it.body], fill: it.fill, stroke: it.stroke, inset: 5pt),
+  display: it => block(fill: it.fill, stroke: it.stroke, inset: 5pt, it.body),
   fields: (
     field("body", types.option(content), doc: "Box contents", required: true),
     field("fill", types.option(types.paint), doc: "Box fill"),
