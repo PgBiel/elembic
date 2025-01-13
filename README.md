@@ -41,7 +41,9 @@ depends on your operating system, as explained in the link.
 
 #bigbox[abc]
 
-#bigbox(fill: red, stroke: blue + 2pt)[def]
+#show: e.set_(bigbox, fill: red)
+
+#bigbox(stroke: blue + 2pt)[def]
 ```
 
 !['abc' with no fill and a thin red stroke, followed by 'def' with red fill and blue thicker stroke](https://github.com/user-attachments/assets/c852cfcd-c0de-446a-999b-5ecaa44809b7)
