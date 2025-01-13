@@ -2,7 +2,7 @@
 
 Elements naturally contain **data**, such as **the fields specified** for them, as well as their **names, unique IDs (`eid`), counters,** and so on.
 
-You can retrieve this data using the [dedicated data-extraction functions](../../reference/data.md) made available by Elembic. They are all based around [`e.data`](../../reference/data.md#edata), the main function which returns a data dictionary for lots of different types. Here are some of the most useful functions and tasks:
+You can retrieve this data using the [dedicated data-extraction functions](../../misc/reference/data.md) made available by Elembic. They are all based around [`e.data`](../../misc/reference/data.md#edata), the main function which returns a data dictionary for lots of different types. Here are some of the most useful functions and tasks:
 
 ## Accessing fields
 
