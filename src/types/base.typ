@@ -201,11 +201,58 @@
       // Note that this check also works for input reduced to just "any". If "any" is an
       // unchecked input, then checks will never fail.
       none
-    } else if checked-types.all(t => t.type-kind == "literal") {
+    } else if checked-types.all(t => t.type-kind == "native-element") {
       // From here onwards, we can assume unchecked-inputs doesn't contain "any",
       // since it is a subset of input, therefore input would be just ("any",) and
       // the check above would have had to pass in that case.
+      let all-funcs = checked-types.map(t => t.data.func)
+      let non-seq-funcs = all-funcs.filter(f => f != _sequence)
+      let has-seq = _sequence in all-funcs
 
+      // Check sequence separately, as a sequence can also be a custom element,
+      // so we must tell them apart.
+      if has-seq {
+        if non-seq-funcs == () {
+          x => {
+            let typ = type(x)
+            if typ == dictionary and custom-type-key in x {
+              // Custom type must be checked differently in inputs
+              typ = x.at(custom-type-key).id
+            }
+            typ in unchecked-inputs or typ == content and x.func() == _sequence and data(x).eid == none
+          }
+        } else {
+          x => {
+            let typ = type(x)
+            if typ == dictionary and custom-type-key in x {
+              // Custom type must be checked differently in inputs
+              typ = x.at(custom-type-key).id
+            }
+            typ in unchecked-inputs or typ == content and (x.func() in non-seq-funcs or x.func() == _sequence and data(x).eid == none)
+          }
+        }
+      } else {
+        x => {
+          let typ = type(x)
+          if typ == dictionary and custom-type-key in x {
+            // Custom type must be checked differently in inputs
+            typ = x.at(custom-type-key).id
+          }
+          typ in unchecked-inputs or typ == content and x.func() in non-seq-funcs
+        }
+      }
+    } else if checked-types.all(t => t.type-kind == "element") {
+      let all-eids = checked-types.map(t => t.data.eid)
+
+      x => {
+        let typ = type(x)
+        if typ == dictionary and custom-type-key in x {
+          // Custom type must be checked differently in inputs
+          typ = x.at(custom-type-key).id
+        }
+        typ in unchecked-inputs or typ == content and x.func() == _sequence and data(x).eid in all-eids
+      }
+    } else if checked-types.all(t => t.type-kind == "literal") {
       let values-inputs-and-checks = checked-types.map(t => (t.data.value, t.input, t.data.typeinfo.check))
       x => {
         let typ = type(x)
@@ -277,6 +324,18 @@
     let literals = typeinfos.map(t => str(t.data.represented)).join(", ", last: " or ")
     let message = "given value wasn't equal to literals " + literals
     x => message
+  } else if typeinfos.all(t => t.type-kind == "native-element") {
+    let funcs = typeinfos.map(t => repr(t.data.func)).join(", ", last: " or ")
+    let head = "expected native elements " + funcs + ", found "
+    x => head + {
+      if type(x) == content { func-name(x) } else { "a(n) " + typename(x) }
+    }
+  } else if typeinfos.all(t => t.type-kind == "element" or t.type-kind == "native-element") {
+    let funcs = typeinfos.map(t => if t.type-kind == "element" { t.data.name } else { repr(t.data.func) + " (native)" }).join(", ", last: " or ")
+    let head = "expected elements " + funcs + ", found "
+    x => head + {
+      if type(x) == content { func-name(x) } else { "a(n) " + typename(x) }
+    }
   } else {
     let error-types = typeinfos.filter(t => t.error != none)
     x => {
