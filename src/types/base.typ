@@ -1,5 +1,5 @@
 // The shared fundamentals of the type system.
-#import "../data.typ": data, type-key, custom-type-key, custom-type-data-key
+#import "../data.typ": data, type-key, custom-type-key, custom-type-data-key, repr_
 
 #let type-version = 1
 
@@ -102,56 +102,6 @@
   ) + id-separator + name.replace(
     trimmed-separator, trimmed-separator + "-"
   )
-}
-
-#let _letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
-
-/// This is used to obtain a debug representation of custom types.
-///
-/// In the future, this will support elements as well.
-///
-/// Also supports native types (just calls `repr()` for them).
-#let repr_(value, depth: 0) = {
-  if depth < 10 and type(value) == dictionary {
-    let dict = value
-    if custom-type-key in value {
-      let type-data = value.at(custom-type-key)
-      dict = type-data.fields
-
-      let id = type-data.id
-      if "name" in id {
-        id.name
-      } else if id == "custom type" {
-        return if custom-type-data-key in value {
-          "custom-type(name: " + repr(value.name) + "', tid: " + repr(value.tid) + ")"
-        } else {
-          "custom-type()"
-        }
-      } else {
-        str(id)
-      }
-    }
-
-    "("
-    dict.pairs().map(((k, v)) => {
-      if k.codepoints().all(c => c in _letters) {
-        k
-      } else {
-        repr(k)
-      }
-
-      ": "
-
-      repr_(v, depth: depth + 1)
-    }).join(", ")
-    ")"
-  } else if depth < 10 and type(value) == array {
-    "("
-    value.map(repr_.with(depth: depth + 1)).join(", ")
-    ")"
-  } else {
-    repr(value)
-  }
 }
 
 // Literal type

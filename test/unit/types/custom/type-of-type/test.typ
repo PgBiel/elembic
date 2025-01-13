@@ -29,4 +29,4 @@
 #assert.eq(cast(e.data(sides(red)), dictionary), (false, "expected dictionary, found custom type"))
 #assert.eq(cast(e.data(sides(red)), types.union(dictionary, stroke, types.custom-type)), (true, e.data(sides(red))))
 #assert.eq(cast(e.data(sides(red)), types.literal(e.data(sides(red)))), (true, e.data(sides(red))))
-#assert.eq(cast(e.data(sides(blue)), types.literal(e.data(sides(red)))), (false, "given value wasn't equal to literal 'custom-type(name: \"sides of literal 'rgb(\\\"#ff4136\\\")'\"', tid: \"t__---_sides of literal 'rgb(\\\"#ff4136\\\")'\")'"))
+#assert.eq(cast(e.data(sides(blue)), types.literal(e.data(sides(red)))), (false, "given value wasn't equal to literal 'custom-type(name: \"sides of literal 'rgb(\\\"#ff4136\\\")'\", tid: \"t__---_sides of literal 'rgb(\\\"#ff4136\\\")'\")'"))

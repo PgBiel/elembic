@@ -278,3 +278,80 @@
     assert(false, message: "e.counter: this is not an element")
   }
 }
+
+#let _letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
+
+/// This is used to obtain a debug representation of custom elements and types.
+///
+/// Also supports native types (just calls `repr()` for them).
+///
+/// - value (any): value to represent
+/// - depth (int): current depth (must start at 0, conservative limit of 10 for now)
+/// -> str
+#let repr_(value, depth: 0) = {
+  if depth >= 10 {
+    return repr(value)
+  }
+  let typename = ""
+  let value-type = type(value)
+  if value-type == content and value.func() == sequence {
+    let value-data = data(value)
+    if "eid" in value-data and value-data.eid != none {
+      value = value-data.fields
+      value-type = dictionary
+      typename = if "name" in value-data and type(value-data.name) == str {
+        value-data.name
+      } else {
+        "unknown-element"
+      }
+    }
+  }
+
+  if value-type == dictionary {
+    let pairs = if typename != "" {
+      // Element fields => sort
+      value.pairs().sorted(key: ((k, _)) => k)
+    } else if custom-type-key in value {
+      let type-data = value.at(custom-type-key)
+
+      let id = type-data.id
+
+      typename = if "name" in id {
+        id.name
+      } else if id == "custom type" {
+        return if custom-type-data-key in value {
+          "custom-type(name: " + repr(value.name) + ", tid: " + repr(value.tid) + ")"
+        } else {
+          "custom-type()"
+        }
+      } else {
+        str(id)
+      }
+
+      type-data.fields.pairs().sorted(key: ((k, _)) => k)
+    } else {
+      value.pairs()
+    }
+
+    typename
+    "("
+    pairs.map(((k, v)) => {
+      if k.codepoints().all(c => c in _letters) {
+        k
+      } else {
+        repr(k)
+      }
+
+      ": "
+
+      repr_(v, depth: depth + 1)
+    }).join(", ")
+    ")"
+  } else if value-type == array {
+    "("
+    value.map(repr_.with(depth: depth + 1)).join(", ")
+    ")"
+  } else {
+    repr(value)
+  }
+}

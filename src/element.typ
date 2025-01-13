@@ -1820,6 +1820,7 @@
             func: __elembic_func,
             scope: scope,
             default-constructor: default-constructor,
+            name: name,
             eid: eid,
             ctx: if contextual {
               (get: get-styles.with(elements: global-data.elements))
@@ -2025,6 +2026,7 @@
       fields: args,
       func: __elembic_func,
       default-constructor: default-constructor,
+      name: name,
       eid: eid,
       ctx: none,
       counter: element-counter,

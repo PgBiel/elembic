@@ -8,7 +8,7 @@
   display: it => {},
   fields: (
     field("color", color, default: red),
-    field("border", stroke, default: red),
+    field("border", stroke, default: blue),
     field("inner", content, default: [Hello!])
   ),
   prefix: ""
@@ -19,6 +19,12 @@
   assert.eq(e.func(it), e.data(it).func)
   assert.eq(e.eid(it), e.eid(wock))
   assert.eq(e.eid(it), e.data(it).eid)
+
+  assert.eq(e.repr(it), "wock(border: luma(0%), color: rgb(\"#ff4136\"), inner: [Hello!])")
 }
 
-#wock()
+#let w = wock(border: black)
+
+#assert.eq(e.repr(w), "wock(border: luma(0%))")
+
+#w

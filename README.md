@@ -74,7 +74,7 @@ pkgbase="${XDG_DATA_HOME:-$HOME/.local/share}/typst/packages/local/elembic" && m
 
 #assert.eq(
   e.repr(person("John", age: 50, preference: "soup")),
-  "person(age: 50, preference: \"soup\", name: \"John\")"
+  "person(age: 50, name: \"John\", preference: \"soup\")"
 )
 
 // Manually invoke typechecking and cast
