@@ -76,12 +76,16 @@
 // Error when a value doesn't conform to a certain cast
 #let generate-cast-error(value, typeinfo, hint: none) = {
   let message = if "any" not in typeinfo.input and base.typeid(value) not in typeinfo.input {
-    (
-      "expected "
-      + typeinfo.input.map(t => if type(t) == dictionary and "name" in t { t.name } else { str(t) }).join(", ", last: " or ")
-      + ", found "
-      + base.typename(value)
-    )
+    if typeinfo.input == () {
+      "type '" + typeinfo.name + "' does not accept any values"
+    } else {
+      (
+        "expected "
+        + typeinfo.input.map(t => if type(t) == dictionary and "name" in t { t.name } else { str(t) }).join(", ", last: " or ")
+        + ", found "
+        + base.typename(value)
+      )
+    }
   } else if typeinfo.at("error", default: none) != none {
     (typeinfo.error)(value)
   } else {
