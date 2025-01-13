@@ -44,6 +44,7 @@
   cast: float,
   default: (0.0,),
 )
+#let stroke-keys = ("paint", "thickness", "cap", "join", "dash", "miter-limit")
 #let stroke_ = (
   ..native-base,
   name: str(stroke),
@@ -51,6 +52,7 @@
   output: (stroke,),
   data: stroke,
   cast: stroke,
+  check: v => type(v) != dictionary or v.keys().all(k => k in stroke-keys),
   default: (stroke(),),
   // Allow specifying e.g. 4pt in one set rule, red in the other => 4pt + red in the end
   fold: (outer, inner) => {

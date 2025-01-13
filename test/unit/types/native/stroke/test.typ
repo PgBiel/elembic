@@ -16,4 +16,16 @@
 #assert.eq(cast(gradient.linear(red, blue), native.stroke_), (true, stroke(paint: gradient.linear(red, blue))))
 #assert.eq(cast((paint: red), native.stroke_), (true, stroke(paint: red)))
 
+#assert.eq(cast((
+  paint: auto,
+  thickness: auto,
+  cap: auto,
+  join: auto,
+  dash: auto,
+  miter-limit: auto,
+), stroke), (true, stroke()))
+
+#assert.eq(cast((abc: 5), stroke), (false, "typecheck for stroke failed"))
+#assert.eq(cast((abc: 5), types.union(stroke, dictionary)), (true, (abc: 5)))
+
 #assert.ne(unwrap(default(native.stroke_)), 1pt + black)
