@@ -11,6 +11,7 @@
 
 - [Creating elements](./elements/creating/README.md)
   - [Declaring](./elements/creating/declaring.md)
+  - [Specifying fields](./elements/creating/fields.md)
   - [Custom constructor and parsing](./elements/creating/overriding-constr.md)
   - [Labels and references](./elements/creating/labels-refs.md)
   - [Outline](./elements/creating/outline.md)
