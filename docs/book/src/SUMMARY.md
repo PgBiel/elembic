@@ -28,6 +28,8 @@
   - [Helper functions](./types/type-system/helper-functions.md)
 - [Custom types](./types/custom-types/README.md)
   - [Declaring](./types/custom-types/declaring.md)
+  - [Casts](./types/custom-types/casts.md)
+  - [Other options](./types/custom-types/other-options.md)
 
 # Misc
 
