@@ -21,6 +21,12 @@ Instructions for using local packages can be found at [https://github.com/typst/
 moving the directory with elembic's code to `$LOCAL_PACKAGES_DIR/elembic/0.0.1`, where `$LOCAL_PACKAGES_DIR`
 depends on your operating system, as explained in the link.
 
+If you're on Linux, you can run the following one-liner command on your terminal to download the latest development version:
+
+```sh
+pkgbase="${XDG_DATA_HOME:-$HOME/.local/share}/typst/packages/local/elembic" && mkdir -p "$pkgbase/0.0.1" && curl -L https://github.com/PgBiel/elembic/archive/main.tar.gz | tar xz --strip-components=1 --directory="$pkgbase/0.0.1"
+```
+
 ## Example
 
 ### Custom element
