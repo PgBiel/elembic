@@ -17,6 +17,7 @@
 - [Using elements](./elements/using/README.md)
   - [Placing and styling](./elements/using/styling.md)
   - [References and outline]()
+  - [Scripting with elements](./elements/using/scripting.md)
 
 # Types
 
