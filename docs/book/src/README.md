@@ -12,7 +12,7 @@ Elembic allows you to create custom **elements,** which are **reusable visual co
 
 Elembic's elements support styling through **show and set rules**, which allow changing the default values of element properties in bulk. They **are scoped** (that is, lose effect at the end of the current `#[]` block) and **do not use `state` or `counter` by default,** making it comparatively fast.
 
-However, **there are some important limitations**, so **make sure to read** the ["Limitations" page](../about/limitations.md), which explains them in detail.
+However, **there are some important limitations**, so **make sure to read** the ["Limitations" page](./about/limitations.md), which explains them in detail.
 
 In addition, Elembic includes some extras not natively available such as **revoke and reset rules** (which can be used to temporarily "undo" the effect of an earlier set rule, or group of set rules, for a limited scope). Also, Elembic can guarantee type-safety and more helpful errors by **typechecking inputs to elements' fields.**
 
