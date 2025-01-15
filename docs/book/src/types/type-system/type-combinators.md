@@ -23,3 +23,9 @@ You can use `types.exact(typ)` to ensure there is no casting involved for this t
 ## `types.array`: Array of a type
 
 You can use `types.array(typ)` to accept arrays of elements of the same type.
+
+## `types.dict`: Dictionary with values of a type
+
+You can use `types.dict(typ)` to accept dictionaries with values of the same type. (Note that dictionary keys are all strings.)
+
+For example, `(a: 5, b: 6)` is a valid `dict(int)`, but not a valid `dict(str)`.
