@@ -348,5 +348,45 @@
   )
 }
 
+#let dict_(type_) = {
+  let (res, param) = validate(type_)
+  if not res {
+    assert(false, message: "types.array: " + param)
+  }
+
+  base.dict_(
+    native.dict_,
+    param,
+
+    error: if param.check == none {
+      d => {
+        let (count, message) = d.pairs().fold((0, ""), ((count, message), (key, value)) => {
+          if "any" not in param.input and base.typeid(value) not in param.input {
+            (count + 1, message + "\n  hint: at key " + repr(key) + ": " + generate-cast-error(value, param))
+          } else {
+            (count, message)
+          }
+        })
+
+        let n-elements = if count == 1 { "a value" } else { str(count) + " values" }
+        n-elements + " in a dictionary of " + param.name + " did not typecheck" + message
+      }
+    } else {
+      d => {
+        let (count, message) = d.pairs().fold((0, ""), ((count, message), (key, value)) => {
+          if "any" not in param.input and base.typeid(value) not in param.input or not (param.check)(value) {
+            (count + 1, message + "\n  hint: at key " + repr(key) + ": " + generate-cast-error(value, param))
+          } else {
+            (count, message)
+          }
+        })
+
+        let n-elements = if count == 1 { "a value" } else { str(count) + " values" }
+        n-elements + " in a dictionary of " + param.name + " did not typecheck" + message
+      }
+    }
+  )
+}
+
 // Native paint type. Can be used for fills, strokes and so on.
 #let paint = union(color, gradient, native.tiling_)

@@ -1,0 +1,21 @@
+#import "/test/unit/base.typ": empty, type-assert-eq, unwrap
+#show: empty
+
+#import "/src/lib.typ": types
+#import types: exact, literal, ok, err, native
+#import "/src/types/types.typ": cast, validate, default
+
+#let pos-int = types.wrap(int, name: "positive integer", check: _ => i => i > 0, error: _ => i => "expected positive integer, got " + str(i))
+
+#assert.eq(cast((:), types.dict(int)), ok((:)))
+#assert.eq(cast((abc: 5pt, def: 6%), types.dict(relative)), ok((abc: 5pt + 0%, def: 0pt + 6%)))
+#type-assert-eq(unwrap(cast((abc: 5pt, def: 6%), types.dict(relative))).abc, relative)
+#assert.eq(cast((abc: 5.0, def: 6.0, ghi: "abc"), types.dict(float)), err("a value in a dictionary of float did not typecheck\n  hint: at key \"ghi\": expected float or integer, found string"))
+#assert.eq(cast((abc: 5, def: 6, ghi: "abc", jkl: 0), types.dict(pos-int)), err("2 values in a dictionary of positive integer did not typecheck\n  hint: at key \"ghi\": expected integer, found string\n  hint: at key \"jkl\": expected positive integer, got 0"))
+#assert.eq(cast((abc: 5), types.dict(float)), ok((abc: 5.0)))
+#type-assert-eq(unwrap(cast((abc: 5), types.dict(float))).abc, float)
+#assert.eq(cast((v1: "abc", v2: "abc", v3: [def]), types.dict(content)), ok((v1: [abc], v2: [abc], v3: [def])))
+#assert.eq(cast((v1: "abc", v2: "abc", v3: "def"), types.dict(types.union("abc", "def"))), ok((v1: "abc", v2: "abc", v3: "def")))
+#assert.eq(cast((v1: "abc", v2: "abc", v3: "defg"), types.dict(types.union("abc", "def"))).first(), false)
+
+#assert.eq(default(types.dict(types.union(float, int, color))), (true, (:)))

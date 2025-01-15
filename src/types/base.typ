@@ -538,3 +538,47 @@
     error: error
   )
 }
+
+// Create a dict with a uniform parameter typeinfo for its values.
+// (Keys are always strings.)
+#let dict_(base-type, param, error: none) = {
+  assert(dictionary in base-type.input or "any" in base-type.input)
+  let kind = param.type-kind
+
+  collection(
+    "dict",
+    base-type,
+    (param,),
+    check: {
+      // Simply check the array of values
+      // (We can pass 'any' as the base type since that doesn't affect the 'check')
+      let array-check = array_(any, param).check
+      if array-check == none {
+        none
+      } else {
+        d => array-check(d.values())
+      }
+    },
+
+    cast: if param.cast == none {
+      none
+    } else if kind == "native" and param.data == content {
+      d => {
+        for (k, v) in d {
+          d.at(k) = [#v]
+        }
+        d
+      }
+    } else {
+      let cast = param.cast
+      d => {
+        for (k, v) in d {
+          d.at(k) = cast(v)
+        }
+        d
+      }
+    },
+
+    error: error
+  )
+}
