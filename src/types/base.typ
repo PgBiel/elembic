@@ -487,7 +487,7 @@
       _ => false
     } else if "any" in param.input {
       // Only need to run checks
-      a => a.all(x => (param.check)(x))
+      a => a.all(param.check)
     } else {
       // Some optimizations ahead
       // The proper code is at the bottom
