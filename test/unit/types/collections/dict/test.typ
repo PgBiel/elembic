@@ -6,6 +6,7 @@
 #import "/src/types/types.typ": cast, validate, default
 
 #let pos-int = types.wrap(int, name: "positive integer", check: _ => i => i > 0, error: _ => i => "expected positive integer, got " + str(i))
+#let pos-if-int-or-any = types.wrap(types.any, name: "positive integer or any", check: _ => i => type(i) != int or i > 0, error: _ => i => "expected positive integer, got " + str(i))
 
 #assert.eq(cast((:), types.dict(int)), ok((:)))
 #assert.eq(cast((abc: 5pt, def: 6%), types.dict(relative)), ok((abc: 5pt + 0%, def: 0pt + 6%)))
@@ -17,5 +18,8 @@
 #assert.eq(cast((v1: "abc", v2: "abc", v3: [def]), types.dict(content)), ok((v1: [abc], v2: [abc], v3: [def])))
 #assert.eq(cast((v1: "abc", v2: "abc", v3: "def"), types.dict(types.union("abc", "def"))), ok((v1: "abc", v2: "abc", v3: "def")))
 #assert.eq(cast((v1: "abc", v2: "abc", v3: "defg"), types.dict(types.union("abc", "def"))).first(), false)
+
+#assert.eq(cast((v0: "abc", v1: 50, v2: 2), types.dict(pos-if-int-or-any)), ok((v0: "abc", v1: 50, v2: 2)))
+#assert.eq(cast((v0: "abc", v1: 50, v2: 0), types.dict(pos-if-int-or-any)), err("a value in a dictionary of positive integer or any did not typecheck\n  hint: at key \"v2\": expected positive integer, got 0"))
 
 #assert.eq(default(types.dict(types.union(float, int, color))), (true, (:)))

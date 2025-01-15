@@ -6,6 +6,7 @@
 #import "/src/types/types.typ": cast, validate, default
 
 #let pos-int = types.wrap(int, name: "positive integer", check: _ => i => i > 0, error: _ => i => "expected positive integer, got " + str(i))
+#let pos-if-int-or-any = types.wrap(types.any, name: "positive integer or any", check: _ => i => type(i) != int or i > 0, error: _ => i => "expected positive integer, got " + str(i))
 
 #assert.eq(cast((), types.array(int)), ok(()))
 #assert.eq(cast((5pt, 6%), types.array(relative)), ok((5pt + 0%, 0pt + 6%)))
@@ -17,5 +18,8 @@
 #assert.eq(cast(("abc", "abc", [def]), types.array(content)), ok(([abc], [abc], [def])))
 #assert.eq(cast(("abc", "abc", "def"), types.array(types.union("abc", "def"))), ok(("abc", "abc", "def")))
 #assert.eq(cast(("abc", "abc", "defg"), types.array(types.union("abc", "def"))).first(), false)
+
+#assert.eq(cast(("abc", 50, 2), types.array(pos-if-int-or-any)), ok(("abc", 50, 2)))
+#assert.eq(cast(("abc", 50, 0), types.array(pos-if-int-or-any)), err("an element in an array of positive integer or any did not typecheck\n  hint: at position 2: expected positive integer, got 0"))
 
 #assert.eq(default(types.array(types.union(float, int, color))), (true, ()))
