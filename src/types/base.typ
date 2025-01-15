@@ -470,3 +470,71 @@
     default: default,
   )
 }
+
+// Create an array collection with a uniform parameter typeinfo for its elements.
+#let array_(base-type, param, error: none) = {
+  assert(array in base-type.input or "any" in base-type.input)
+  let kind = param.type-kind
+
+  collection(
+    "array",
+    base-type,
+    (param,),
+    check: if param.check == none and "any" in param.input {
+      none
+    } else if param.input == () {
+      // Propagate 'never'
+      _ => false
+    } else if "any" in param.input {
+      // Only need to run checks
+      a => a.all(x => (param.check)(x))
+    } else {
+      // Some optimizations ahead
+      // The proper code is at the bottom
+      let input = param.input
+      let check = param.check
+      if kind == "native" and param.data == dictionary {
+        a => a.all(x => type(x) == dictionary and custom-type-key not in x)
+      } else if param.input.all(i => type(i) == type) and dictionary not in param.input {
+        // No custom types accepted (the check above excludes '(tid: ..., name: ...)' as well as "any")
+        // If this is a custom type, it will return type(x) = dictionary, so it will fail
+        // (Also excludes "custom type": the type of custom types)
+        // So that suffices
+        if input.len() == 1 {
+          let input = input.first()
+          if check == none {
+            a => a.all(x => type(x) == input)
+          } else {
+            a => a.all(x => type(x) == input and check(x))
+          }
+        } else if input.len() == 2 {
+          let first = input.first()
+          let second = input.at(1)
+          if check == none {
+            a => a.all(x => type(x) == first or type(x) == second)
+          } else {
+            a => a.all(x => (type(x) == first or type(x) == second) and check(x))
+          }
+        } else if check == none {
+          a => a.all(x => type(x) in input)
+        } else {
+          a => a.all(x => type(x) in input and check(x))
+        }
+      } else if param.check == none {
+        a => a.all(x => typeid(x) in param.input)
+      } else {
+        a => a.all(x => typeid(x) in param.input and check(x))
+      }
+    },
+
+    cast: if param.cast == none {
+      none
+    } else if kind == "native" and param.data == content {
+      a => a.map(x => [#x])
+    } else {
+      a => a.map(param.cast)
+    },
+
+    error: error
+  )
+}
