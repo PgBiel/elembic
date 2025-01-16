@@ -1,6 +1,6 @@
 # Native types
 
-Typst-native types, such as `int` and `str`, are intenrally represented by typeinfos of `"native"` type-kind, which can be obtained with `e.types.native.typeinfo(type)`. They can generally be specified directly on type positions (e.g. `types.union(int, float)`) without using that function, as Elembic will automatically convert them.
+Typst-native types, such as `int` and `str`, are internally represented by typeinfos of `"native"` type-kind, which can be obtained with `e.types.native.typeinfo(type)`. They can generally be specified directly on type positions (e.g. `types.union(int, float)`) without using that function, as Elembic will automatically convert them.
 
 For fill-like fields, there is also `e.types.paint`, an alias for `types.union(color, gradient, tiling)`.
 
