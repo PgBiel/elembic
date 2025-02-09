@@ -32,6 +32,6 @@
 #assert.eq(cast(95.6, person), (true, person("Generic", 95)))
 #assert.eq(cast(gradient.linear(red, blue, green), person), (true, person("Generic 2", 100, border: gradient.linear(red, blue, green))))
 #assert.eq(cast(int, person), (true, person("Joseph", 50)))
-#assert.eq(cast("abc", person), (false, "expected person, integer, float, stroke, length, color, gradient, pattern, dictionary, type or function, found string"))
+#assert.eq(cast("abc", person), (false, "expected person, integer, float, stroke, length, color, gradient, " + str(types.native.tiling) + ", dictionary, type or function, found string"))
 #assert.eq(cast(5.0, person), (false, "all casts to custom type 'person' failed\n  hint (large float): value must be larger than 5"))
 #assert.eq(cast(float, person), (false, "all casts to custom type 'person' failed\n  hint (large float): value must be larger than 5"))
