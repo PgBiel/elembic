@@ -1,5 +1,5 @@
 #!/usr/bin/env nu
-def "main test" [--typst: string = "", --tests: string, --verbose (-v), --update (-u)] {
+def "main test" [--typst: string = "", --tests: string = "", --verbose (-v), --update (-u)] {
     print $"(ansi cyan)== (ansi blue_bold)Running tests for Typst version (ansi green_bold)($typst) (ansi cyan)==(ansi reset)"
 
     let target_folder = if $typst == "" {
@@ -8,7 +8,8 @@ def "main test" [--typst: string = "", --tests: string, --verbose (-v), --update
         $typst
     }
     let test_list = $tests | split row ","
-    let test_dirs = glob $"test/unit/{($tests)}/**/v-ref" | each { path dirname }
+    let test_glob_part = if $tests == "" { "" } else { $"{($tests)}" }
+    let test_dirs = glob ("test/unit" | path join $test_glob_part "**/v-ref") | each { path dirname }
 
     def verbose_print [message: string] {
         if $verbose {
