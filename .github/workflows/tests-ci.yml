@@ -21,8 +21,8 @@ jobs:
       matrix:
         # Test for the following Typst versions
         # 0.11.0 (earliest supported),
-        # 0.11.1, 0.12.0, 0.13.0 (latest supported)
-        typst-version: [v0.11.0, v0.11.1, v0.12.0, v0.13.0-rc1]
+        # 0.11.1, 0.12.0, 0.13.0, 0.13.1 (latest supported)
+        typst-version: [v0.11.0, v0.11.1, v0.12.0, v0.13.0, v0.13.1]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
