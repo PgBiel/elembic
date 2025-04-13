@@ -42,6 +42,11 @@ jobs:
           git: https://github.com/tingerrr/typst-test.git
           tag: ci-semi-stable
 
+      - name: 📥 Install Nushell
+        uses: hustcer/setup-nu@9859855d6c1dfcd6d53ee7480b8e86c8c45298cb
+        with:
+          version: "0.100"
+
       - name: 📥 Setup Typst
         uses: typst-community/setup-typst@v3
         id: setup-typst
@@ -73,21 +78,19 @@ jobs:
 
       - name: ⚠️ Skip incompatible unit tests (Typst v0.11)
         if: ${{ matrix.typst-version == 'v0.11.0' || matrix.typst-version == 'v0.11.1' }}
-        run: |
-          rm -rf test/unit/elements/show-body-order
-          rm -rf test/unit/elements/reference
-          rm -rf test/unit/elements/outline
+        run: echo "No tests to skip for now"
 
-      - name: 🛠️ Run unit tests
-        run: typst-test run
+      - name: 🛠️ Run unit tests for Typst version
+        run: ./test.nu test --typst "${{ matrix.typst-version }}"
 
       - name: 📤 Archive test artifacts
         uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
           name: artifacts-typst-${{ matrix.typst-version }}
           path: |
             test/unit/**/diff/*.png
             test/unit/**/out/*.png
             test/unit/**/ref/*.png
+            test/unit/**/v-ref/*/*.png
           retention-days: 3
