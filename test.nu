@@ -3,7 +3,7 @@ def "main test" [--typst: string = "", --tests: string = "", --verbose (-v), --u
     print $"(ansi cyan)== (ansi blue_bold)Running tests for Typst version (ansi green_bold)($typst) (ansi cyan)==(ansi reset)"
 
     if (which typst-test | length) == 0 {
-        print $"(ansi red)Error: (ansi green)typst-test (ansi red)is not installed."
+        print $"(ansi red)Error: (ansi green)typst-test (ansi red)is not installed.(ansi reset)"
         exit 1
     }
     let target_folder = if $typst == "" {
