@@ -81,7 +81,7 @@ jobs:
         run: echo "No tests to skip for now"
 
       - name: 🛠️ Run unit tests for Typst version
-        run: ./test.nu test --typst $("${{ matrix.typst-version }}" | cut -c2-)
+        run: ./test.nu test --typst $(echo "${{ matrix.typst-version }}" | cut -c2-)
 
       - name: 📤 Archive test artifacts
         uses: actions/upload-artifact@v4
