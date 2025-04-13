@@ -1,7 +1,10 @@
 #import "/test/unit/base.typ": template
 #show: template
 #set text(5pt)
-#set outline(title: box(circle(fill: black, radius: 2.5pt)), fill: box(width: 1fr, stroke: (bottom: black)))
+#let outline-fill = box(width: 1fr, stroke: (bottom: black))
+#set outline(title: box(circle(fill: black, radius: 2.5pt)))
+#set outline(fill: outline-fill) if sys.version < version(0, 13, 0)
+#set outline.entry(fill: outline-fill) if sys.version >= version(0, 13, 0)
 
 #import "/src/lib.typ" as e: field
 
