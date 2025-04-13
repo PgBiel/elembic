@@ -78,7 +78,7 @@ jobs:
 
       - name: ⚠️ Skip incompatible unit tests (Typst v0.11)
         if: ${{ matrix.typst-version == 'v0.11.0' || matrix.typst-version == 'v0.11.1' }}
-        run: echo "No tests to skip for now"
+        run: echo "No tests to skip for now."
 
       - name: 🛠️ Run unit tests for Typst version
         run: ./test.nu test --typst $(echo "${{ matrix.typst-version }}" | cut -c2-)
