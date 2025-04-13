@@ -46,7 +46,7 @@ def "main test" [--typst: string = "", --tests: string = "", --verbose (-v), --u
 
     $test_dirs
     | each {
-        let orig = $"($in)/v-ref/($target_folder)"
+        let orig = $"($in)/v-ref/($target_folder)" | readlink -m $in # follow symlinks
         let dest = $"($in)/ref"
         if ($orig | path exists) {
             verbose_print $"(ansi magenta)Moving(ansi green) ($orig) (ansi reset)to (ansi green)($dest)(ansi reset)"
@@ -75,7 +75,7 @@ def "main test" [--typst: string = "", --tests: string = "", --verbose (-v), --u
     $test_dirs
     | each {|test|
         let ref = $test | path join "ref"
-        let test_ref = $test | path join "v-ref" $target_folder
+        let test_ref = $test | path join "v-ref" $target_folder | readlink -m $in # follow symlinks
         let bup = $test | path join "ref.bup"
         verbose_print $"(ansi magenta)Moving(ansi green) ($ref) (ansi reset)to (ansi green)($test_ref)(ansi reset)"
         mv $ref $test_ref
