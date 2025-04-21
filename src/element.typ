@@ -83,6 +83,61 @@
   // this 'counter' by one each time.
   where-rule-count: 0,
 
+  // Data for filtering.
+  filters: (
+    // Arena of filters. Other fields in 'filters' refer to these filters
+    // by index.
+    all-filters: (),
+
+    // Map of native selectors, such as 'heading.where(level: 1)',
+    // 'selector(rect)' and so on.
+    // The idea is that each native selector will have a single show
+    // rule activating their associated filters. In this show rule,
+    // they will find their selector's position in the list, extract its
+    // data from the auxiliary 'data' list, which includes the index of
+    // the associated filter in the 'all-filters' arena, and then
+    // activate that filter. (No need to even check 'all-filters', just
+    // immediately push the corresponding index to 'active-filters' in
+    // the style chain.)
+    //
+    // Note that, if a native selector is already in 'list', a new show
+    // rule for it should not be created, at least in normal mode where
+    // we have a limited amount of contextual show rules available.
+    // In stateful mode, that's OK since the show rules add no overhead.
+    native-selectors: (
+      list: (),
+      data: ()
+    ),
+
+    // This is a map eid -> list of filters to check for this element.
+    // Each element with this eid must check if there are any active
+    // filters whose rules should be applied. If so, the filters'
+    // rules should be applied to the stylechain.
+    element-filters: (:),
+
+    // This is an array of arrays of rules for each filter.
+    // These rules are applied whenever an element matching the
+    // given filter is found.
+    filtered-rules: (),
+
+    // List of filter indices which are active because
+    // their condition was just met; for example, a set rule
+    // filtered by 'rect' was activated because we just entered
+    // that element, activating the 'rect' filter. When a filter
+    // is in this list, its associated rules must be immediately
+    // applied ONCE by the first scope modifier
+    // (rule / getter / constructor) and the filter is inactivated.
+    active-filters: (),
+  ),
+
+  // This is an array of arrays of rules for each filter.
+  // These rules are applied whenever an element matching the
+  // given filter is found.
+  pending-rules: (),
+
+
+  pending-filters: (),
+
   // Per-element data (set rules and other style chain info).
   elements: (:)
 )
@@ -438,8 +493,34 @@
   }
 }
 
+// Activate rules associated with the given filters.
+//
+// 'Prepare-rule' needs this, so we receive it as an
+// argument due to the lack of hoisting. This is, itself,
+// a rule, but set in a different scope, e.g. in all
+// bibliography elements to activate filters targetting
+// those elements.
+#let activate-filters(..filters, prepare-rule: none, mode: auto) = {
+  assert(mode == auto or mode in style-modes.values(), message: "element.active-filters: invalid mode, must be auto or style-modes.(normal/leaky/stateful)")
+  assert(filters.named() == (:), message: "element.activate-filters: unexpected named arguments")
+
+  let filters = filters.pos().map(f => {
+    if type(f) == function {
+      f(__elembic_data: special-data-values.get-where)
+    } else if type(f) == dictionary and filter-key in f {
+      f
+    } else {
+      assert(false, message: "element.activate-filters: invalid filter, please use 'custom-element.with(...)' or 'e.filter(native-elem)' to generate a filter.")
+    }
+  })
+
+  prepare-rule(
+    ((prepared-rule-key): true, version: element-version, kind: "activate-filters", name: none, mode: mode, filters: filters)
+  )
+}
+
 // Apply set and revoke rules to the current per-element data.
-#let apply-rules(rules, elements: none) = {
+#let apply-rules(rules, elements: none, filters: none) = {
   for rule in rules {
     let kind = rule.kind
     if kind == "set" {
@@ -514,6 +595,10 @@
             elements.at(name).names.insert(rule.name, true)
           }
         }
+      }
+    } else if kind == "activate-filters" {
+      for filter-data in filters.inactive-filters {
+        filters.pending-filters.push()
       }
     } else {
       assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
@@ -925,6 +1010,44 @@
   prepare-rule(
     ((prepared-rule-key): true, version: element-version, kind: "set", name: none, mode: auto, element: (eid: elem.eid, default-data: elem.default-data, fields: elem.fields), args: args)
   )
+}
+
+// Apply filtered rules to a custom element.
+//
+// USAGE:
+// #show: filtered(
+//   elem1,
+//   elem2.with(...),
+//   e.set_(elem3, fields: ...)
+// )
+//
+// When applying many set rules at once, use 'apply' instead of 'set' on the last parameter.
+#let filtered(..filters, rule) = {
+  assert(args.named() == (:), message: "element.filtered: unexpected named arguments")
+  assert(type(rule) == function, message: "element.filtered: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
+
+  let filters = filters.pos()
+  let rule = rule([]).children.last().value.rule
+  if rule.kind == "apply" {
+    let i = 0
+    for inner-rule in rule.rules {
+      assert(inner-rule.kind in ("set", "revoke", "reset"), message: "element.named: can only filter set, revoke and reset rules at this moment, not '" + inner-rule.kind + "'")
+
+      if inner-rule.at("filters", default: ()) != () {
+        rule.rules.at(i).filters.push(filters)
+      } else {
+        rule.rules.at(i).filters = filters
+      }
+
+      i += 1
+    }
+  } else {
+    assert(rule.kind in ("set", "revoke", "reset"), message: "element.filtered: can only filter set, revoke and reset rules at this moment, not '" + rule.kind + "'")
+    rule.insert("name", name)
+  }
+
+  // Re-prepare the rule
+  prepare-rule(rule)
 }
 
 /// Apply multiple rules (set rules, etc.) at once.
