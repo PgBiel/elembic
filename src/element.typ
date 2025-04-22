@@ -83,24 +83,6 @@
   // this 'counter' by one each time.
   where-rule-count: 0,
 
-  // Data for filtering.
-  filters: (
-    // Arena of filters. Other fields in 'filters' refer to these filters
-    // by index.
-    all-filters: (),
-
-    // This is a map eid -> list of filters to check for this element.
-    // Each element with this eid must check if there are any active
-    // filters whose rules should be applied. If so, the filters'
-    // rules should be applied to the stylechain.
-    element-filters: (:),
-
-    // This is an array of rules to apply for each filter in the same index.
-    // These rules are applied whenever an element matching the given filter
-    // is found.
-    rules: (),
-  ),
-
   // Per-element data (set rules and other style chain info).
   elements: (:)
 )
@@ -154,7 +136,20 @@
 
   // List of active revokes, of the form:
   // (index: last-chain-index, revoking: name-revoked, name: none / name of the revoke itself)
-  revoke-chain: ()
+  revoke-chain: (),
+
+  // Data for filtering.
+  filters: (
+    // Filters applying to this element. Each filter is associated with a rule below.
+    // While some filters might trivially apply to all instances of an element,
+    // others might require specific field values to match, for example.
+    all: (),
+
+    // This is an array of rules to apply for each filter in the same index.
+    // These rules are applied whenever an element matching the given filter
+    // is found.
+    rules: (),
+  ),
 )
 
 /// This is meant to be used in a show rule of the form `#show ref: e.ref` to ensure
@@ -465,7 +460,7 @@
 }
 
 // Apply set and revoke rules to the current per-element data.
-#let apply-rules(rules, elements: none, filters: none) = {
+#let apply-rules(rules, elements: none) = {
   for rule in rules {
     let kind = rule.kind
     if kind == "set" {
@@ -542,20 +537,19 @@
         }
       }
     } else if kind == "filtered" {
-      if filters == none {
-        filters = default-global-data.filters
-      }
       let (filter, rule: inner-rule) = rule
-      let filter-index = filters.all-filters.len()
-      filters.all-filters.push(filter)
-      filters.rules.push(inner-rule)
       // TODO(filters): multiple eids with joined rules
       let eids = (filter.eid,)
       for eid in eids {
-        if eid in filters.element-filters {
-          filters.element-filters.at(eid).push(filter-index)
+        if eid in elements {
+          if "filters" not in elements.at(eid) {
+            elements.at(eid).filters = default-data.filters
+          }
+          elements.at(eid).filters.all.push(filter)
+          elements.at(eid).filters.rules.push(inner-rule)
         } else {
-          filters.element-filters.insert(eid, (filter-index,))
+          // TODO(filters): get element's default data
+          elements.insert(eid, (..default-data, filters: (all: (filter,), rules: (inner-rule,))))
         }
       }
     } else {
@@ -563,7 +557,7 @@
     }
   }
 
-  (elements: elements, filters: filters)
+  (elements: elements)
 }
 
 // Prepare rule(s), returning a function `doc => ...` to be used in
@@ -821,7 +815,7 @@
           message: "element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
         )
 
-        global-data += apply-rules(rules, elements: global-data.elements, filters: global-data.filters)
+        global-data += apply-rules(rules, elements: global-data.elements)
 
         chain.push(global-data)
         chain
@@ -862,7 +856,7 @@
           }
         }
 
-        global-data += apply-rules(rules, elements: global-data.elements, filters: global-data.filters)
+        global-data += apply-rules(rules, elements: global-data.elements)
 
         set bibliography(title: previous-bib-title)
         show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
@@ -912,7 +906,7 @@
           }
         }
 
-        global-data += apply-rules(rules, elements: global-data.elements, filters: global-data.filters)
+        global-data += apply-rules(rules, elements: global-data.elements)
 
         set bibliography(title: first-bib-title)
         show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
@@ -1869,7 +1863,8 @@
         }
 
         let element-data = global-data.elements.at(eid, default: default-data)
-        let filters = global-data.at("filters", default: default-global-data.filters).element-filters.at(eid, default: ())
+        let filters = element-data.at("filters", default: (all: (), rules: ()))
+        let has-filters = filters.all != ()
 
         let constructed-fields = if (
           element-data.revoke-chain == default-data.revoke-chain
@@ -1901,6 +1896,16 @@
           }
 
           finalized-chain
+        }
+
+        let editable-global-data
+        if has-filters {
+          // The closures inside context {} below will capture global-data,
+          // reducing potential for memoization of their output, so, for
+          // performance reasons, we only pass the real global data if
+          // necessary due to filtering (which will update the data on a
+          // match).
+          editable-global-data = global-data
         }
 
         let shown = {
@@ -1953,20 +1958,24 @@
               synthesized-fields.insert(stored-data-key, tag)
 
               let new-global-data
-              if filters != () {
-                let global-data = global-data
-                for filter-index in filters {
-                  let filter = global-data.filters.all-filters.at(filter-index, default: none)
+              if has-filters {
+                let editable-global-data = editable-global-data
+                let i = 0
+                for filter in filters.all {
                   if filter != none and verify-filter(synthesized-fields, filter) {
-                    let rule = global-data.filters.rules.at(filter-index)
-                    global-data += apply-rules(if rule.kind == apply { rule.rules } else { (rule,) }, elements: global-data.elements, filters: global-data.filters)
+                    let rule = filters.rules.at(i)
+                    editable-global-data += apply-rules(
+                      if rule.kind == "apply" { rule.rules } else { (rule,) },
+                      elements: editable-global-data.elements,
+                    )
                   }
+                  i += 1
                 }
-                new-global-data = global-data
+                new-global-data = editable-global-data
               }
 
               // Save updated styles from applied rules
-              show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if filters != ()
+              show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if has-filters
 
               if count-needs-fields {
                 count(synthesized-fields)
@@ -2056,20 +2065,24 @@
             synthesized-fields.insert(stored-data-key, tag)
 
             let new-global-data
-            if filters != () {
-              let global-data = global-data
-              for filter-index in filters {
-                let filter = global-data.filters.all-filters.at(filter-index, default: none)
+            if has-filters {
+              let editable-global-data = editable-global-data
+              let i = 0
+              for filter in filters.all {
                 if filter != none and verify-filter(synthesized-fields, filter) {
-                  let rule = global-data.filters.rules.at(filter-index)
-                  global-data += apply-rules(if rule.kind == apply { rule.rules } else { (rule,) }, elements: global-data.elements, filters: global-data.filters)
+                  let rule = filters.rules.at(i)
+                  editable-global-data += apply-rules(
+                    if rule.kind == "apply" { rule.rules } else { (rule,) },
+                    elements: editable-global-data.elements,
+                  )
                 }
+                i += 1
               }
-              new-global-data = global-data
+              new-global-data = editable-global-data
             }
 
             // Save updated styles from applied rules
-            show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if filters != ()
+            show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if has-filters
 
             if count-needs-fields {
               count(synthesized-fields)
