@@ -538,18 +538,27 @@
       }
     } else if kind == "filtered" {
       let (filter, rule: inner-rule) = rule
-      // TODO(filters): multiple eids with joined rules
-      let eids = (filter.eid,)
-      for eid in eids {
+      if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
+        assert(false, message: "element.filtered: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+      }
+      let target-elements = if "elements" in filter {
+        filter.elements
+      } else {
+        // Old version
+        // Likely a where filter
+        ((filter.eid): (default-data: default-data))
+      }
+
+      for (eid, all-elem-data) in target-elements {
         if eid in elements {
           if "filters" not in elements.at(eid) {
+            // Old version
             elements.at(eid).filters = default-data.filters
           }
           elements.at(eid).filters.all.push(filter)
           elements.at(eid).filters.rules.push(inner-rule)
         } else {
-          // TODO(filters): get element's default data
-          elements.insert(eid, (..default-data, filters: (all: (filter,), rules: (inner-rule,))))
+          elements.insert(eid, (..all-elem-data.default-data, filters: (all: (filter,), rules: (inner-rule,))))
         }
       }
     } else {
@@ -1684,6 +1693,16 @@
 
   let get-rule(receiver) = prepare-get(g => receiver(g((eid: eid, default-fields: default-fields))))
 
+  // Partial version of element data to store in filters.
+  let partial-element-data = (
+    name: name,
+    eid: eid,
+    default-data: default-data,
+    default-global-data: default-global-data,
+    fields: fields,
+    sel: lbl-show,
+  )
+
   // Prepare a filter which should be passed to 'select()'.
   // This function will specify which field values for this
   // element should be matched.
@@ -1701,7 +1720,15 @@
       }
     }
 
-    ((filter-key): true, kind: "where", eid: eid, fields: args, sel: lbl-show)
+    (
+      (filter-key): true,
+      element-version: element-version,
+      kind: "where",
+      eid: eid,
+      fields: args,
+      sel: lbl-show,
+      elements: ((eid): partial-element-data),
+    )
   }
 
   let elem-data = (
