@@ -1011,7 +1011,7 @@
       // TODO(filters): merge filters into AND if rule is already filtered
       assert(inner-rule.kind in ("set", "revoke", "reset"), message: "element.named: can only filter apply, set, revoke and reset rules at this moment, not '" + inner-rule.kind + "'")
 
-      rule.rules.at(i) = (..filtered-rule, rule: inner-rule, mode: rule.at("mode", default: auto))
+      rule.rules.at(i) = (..filtered-rule, rule: inner-rule, mode: inner-rule.at("mode", default: auto))
 
       i += 1
     }
@@ -1893,7 +1893,8 @@
           ((..default-global-data, first-bib-title: previous-bib-title), true)
         }
 
-        if global-data.stateful {
+        let is-stateful = global-data.stateful
+        if is-stateful {
           let chain = style-state.get()
           global-data = if chain == () {
             default-global-data
@@ -2018,7 +2019,15 @@
               }
 
               // Save updated styles from applied rules
-              show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if has-filters
+              show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if has-filters and not is-stateful
+
+              if has-filters and is-stateful {
+                // Popping after the if below
+                style-state.update(chain => {
+                  chain.push(new-global-data)
+                  chain
+                })
+              }
 
               if count-needs-fields {
                 count(synthesized-fields)
@@ -2080,6 +2089,14 @@
                   [#[#body#metadata(tag)]#lbl-show]
                 }
               }
+
+              if has-filters and is-stateful {
+                // Pushed before the if above
+                style-state.update(chain => {
+                  _ = chain.pop()
+                  chain
+                })
+              }
             }
           } else {
             let synthesized-fields = if synthesize == none {
@@ -2125,7 +2142,15 @@
             }
 
             // Save updated styles from applied rules
-            show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if has-filters
+            show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if has-filters and not is-stateful
+
+            if has-filters and is-stateful {
+              // Popping after the if below
+              style-state.update(chain => {
+                chain.push(new-global-data)
+                chain
+              })
+            }
 
             if count-needs-fields {
               count(synthesized-fields)
@@ -2186,12 +2211,30 @@
                 [#[#body#metadata(tag)]#lbl-show]
               }
             }
+
+            if has-filters and is-stateful {
+              // Pushed before the if above
+              style-state.update(chain => {
+                _ = chain.pop()
+                chain
+              })
+            }
           }
         }
 
-        if data-changed {
-          show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
-          shown
+        if data-changed and not has-filters {
+          if is-stateful {
+            [#style-state.update(chain => {
+              chain.push(global-data)
+              chain
+            })#shown#style-state.update(chain => {
+              _ = chain.pop()
+              chain
+            })]
+          } else {
+            show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
+            shown
+          }
         } else {
           shown
         }
