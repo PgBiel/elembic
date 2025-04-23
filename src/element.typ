@@ -553,10 +553,14 @@
         // Likely a where filter
         ((filter.eid): (default-data: default-data))
       }
-      let data = (names: if name == none { () } else { (name,) })
+      let base-data = (names: if name == none { () } else { (name,) })
 
       for (eid, all-elem-data) in target-elements {
+        let index
+        let data
         if eid in elements {
+          index = elements.at(eid).chain.len()
+          data = (..base-data, index: index)
           if "filters" not in elements.at(eid) {
             // Old version
             elements.at(eid).filters = default-data.filters
@@ -565,8 +569,22 @@
           elements.at(eid).filters.rules.push(inner-rule)
           elements.at(eid).filters.data.push(data)
         } else {
+          index = 0
+          data = (..base-data, index: index)
           elements.insert(eid, (..all-elem-data.default-data, filters: (all: (filter,), rules: (inner-rule,), data: (data,))))
         }
+
+        // Push an entry to the data chain so we have an index to assign to
+        // this filter rule. This allows us to reset() it later.
+        elements.at(eid).chain.push((:))
+
+        // Lazily fill the data chain with 'none'
+        elements.at(eid).data-chain += (none,) * (index - elements.at(eid).data-chain.len())
+
+        // Keep "name" for some compatibility with older versions...
+        elements.at(eid).data-chain.push(
+          (kind: "filtered", name: if data.names == () { none } else { data.names.last() }, names: data.names)
+        )
 
         for name in data.names {
           // Ensure the name is registered so revoke rules on this name are
@@ -1339,7 +1357,7 @@
     }
   }
 
-  (folded: final-values, active-revokes: active-revokes)
+  (folded: final-values, active-revokes: active-revokes, first-active-index: first-active-index)
 }
 
 // Retrieves the final chain data for an element, after applying all set rules so far.
@@ -1907,7 +1925,7 @@
         let filters = element-data.at("filters", default: default-data.filters)
         let has-filters = filters.all != ()
 
-        let (constructed-fields, active-revokes) = if (
+        let (constructed-fields, active-revokes, first-active-index) = if (
           element-data.revoke-chain == default-data.revoke-chain
           and (
             foldable-fields == (:)
@@ -1917,11 +1935,11 @@
         ) {
           // Sum the chain of dictionaries so that the latest value specified for
           // each property wins.
-          (default-fields + element-data.chain.sum(default: (:)) + args, (:))
+          (default-fields + element-data.chain.sum(default: (:)) + args, (:), 0)
         } else {
           // We can't just sum, we need to filter and fold first.
           // Memoize this operation through a function.
-          let (folded, active-revokes) = fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
+          let (folded, active-revokes, first-active-index) = fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
           let outer-chain = default-fields + folded
           let finalized-chain = outer-chain + args
 
@@ -1937,7 +1955,7 @@
             }
           }
 
-          (finalized-chain, active-revokes)
+          (finalized-chain, active-revokes, first-active-index)
         }
 
         let filter-revokes
@@ -2007,7 +2025,12 @@
                 let i = 0
                 for filter in filters.all {
                   let data = filters.data.at(i)
-                  if filter != none and data.names.all(n => n not in filter-revokes) and verify-filter(synthesized-fields, filter) {
+                  if (
+                    filter != none
+                    and data.index >= first-active-index
+                    and data.names.all(n => n not in filter-revokes)
+                    and verify-filter(synthesized-fields, filter)
+                  ) {
                     let rule = filters.rules.at(i)
                     new-global-data += apply-rules(
                       if rule.kind == "apply" { rule.rules } else { (rule,) },
@@ -2130,7 +2153,12 @@
               let i = 0
               for filter in filters.all {
                 let data = filters.data.at(i)
-                if filter != none and data.names.all(n => n not in filter-revokes) and verify-filter(synthesized-fields, filter) {
+                if (
+                  filter != none
+                  and data.index >= first-active-index
+                  and data.names.all(n => n not in filter-revokes)
+                  and verify-filter(synthesized-fields, filter)
+                ) {
                   let rule = filters.rules.at(i)
                   new-global-data += apply-rules(
                     if rule.kind == "apply" { rule.rules } else { (rule,) },
