@@ -38,7 +38,7 @@
   wobble(run: it => assert.eq(it.inner, inner))
 }
 
-#show: e.named("abc", e.filtered(wibble.with(number: 10), e.set_(wobble, color: orange)))
+#show: e.named("abc", e.filtered(wibble.with(number: 10), e.named("inner", e.set_(wobble, color: orange))))
 
 #wibble(
   number: 10,
@@ -48,12 +48,42 @@
   })
 )
 
-#show: e.revoke("abc")
+#[
+  #show: e.revoke("abc")
 
-#wibble(
-  number: 10,
-  run: it => wobble(run: it => {
-    assert.eq(it.color, red)
-    assert.eq(it.inner, [Hello!])
-  })
-)
+  #wibble(
+    number: 10,
+    run: it => wobble(run: it => {
+      assert.eq(it.color, red)
+      assert.eq(it.inner, [Hello!])
+    })
+  )
+]
+
+#[
+  #show: e.revoke("inner") // this should have no effect (rule not yet applied)
+
+  #wibble(
+    number: 10,
+    run: it => {
+      wobble(run: it => {
+        assert.eq(it.color, orange)
+        assert.eq(it.inner, [Hello!])
+      })
+
+      show: e.revoke("abc") // too late (filter already applied)
+
+      wobble(run: it => {
+        assert.eq(it.color, orange)
+        assert.eq(it.inner, [Hello!])
+      })
+
+      show: e.revoke("inner") // now it should work
+
+      wobble(run: it => {
+        assert.eq(it.color, red)
+        assert.eq(it.inner, [Hello!])
+      })
+    }
+  )
+]
