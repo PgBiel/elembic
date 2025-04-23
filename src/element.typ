@@ -155,6 +155,20 @@
     // ((names: ("name1", "name2", ...)), ...)
     data: (),
   ),
+
+  // Conditional set rules, which only apply to matching instances of an
+  // element.
+  cond-sets: (
+    // Filters to apply to each set rule.
+    filters: (),
+    // For each filter above, the associated set rule args with the changed
+    // fields.
+    args: (),
+    // Data associated with each conditional set rule.
+    // Format:
+    // ((names: ("name1", "name2", ...)), ...)
+    data: (),
+  )
 )
 
 /// This is meant to be used in a show rule of the form `#show ref: e.ref` to ensure
@@ -591,6 +605,43 @@
           // treated as valid.
           elements.at(eid).names.insert(name, true)
         }
+      }
+    } else if kind == "cond-set" {
+      let (filter, args, name, element) = rule
+      if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
+        assert(false, message: "element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+      }
+      let (eid,) = element
+
+      if eid not in elements {
+        elements.insert(eid, element.default-data)
+      } else if "cond-sets" not in elements.at(eid) {
+        // Old version
+        elements.at(eid).cond-sets = default-data.cond-sets
+      }
+
+      let index = elements.at(eid).chain.len()
+      let data = (names: if name == none { () } else { (name,) }, index: index)
+      elements.at(eid).cond-sets.filters.push(filter)
+      elements.at(eid).cond-sets.args.push(args)
+      elements.at(eid).cond-sets.data.push(data)
+
+      // Push an entry to the data chain so we have an index to assign to
+      // this filter rule. This allows us to reset() it later.
+      elements.at(eid).chain.push((:))
+
+      // Lazily fill the data chain with 'none'
+      elements.at(eid).data-chain += (none,) * (index - elements.at(eid).data-chain.len())
+
+      // Keep "name" for some compatibility with older versions...
+      elements.at(eid).data-chain.push(
+        (kind: "cond-set", name: if data.names == () { none } else { data.names.last() }, names: data.names)
+      )
+
+      for name in data.names {
+        // Ensure the name is registered so revoke rules on this name are
+        // treated as valid.
+        elements.at(eid).names.insert(name, true)
       }
     } else {
       assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
@@ -1044,6 +1095,51 @@
   }
 }
 
+/// Apply a conditional set rule to a custom element. The set rule is only applied if
+/// the given filter matches for that element.
+///
+/// Check out the Styling guide for more information.
+///
+/// Note that this function only accepts non-required fields (that have a `default`).
+/// Any required fields must always be specified at call site and, as such, are always
+/// going to be prioritized, so it is pointless to have set rules for those.
+///
+/// Keep in mind the limitations when using set rules, as well as revoke, reset and
+/// apply rules.
+///
+/// As such, when applying many set rules at once, please use `e.apply` instead
+/// (or specify them consecutively so `elembic` does that automatically).
+///
+/// USAGE:
+///
+/// ```typ
+/// #show: e.set_(superbox, fill: red)
+/// #show: e.cond-set(superbox.with(data: 10), fill: blue)
+///
+/// #superbox(data: 5) // this will have red fill
+/// #superbox(data: 10) // this will have blue fill
+/// ```
+///
+/// - filter (filter): filter specifying which element instances should receive this set rule.
+/// - fields (arguments): optional fields to set (positionally or named, depending on the field)
+/// -> function
+#let cond-set(filter, ..fields) = {
+  if type(filter) == function {
+    filter = filter(__elembic_data: special-data-values.get-where)
+  }
+  assert(type(filter) == dictionary and filter-key in filter, message: "element.cond-set: invalid filter, please pass just 'custom-element' or use 'custom-element.with(...)' to generate a filter.")
+  assert("elements" in filter, message: "element.cond-set: this filter is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
+  assert(filter.elements != (:), message: "element.cond-set: this filter appears to not be restricted to any elements. It must apply to exactly one element (the one receiving the set rule).")
+  assert(filter.elements.len() == 1, message: "element.cond-set: this filter appears to apply to more than one element. It must apply to exactly one element (the one receiving the set rule).")
+  let (eid, elem) = filter.elements.pairs().first()
+
+  let args = (elem.parse-args)(fields, include-required: false)
+
+  prepare-rule(
+    ((prepared-rule-key): true, version: element-version, kind: "cond-set", name: none, mode: auto, filter: filter, element: (eid: elem.eid, default-data: elem.default-data, fields: elem.fields), args: args)
+  )
+}
+
 /// Apply multiple rules (set rules, etc.) at once.
 ///
 /// These rules do not count towards the "set rule limit" observed in 'Limitations';
@@ -1146,14 +1242,14 @@
     let i = 0
     while i < rule.rules.len() {
       let inner-rule = rule.rules.at(i)
-      assert(inner-rule.kind in ("set", "revoke", "reset", "filtered"), message: "element.named: can only name set, revoke, reset and filtered rules at this moment, not '" + inner-rule.kind + "'")
+      assert(inner-rule.kind in ("set", "revoke", "reset", "filtered", "cond-set"), message: "element.named: can only name set, revoke, reset, filtered and cond-set rules at this moment, not '" + inner-rule.kind + "'")
 
       rule.rules.at(i).insert("name", name)
 
       i += 1
     }
   } else {
-    assert(rule.kind in ("set", "revoke", "reset", "filtered"), message: "element.named: can only name set, revoke, reset and filtered rules at this moment, not '" + rule.kind + "'")
+    assert(rule.kind in ("set", "revoke", "reset", "filtered", "cond-set"), message: "element.named: can only name set, revoke, reset, filtered and cond-set rules at this moment, not '" + rule.kind + "'")
     rule.insert("name", name)
   }
 
@@ -1726,8 +1822,10 @@
 
   // Partial version of element data to store in filters.
   let partial-element-data = (
+    version: element-version,
     name: name,
     eid: eid,
+    parse-args: parse-args,
     default-data: default-data,
     default-global-data: default-global-data,
     fields: fields,
@@ -1924,6 +2022,8 @@
         let element-data = global-data.elements.at(eid, default: default-data)
         let filters = element-data.at("filters", default: default-data.filters)
         let has-filters = filters.all != ()
+        let cond-sets = element-data.at("cond-sets", default: default-data.cond-sets)
+        let has-cond-sets = cond-sets.args != ()
 
         let (constructed-fields, active-revokes, first-active-index) = if (
           element-data.revoke-chain == default-data.revoke-chain
@@ -1968,6 +2068,15 @@
           // match).
           editable-global-data = global-data
           filter-revokes = active-revokes
+        } else if has-cond-sets {
+          // No need for global data, but still need revokes to see which
+          // conditional sets were revoked
+          filter-revokes = active-revokes
+        }
+
+        let cond-set-foldable-fields
+        if has-cond-sets {
+          cond-set-foldable-fields = foldable-fields
         }
 
         let shown = {
@@ -2011,6 +2120,39 @@
 
               if labelable and label != none and label != _missing {
                 synthesized-fields.label = label
+              }
+
+              // Update synthesized fields BEFORE applying filters!
+              if has-cond-sets {
+                let i = 0
+                for filter in cond-sets.filters {
+                  let data = cond-sets.data.at(i)
+                  if (
+                    filter != none
+                    and data.index >= first-active-index
+                    and data.names.all(n => n not in filter-revokes)
+                    and verify-filter(synthesized-fields, filter)
+                  ) {
+                    let args = cond-sets.args.at(i)
+
+                    let new-synthesized-fields = synthesized-fields + args
+
+                    // Fold received arguments with existing fields or defaults
+                    for (field-name, fold-data) in cond-set-foldable-fields {
+                      if field-name in args {
+                        let outer = synthesized-fields.at(field-name, default: fold-data.default)
+                        if fold-data.folder == auto {
+                          new-synthesized-fields.at(field-name) = outer + args.at(field-name)
+                        } else {
+                          new-synthesized-fields.at(field-name) = (fold-data.folder)(outer, args.at(field-name))
+                        }
+                      }
+                    }
+
+                    synthesized-fields = new-synthesized-fields
+                  }
+                  i += 1
+                }
               }
 
               let tag = tag
@@ -2140,6 +2282,39 @@
 
             if labelable and label != none and label != _missing {
               synthesized-fields.label = label
+            }
+
+            // Update synthesized fields BEFORE applying filters!
+            if has-cond-sets {
+              let i = 0
+              for filter in cond-sets.filters {
+                let data = cond-sets.data.at(i)
+                if (
+                  filter != none
+                  and data.index >= first-active-index
+                  and data.names.all(n => n not in filter-revokes)
+                  and verify-filter(synthesized-fields, filter)
+                ) {
+                  let args = cond-sets.args.at(i)
+
+                  let new-synthesized-fields = synthesized-fields + args
+
+                  // Fold received arguments with existing fields or defaults
+                  for (field-name, fold-data) in cond-set-foldable-fields {
+                    if field-name in args {
+                      let outer = synthesized-fields.at(field-name, default: fold-data.default)
+                      if fold-data.folder == auto {
+                        new-synthesized-fields.at(field-name) = outer + args.at(field-name)
+                      } else {
+                        new-synthesized-fields.at(field-name) = (fold-data.folder)(outer, args.at(field-name))
+                      }
+                    }
+                  }
+
+                  synthesized-fields = new-synthesized-fields
+                }
+                i += 1
+              }
             }
 
             tag.fields = synthesized-fields
