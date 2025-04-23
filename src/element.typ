@@ -149,6 +149,11 @@
     // These rules are applied whenever an element matching the given filter
     // is found.
     rules: (),
+
+    // Data associated with each filter, such as its name(s).
+    // Format:
+    // ((names: ("name1", "name2", ...)), ...)
+    data: (),
   ),
 )
 
@@ -537,7 +542,7 @@
         }
       }
     } else if kind == "filtered" {
-      let (filter, rule: inner-rule) = rule
+      let (filter, rule: inner-rule, name) = rule
       if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
         assert(false, message: "element.filtered: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
       }
@@ -548,6 +553,7 @@
         // Likely a where filter
         ((filter.eid): (default-data: default-data))
       }
+      let data = (names: if name == none { () } else { (name,) })
 
       for (eid, all-elem-data) in target-elements {
         if eid in elements {
@@ -557,8 +563,15 @@
           }
           elements.at(eid).filters.all.push(filter)
           elements.at(eid).filters.rules.push(inner-rule)
+          elements.at(eid).filters.data.push(data)
         } else {
-          elements.insert(eid, (..all-elem-data.default-data, filters: (all: (filter,), rules: (inner-rule,))))
+          elements.insert(eid, (..all-elem-data.default-data, filters: (all: (filter,), rules: (inner-rule,), data: (data,))))
+        }
+
+        for name in data.names {
+          // Ensure the name is registered so revoke rules on this name are
+          // treated as valid.
+          elements.at(eid).names.insert(rule.name, true)
         }
       }
     } else {
@@ -990,7 +1003,7 @@
   assert(type(rule) == function, message: "element.filtered: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
 
   let rule = rule([]).children.last().value.rule
-  let filtered-rule = ((prepared-rule-key): true, version: element-version, kind: "filtered", filter: filter, rule: rule, mode: rule.at("mode", default: auto))
+  let filtered-rule = ((prepared-rule-key): true, version: element-version, kind: "filtered", filter: filter, rule: rule, name: none, mode: rule.at("mode", default: auto))
   if rule.kind == "apply" {
     // Transpose filtered(filter, apply(a, b, c)) into apply(filtered(filter, a), filtered(filter, b), filtered(filter, c))
     let i = 0
@@ -1115,14 +1128,14 @@
     let i = 0
     while i < rule.rules.len() {
       let inner-rule = rule.rules.at(i)
-      assert(inner-rule.kind in ("set", "revoke", "reset"), message: "element.named: can only name set, revoke and reset rules at this moment, not '" + inner-rule.kind + "'")
+      assert(inner-rule.kind in ("set", "revoke", "reset", "filtered"), message: "element.named: can only name set, revoke, reset and filtered rules at this moment, not '" + inner-rule.kind + "'")
 
       rule.rules.at(i).insert("name", name)
 
       i += 1
     }
   } else {
-    assert(rule.kind in ("set", "revoke", "reset"), message: "element.named: can only name set, revoke and reset rules at this moment, not '" + rule.kind + "'")
+    assert(rule.kind in ("set", "revoke", "reset", "filtered"), message: "element.named: can only name set, revoke, reset and filtered rules at this moment, not '" + rule.kind + "'")
     rule.insert("name", name)
   }
 
@@ -1326,7 +1339,7 @@
     }
   }
 
-  final-values
+  (folded: final-values, active-revokes: active-revokes)
 }
 
 // Retrieves the final chain data for an element, after applying all set rules so far.
@@ -1344,7 +1357,7 @@
   let folded-chain = if element-data.revoke-chain == default-data.revoke-chain and element-data.fold-chain == default-data.fold-chain {
     element-data.chain.sum(default: (:))
   } else {
-    fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
+    fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain).folded
   }
 
   // No need to do extra folding like in constructor:
@@ -1890,10 +1903,10 @@
         }
 
         let element-data = global-data.elements.at(eid, default: default-data)
-        let filters = element-data.at("filters", default: (all: (), rules: ()))
+        let filters = element-data.at("filters", default: default-data.filters)
         let has-filters = filters.all != ()
 
-        let constructed-fields = if (
+        let (constructed-fields, active-revokes) = if (
           element-data.revoke-chain == default-data.revoke-chain
           and (
             foldable-fields == (:)
@@ -1903,11 +1916,12 @@
         ) {
           // Sum the chain of dictionaries so that the latest value specified for
           // each property wins.
-          default-fields + element-data.chain.sum(default: (:)) + args
+          (default-fields + element-data.chain.sum(default: (:)) + args, (:))
         } else {
           // We can't just sum, we need to filter and fold first.
           // Memoize this operation through a function.
-          let outer-chain = default-fields + fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
+          let (folded, active-revokes) = fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
+          let outer-chain = default-fields + folded
           let finalized-chain = outer-chain + args
 
           // Fold received arguments with outer chain or defaults
@@ -1922,9 +1936,10 @@
             }
           }
 
-          finalized-chain
+          (finalized-chain, active-revokes)
         }
 
+        let filter-revokes
         let editable-global-data
         if has-filters {
           // The closures inside context {} below will capture global-data,
@@ -1933,6 +1948,7 @@
           // necessary due to filtering (which will update the data on a
           // match).
           editable-global-data = global-data
+          filter-revokes = active-revokes
         }
 
         let shown = {
@@ -1986,19 +2002,19 @@
 
               let new-global-data
               if has-filters {
-                let editable-global-data = editable-global-data
+                new-global-data = editable-global-data
                 let i = 0
                 for filter in filters.all {
-                  if filter != none and verify-filter(synthesized-fields, filter) {
+                  let data = filters.data.at(i)
+                  if filter != none and data.names.all(n => n not in filter-revokes) and verify-filter(synthesized-fields, filter) {
                     let rule = filters.rules.at(i)
-                    editable-global-data += apply-rules(
+                    new-global-data += apply-rules(
                       if rule.kind == "apply" { rule.rules } else { (rule,) },
-                      elements: editable-global-data.elements,
+                      elements: new-global-data.elements,
                     )
                   }
                   i += 1
                 }
-                new-global-data = editable-global-data
               }
 
               // Save updated styles from applied rules
@@ -2093,19 +2109,19 @@
 
             let new-global-data
             if has-filters {
-              let editable-global-data = editable-global-data
+              new-global-data = editable-global-data
               let i = 0
               for filter in filters.all {
-                if filter != none and verify-filter(synthesized-fields, filter) {
+                let data = filters.data.at(i)
+                if filter != none and data.names.all(n => n not in filter-revokes) and verify-filter(synthesized-fields, filter) {
                   let rule = filters.rules.at(i)
-                  editable-global-data += apply-rules(
+                  new-global-data += apply-rules(
                     if rule.kind == "apply" { rule.rules } else { (rule,) },
-                    elements: editable-global-data.elements,
+                    elements: new-global-data.elements,
                   )
                 }
                 i += 1
               }
-              new-global-data = editable-global-data
             }
 
             // Save updated styles from applied rules
