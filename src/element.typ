@@ -589,7 +589,7 @@
         for name in data.names {
           // Ensure the name is registered so revoke rules on this name are
           // treated as valid.
-          elements.at(eid).names.insert(rule.name, true)
+          elements.at(eid).names.insert(name, true)
         }
       }
     } else {
