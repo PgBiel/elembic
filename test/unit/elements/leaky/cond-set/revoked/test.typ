@@ -1,4 +1,4 @@
-/// Test conditional set rules with filtered rules.
+/// Test revoking conditional set rules (leaky).
 
 #import "/test/unit/base.typ": empty
 #show: empty
@@ -38,42 +38,39 @@
   wobble(run: it => assert.eq(it.inner, inner))
 }
 
-#show: e.filtered(wibble.with(data: "lol"), e.set_(wobble, color: orange))
-#show: e.filtered(wibble.with(data: "data"), e.set_(wobble, color: green))
-#show: e.cond-set(wibble.with(number: 10), data: "lol")
+#show: e.named("abc", e.leaky.cond-set(wibble.with(number: 10), data: "lol"))
 
 #wibble(
   number: 10,
-  run: it => {
-    assert.eq(it.data, "lol")
-    // cond-set applies before filter
-    wobble(run: it => assert.eq(it.color, orange))
-  }
+  run: it => assert.eq(it.data, "lol"),
 )
 
 #wibble(
   number: 20,
-  run: it => {
-    assert.eq(it.data, "data")
-    wobble(run: it => assert.eq(it.color, green))
-  }
+  run: it => assert.eq(it.data, "data")
 )
 
-#show: e.set_(wibble, data: "uuu")
+#[
+  #show: e.leaky.revoke("abc")
 
-#wibble(
-  number: 10,
-  run: it => {
-    assert.eq(it.data, "lol")
-    // cond-set applies before filter
-    wobble(run: it => assert.eq(it.color, orange))
-  }
-)
+  #wibble(
+    number: 10,
+    run: it => assert.eq(it.data, "data"),
+  )
+]
 
-#wibble(
-  number: 20,
-  run: it => {
-    assert.eq(it.data, "uuu")
-    wobble(run: it => assert.eq(it.color, red))
-  }
-)
+#[
+  #show: e.named("def", e.leaky.revoke("abc"))
+
+  #wibble(
+    number: 10,
+    run: it => assert.eq(it.data, "data"),
+  )
+
+  #show: e.leaky.revoke("def")
+
+  #wibble(
+    number: 10,
+    run: it => assert.eq(it.data, "lol"),
+  )
+]

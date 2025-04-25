@@ -1,4 +1,4 @@
-/// Test conditional set rules with filtered rules.
+/// Test conditional set rules with filtered rules (stateful).
 
 #import "/test/unit/base.typ": empty
 #show: empty
@@ -38,9 +38,10 @@
   wobble(run: it => assert.eq(it.inner, inner))
 }
 
-#show: e.filtered(wibble.with(data: "lol"), e.set_(wobble, color: orange))
-#show: e.filtered(wibble.with(data: "data"), e.set_(wobble, color: green))
-#show: e.cond-set(wibble.with(number: 10), data: "lol")
+#show: e.stateful.enable()
+#show: e.filtered(wibble.with(data: "lol"), e.stateful.set_(wobble, color: orange))
+#show: e.filtered(wibble.with(data: "data"), e.stateful.set_(wobble, color: green))
+#show: e.stateful.cond-set(wibble.with(number: 10), data: "lol")
 
 #wibble(
   number: 10,
@@ -59,7 +60,7 @@
   }
 )
 
-#show: e.set_(wibble, data: "uuu")
+#show: e.stateful.set_(wibble, data: "uuu")
 
 #wibble(
   number: 10,

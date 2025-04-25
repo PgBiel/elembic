@@ -1,4 +1,4 @@
-/// Test conditional set rules with filtered rules.
+/// Test conditional set rules with filtered rules (leaky).
 
 #import "/test/unit/base.typ": empty
 #show: empty
@@ -38,9 +38,9 @@
   wobble(run: it => assert.eq(it.inner, inner))
 }
 
-#show: e.filtered(wibble.with(data: "lol"), e.set_(wobble, color: orange))
-#show: e.filtered(wibble.with(data: "data"), e.set_(wobble, color: green))
-#show: e.cond-set(wibble.with(number: 10), data: "lol")
+#show: e.filtered(wibble.with(data: "lol"), e.leaky.set_(wobble, color: orange))
+#show: e.filtered(wibble.with(data: "data"), e.leaky.set_(wobble, color: green))
+#show: e.leaky.cond-set(wibble.with(number: 10), data: "lol")
 
 #wibble(
   number: 10,
@@ -59,7 +59,7 @@
   }
 )
 
-#show: e.set_(wibble, data: "uuu")
+#show: e.leaky.set_(wibble, data: "uuu")
 
 #wibble(
   number: 10,

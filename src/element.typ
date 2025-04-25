@@ -1325,6 +1325,9 @@
 #let stateful-set(..args) = {
   apply(set_(..args), mode: style-modes.stateful)
 }
+#let stateful-cond-set(..args) = {
+  apply(cond-set(..args), mode: style-modes.stateful)
+}
 #let stateful-apply = apply.with(mode: style-modes.stateful)
 #let stateful-revoke = revoke.with(mode: style-modes.stateful)
 #let stateful-reset = reset.with(mode: style-modes.stateful)
@@ -1332,6 +1335,9 @@
 // Leaky variants
 #let leaky-set(..args) = {
   apply(set_(..args), mode: style-modes.leaky)
+}
+#let leaky-cond-set(..args) = {
+  apply(cond-set(..args), mode: style-modes.leaky)
 }
 #let leaky-apply = apply.with(mode: style-modes.leaky)
 #let leaky-revoke = revoke.with(mode: style-modes.leaky)
