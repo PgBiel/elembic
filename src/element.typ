@@ -322,17 +322,165 @@
 //
 // Assumes this filter already accepts this element, so eid is not checked.
 #let verify-filter(fields, eid, filter) = {
-  // TODO(filters): more complex filters
   if filter == none {
     return false
   }
   if filter.kind == "where" {
-    eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
+    return eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
   } else if "__future" in filter and filter.__future.max-version <= element-version {
-    (filter.__future.call)(fields, eid, filter, __future-version: element-version)
-  } else {
-    assert(false, "element/verify-filter: unsupported filter kind\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+    return (filter.__future.call)(fields, eid, filter, __future-version: element-version)
   }
+
+  // Manually simulate a recursive algorithm.
+  // Normally, for OR(A, B), we could just call (verify(A), verify(B)), but
+  // recursive calls are limited and expensive.
+  // We instead do the following:
+  // - Have a stack of filters pending evaluation.
+  // - Have a stack of evaluation results (operands).
+  // - Each time a filter is pushed to the pending stack, we push its operands
+  // to the pending stack too, until the top of the stack has no further
+  // operands, and mark the filter as "visited" so we don't add its operands
+  // again.
+  // - We evaluate each leaf filter (where or custom) and push their results to
+  // 'operands' (in reverse order, from last to first).
+  // - We then reach the filter that will use the latest N results from
+  // 'operands' and push that filter's evaluated result (e.g. AND of the latest
+  // two results) into 'operands'.
+  // - Repeat the process until the filter stack is empty (all evaluated) and
+  // operands has only a single element (for the root filter).
+  // - If operands is empty or has more than one element, something bad
+  // happened. Otherwise, its only remaining element is the evaluated result of
+  // the root filter.
+  let filter-stack = (filter,)
+  let operands = ()
+  while filter-stack != () {
+    let last = filter-stack.last()
+    while last.at(filter-key) != "visited" and "operands" in last and last.operands != () {
+      // Ensure we don't reach the parent operation until we have evaluated
+      // each child operation.
+      let new-operands = last.operands
+      filter-stack.last().at(filter-key) = "visited"
+      filter-stack += new-operands
+      last = filter-stack.last()
+    }
+
+    let filter = filter-stack.pop()
+    let (kind,) = filter
+
+    let value = if "__future" in filter and filter.__future.max-version <= element-version {
+      (filter.__future.call)(fields, eid: eid, filter: filter, __future-version: element-version)
+    } else if kind == "where" {
+      eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
+    } else if kind == "custom" {
+      eid in filter.elements and (filter.call)(fields, eid: eid, __please-use-var-args: true)
+    } else if "operands" in filter {
+      let operand-count = filter.operands.len()
+      let first-applied-operand = operands.len() - operand-count
+      // Operation requires N operands => take N operands from the top of the
+      // stack.
+      let applied-operands = operands.slice(first-applied-operand)
+      let value = if kind == "and" {
+        // Reverse since we push from last to first operand, but from first
+        // to last group of operands, so the groups themselves are in the right
+        // order, but not the operands inside them.
+        //
+        // It is important we check operands in the correct order for
+        // short-circuiting to work.
+        //
+        // TODO: actually, operands are always evaluated, so the order doesn't
+        // really matter. Need to short-circuit in some other way.
+        applied-operands.all(c => c)
+      } else if kind == "or" {
+        applied-operands.any(c => c)
+      } else if kind == "not" {
+        assert(applied-operands.len() == 1, message: "element.verify-filter: expected one child filter for 'not'")
+        eid in filter.elements and not applied-operands.first()
+      } else if kind == "xor" {
+        assert(operands.len() == 2, message: "element.verify-filter: expected two children filters for 'xor'")
+        // Here the order doesn't matter, since we always need to evaluate both
+        // XOR operands (no short-circuit).
+        applied-operands.first() != applied-operands.at(1)
+      } else {
+        assert(false, "element.verify-filter: unsupported filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+      }
+
+      operands = operands.slice(0, first-applied-operand)
+      value
+    } else {
+      assert(false, "element.verify-filter: unsupported or invalid filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+    }
+
+    operands.push(value)
+  }
+
+  if operands.len() != 1 {
+    assert(false, message: "element.verify-filter: filter didn't receive enough operands.")
+  }
+
+  operands.first()
+}
+
+#let multi-operand-filter(kind: "", arg-count: none) = (..args) => {
+  assert(args.named() == (:), message: "filters: invalid named arguments given to '" + kind + "' filter constructor.")
+  let filters = args.pos()
+  if arg-count != none and filters.len() != arg-count {
+    assert(false, message: "filters: must give exactly " + str(arg-count) + " arguments to a '" + kind + "' filter constructor.")
+  }
+
+  filters = filters.map(filter => {
+    if type(filter) == function {
+      filter = filter(__elembic_data: special-data-values.get-where)
+    }
+    assert(type(filter) == dictionary and filter-key in filter, message: "filters: invalid filter passed to '" + kind + "' constructor, please use 'custom-element.with(...)' to generate a filter.")
+    filter
+  })
+
+  (
+    (filter-key): true,
+    element-version: element-version,
+    kind: kind,
+    operands: filters,
+    elements: filters.map(f => if "elements" in f and type(f.elements) == dictionary {
+      f.elements
+    } else {
+      assert(false, message: "filters: invalid operand filter received by '" + kind + "' filter constructor\n\nhint: this filter was likely constructed with an old elembic version. Please update your packages.")
+    }).sum(default: (:)),
+  )
+}
+
+#let or-filter = multi-operand-filter(kind: "or")
+#let and-filter = multi-operand-filter(kind: "and")
+#let not-filter = multi-operand-filter(kind: "not", arg-count: 1)
+#let xor-filter = multi-operand-filter(kind: "xor", arg-count: 2)
+#let custom-filter(elements, callback) = {
+  if type(elements) == function {
+    elements = (data(elements),)
+  } else if type(elements) == dictionary {
+    elements = (elements,)
+  } else if type(elements) != array or elements == () {
+    assert(false, message: "filters.custom: first parameter must be either an element to limit this filter down to, or a non-empty array of such elements.")
+  }
+
+  elements = elements.map(elem => {
+    if type(elem) == function {
+      elem = data(elem)
+    }
+
+    assert(type(elem) == dictionary, message: "filters.custom: please specify the element's constructor or data dictionary in the first parameter (or an array of such).")
+    assert("eid" in elem and "version" in elem and "default-data" in elem, message: "filters.custom: invalid element constructor or data received")
+
+    ((elem.eid): elem)
+  }).sum(default: (:))
+
+  assert(type(callback) == function, message: "filters.custom: 'callback' for custom filter must be a function (fields, eid: eid, ..) => bool.")
+
+  (
+    (filter-key): true,
+    element-version: element-version,
+    kind: "custom",
+    call: callback,
+    elements: elements
+  )
 }
 
 /// Prepare a selector similar to 'element.where(..args)'
