@@ -570,23 +570,20 @@
       let base-data = (names: if name == none { () } else { (name,) })
 
       for (eid, all-elem-data) in target-elements {
-        let index
-        let data
-        if eid in elements {
-          index = elements.at(eid).chain.len()
-          data = (..base-data, index: index)
-          if "filters" not in elements.at(eid) {
-            // Old version
-            elements.at(eid).filters = default-data.filters
-          }
-          elements.at(eid).filters.all.push(filter)
-          elements.at(eid).filters.rules.push(inner-rule)
-          elements.at(eid).filters.data.push(data)
-        } else {
-          index = 0
-          data = (..base-data, index: index)
-          elements.insert(eid, (..all-elem-data.default-data, filters: (all: (filter,), rules: (inner-rule,), data: (data,))))
+        if eid not in elements {
+          elements.insert(eid, all-elem-data.default-data)
         }
+        if "filters" not in elements.at(eid) {
+          // Old version
+          elements.at(eid).filters = default-data.filters
+        }
+
+        let index = elements.at(eid).chain.len()
+        let data = (..base-data, index: index)
+
+        elements.at(eid).filters.all.push(filter)
+        elements.at(eid).filters.rules.push(inner-rule)
+        elements.at(eid).filters.data.push(data)
 
         // Push an entry to the data chain so we have an index to assign to
         // this filter rule. This allows us to reset() it later.
@@ -615,7 +612,8 @@
 
       if eid not in elements {
         elements.insert(eid, element.default-data)
-      } else if "cond-sets" not in elements.at(eid) {
+      }
+      if "cond-sets" not in elements.at(eid) {
         // Old version
         elements.at(eid).cond-sets = default-data.cond-sets
       }
