@@ -490,6 +490,14 @@
 // Apply set and revoke rules to the current per-element data.
 #let apply-rules(rules, elements: none) = {
   for rule in rules {
+    if "__future" in rule and rule.__future.max-version <= element-version {
+      let output = (rule.__future.call)(rule, elements: elements, __future-version: element-version)
+      if "elements" in output {
+        elements = output.elements
+      }
+      continue
+    }
+
     let kind = rule.kind
     if kind == "set" {
       let (element, args) = rule
@@ -2039,7 +2047,39 @@
           }
         }
 
+        if "__futures" in global-data {
+          for future in global-data.__futures {
+            if "__future" in future and future.__future.max-version <= element-version {
+              global-data = (future.__future.call)(
+                global-data,
+                args: args,
+                all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
+                __future-version: element-version
+              )
+              data-changed = true
+
+              continue
+            }
+          }
+        }
+
         let element-data = global-data.elements.at(eid, default: default-data)
+
+        if "__futures" in element-data {
+          for future in element-data.__futures {
+            if "__future" in future and future.__future.max-version <= element-version {
+              element-data = (future.__future.call)(
+                element-data,
+                args: args,
+                all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
+                __future-version: element-version
+              )
+
+              continue
+            }
+          }
+        }
+
         let filters = element-data.at("filters", default: default-data.filters)
         let has-filters = filters.all != ()
         let cond-sets = element-data.at("cond-sets", default: default-data.cond-sets)
