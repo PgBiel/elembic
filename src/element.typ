@@ -1053,15 +1053,24 @@
   )
 }
 
-// Apply filtered rules to a custom element.
-//
-// USAGE:
-// #show: filtered(
-//   elem,
-//   e.set_(elem3, fields: ...)
-// )
-//
-// When applying many set rules at once, use 'apply' instead of 'set' on the last parameter.
+/// Apply filtered rules to a custom element's descendants
+/// (but not to itself; for that use `cond-set`).
+///
+/// USAGE:
+///
+/// ```typ
+/// #show: filtered(
+///   elem,
+///   e.set_(elem3, fields: ...)
+/// )
+/// ```
+///
+/// When applying many set rules at once, use 'apply' instead of 'set' on the last parameter.
+///
+/// - filter (filter): filter specifying which element instances should create this set rule
+/// for their children.
+/// - rule (rule): which rule to create under matched elements.
+/// -> function
 #let filtered(filter, rule) = {
   if type(filter) == function {
     filter = filter(__elembic_data: special-data-values.get-where)
