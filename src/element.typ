@@ -309,9 +309,18 @@
 // Check if an element instance satisfies a filter.
 //
 // Assumes this filter already accepts this element, so eid is not checked.
-#let verify-filter(fields, filter) = {
+#let verify-filter(fields, eid, filter) = {
   // TODO(filters): more complex filters
-  type(fields) == dictionary and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
+  if filter == none {
+    return false
+  }
+  if filter.kind == "where" {
+    eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
+  } else if "__future" in filter and filter.__future.max-version <= element-version {
+    (filter.__future.call)(fields, eid, filter, __future-version: element-version)
+  } else {
+    assert(false, "element/verify-filter: unsupported filter kind\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+  }
 }
 
 /// Prepare a selector similar to 'element.where(..args)'
@@ -443,7 +452,7 @@
           let labeled-it = it
           for (i, filter) in filters {
             // Check if all positional and named arguments match
-            if verify-filter(fields, filter) {
+            if verify-filter(fields, eid, filter) {
               // Add corresponding label and preserve tag so 'data(it)' still works
               labeled-it = [#[#labeled-it#tag]#matching-labels.at(i)]
             }
@@ -642,7 +651,7 @@
         elements.at(eid).names.insert(name, true)
       }
     } else {
-      assert(false, message: "element: invalid rule kind '" + rule.kind + "'")
+      assert(false, message: "element: invalid rule kind '" + rule.kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
     }
   }
 
@@ -2142,7 +2151,7 @@
                     filter != none
                     and data.index >= first-active-index
                     and data.names.all(n => n not in filter-revokes)
-                    and verify-filter(synthesized-fields, filter)
+                    and verify-filter(synthesized-fields, eid, filter)
                   ) {
                     let args = cond-sets.args.at(i)
 
@@ -2182,7 +2191,7 @@
                     filter != none
                     and data.index >= first-active-index
                     and data.names.all(n => n not in filter-revokes)
-                    and verify-filter(synthesized-fields, filter)
+                    and verify-filter(synthesized-fields, eid, filter)
                   ) {
                     let rule = filters.rules.at(i)
                     new-global-data += apply-rules(
@@ -2304,7 +2313,7 @@
                   filter != none
                   and data.index >= first-active-index
                   and data.names.all(n => n not in filter-revokes)
-                  and verify-filter(synthesized-fields, filter)
+                  and verify-filter(synthesized-fields, eid, filter)
                 ) {
                   let args = cond-sets.args.at(i)
 
@@ -2343,7 +2352,7 @@
                   filter != none
                   and data.index >= first-active-index
                   and data.names.all(n => n not in filter-revokes)
-                  and verify-filter(synthesized-fields, filter)
+                  and verify-filter(synthesized-fields, eid, filter)
                 ) {
                   let rule = filters.rules.at(i)
                   new-global-data += apply-rules(
