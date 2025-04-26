@@ -1084,8 +1084,7 @@
     // Transpose filtered(filter, apply(a, b, c)) into apply(filtered(filter, a), filtered(filter, b), filtered(filter, c))
     let i = 0
     for inner-rule in rule.rules {
-      // TODO(filters): merge filters into AND if rule is already filtered
-      assert(inner-rule.kind in ("set", "revoke", "reset"), message: "element.named: can only filter apply, set, revoke and reset rules at this moment, not '" + inner-rule.kind + "'")
+      assert(inner-rule.kind in ("set", "revoke", "reset", "cond-set", "filtered"), message: "element.filtered: can only filter apply, set, revoke, reset, filtered and cond-set rules at this moment, not '" + inner-rule.kind + "'")
 
       rule.rules.at(i) = (..filtered-rule, rule: inner-rule, mode: inner-rule.at("mode", default: auto))
 
@@ -1095,8 +1094,7 @@
     // Keep the apply but with everything filtered.
     prepare-rule(rule)
   } else {
-    // TODO(filters): merge filters into AND if rule is already filtered
-    assert(rule.kind in ("set", "revoke", "reset"), message: "element.filtered: can only filter apply, set, revoke and reset rules at this moment, not '" + rule.kind + "'")
+    assert(rule.kind in ("set", "revoke", "reset", "cond-set", "filtered"), message: "element.filtered: can only filter apply, set, revoke, reset, filtered and cond-set rules at this moment, not '" + rule.kind + "'")
 
     prepare-rule(filtered-rule)
   }
