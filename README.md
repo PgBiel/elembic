@@ -17,7 +17,7 @@ It has a few limitations which are [appropriately noted in the book.](https://pg
 
 ## Installation
 
-You should copy the repository's contents either to your project or as a **local package.**
+You should copy the source code [**from the latest alpha release**](https://github.com/PgBiel/elembic/releases) either to your project or as a **local package.**
 
 Instructions for using local packages can be found at [https://github.com/typst/packages](https://github.com/typst/packages), and involve
 moving the directory with elembic's code to `$LOCAL_PACKAGES_DIR/elembic/0.0.1`, where `$LOCAL_PACKAGES_DIR`
