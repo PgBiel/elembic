@@ -1059,7 +1059,7 @@
 /// USAGE:
 ///
 /// ```typ
-/// #show: filtered(
+/// #show: e.filtered(
 ///   elem,
 ///   e.set_(elem3, fields: ...)
 /// )
