@@ -2502,21 +2502,34 @@
               })
             }
 
-            // idea:
-            // let show-rules = (it => [*doof*], it => text(red, it)) * 32
-            let show-rules = (it => it,) * 60
+            // TODO
+            let show-rules = ()
             let apply-show-rules(body, rule) = {
               if rule >= show-rules.len() {
                 body
+              } else if rule == show-rules.len() - 1 {
+                show: show-rules.at(rule)
+                body
               } else {
+                // Don't recursively apply show rules immediately.
+                // Do it lazily through a matching show rule.
+                // This is so that a show rule that doesn't place down 'it'
+                // stops further show rules from executing.
+                //
+                // We could use 'context' for this, but then the show rule
+                // limit is lower even for 'it => it' (60 vs 30). It is always
+                // lower when the show rule is of the form 'it => element(it)',
+                // however, but it still feels like a waste to force it to be
+                // lower in all cases.
+                let lbl-tmp-show = std.label(str(lbl-show) + "-rule" + str(rule))
                 (show-rules.at(rule))({
-                  show metadata: it => if type(it.value) == dictionary and "abc" in it.value { apply-show-rules(it.value.abc, rule + 1) } else { it }
-                  metadata((abc: body))
+                  show lbl-tmp-show: it => apply-show-rules(it.children.first(), rule + 1)
+                  [#[#body#metadata(data(body))#lbl-tag]#lbl-tmp-show]
                 })
               }
             }
 
-            show: if show-rules.len() == 0 { it => it } else { it => apply-show-rules(it, 0) }
+            show: if show-rules == () { it => it } else { it => apply-show-rules(it, 0) }
 
             if count-needs-fields {
               count(synthesized-fields)
