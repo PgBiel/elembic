@@ -502,6 +502,20 @@
     if kind == "set" {
       let (element, args) = rule
       let (eid, default-data, fields) = element
+
+      // Forward-compatibility with newer elements
+      if (
+        "__future-rules" in default-data
+        and "set" in default-data.__future-rules
+        and default-data.__future-rules.set.max-version <= element-version
+      ) {
+        let output = (default-data.__future-rules.set.call)(rule, elements: elements, __future-version: element-version)
+        if "elements" in output {
+          elements = output.elements
+        }
+        continue
+      }
+
       if eid in elements {
         elements.at(eid).chain.push(args)
       } else {
@@ -545,13 +559,26 @@
         }
       }
     } else if kind == "revoke" {
-      for (name, _) in elements {
+      for (name, element-data) in elements {
+        // Forward-compatibility with newer elements
+        if (
+          "__future-rules" in element-data
+          and "revoke" in element-data.__future-rules
+          and element-data.__future-rules.revoke.max-version <= element-version
+        ) {
+          let output = (element-data.__future-rules.revoke.call)(rule, elements: elements, __future-version: element-version)
+          if "elements" in output {
+            elements = output.elements
+          }
+          continue
+        }
+
         // Can only revoke what's before us.
         // If this element has no rules with this name, there is nothing to revoke;
         // we shouldn't revoke names that come after us (inner rules).
         // Note that this potentially includes named revokes as well.
-        if rule.revoking in elements.at(name).names {
-          elements.at(name).revoke-chain.push((kind: "revoke", name: rule.name, index: elements.at(name).chain.len(), revoking: rule.revoking))
+        if rule.revoking in element-data.names {
+          elements.at(name).revoke-chain.push((kind: "revoke", name: rule.name, index: element-data.chain.len(), revoking: rule.revoking))
 
           if rule.name != none {
             elements.at(name).names.insert(rule.name, true)
@@ -562,6 +589,19 @@
       // Whether the list of elements that this reset applies to is restricted.
       let filtering = rule.eids != ()
       for (name, element-data) in elements {
+        // Forward-compatibility with newer elements
+        if (
+          "__future-rules" in element-data
+          and "reset" in element-data.__future-rules
+          and element-data.__future-rules.reset.max-version <= element-version
+        ) {
+          let output = (element-data.__future-rules.reset.call)(rule, elements: elements, __future-version: element-version)
+          if "elements" in output {
+            elements = output.elements
+          }
+          continue
+        }
+
         // Can only revoke what's before us.
         // If this element has no rules, no need to add a reset.
         if (not filtering or name in rule.eids) and element-data.chain != () {
@@ -587,6 +627,19 @@
       let base-data = (names: if name == none { () } else { (name,) })
 
       for (eid, all-elem-data) in target-elements {
+        // Forward-compatibility with newer elements
+        if (
+          "__future-rules" in all-elem-data.default-data
+          and "filtered" in all-elem-data.default-data.__future-rules
+          and all-elem-data.default-data.__future-rules.filtered.max-version <= element-version
+        ) {
+          let output = (all-elem-data.default-data.__future-rules.filtered.call)(rule, elements: elements, __future-version: element-version)
+          if "elements" in output {
+            elements = output.elements
+          }
+          continue
+        }
+
         if eid not in elements {
           elements.insert(eid, all-elem-data.default-data)
         }
@@ -626,6 +679,19 @@
         assert(false, message: "element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
       }
       let (eid,) = element
+
+      // Forward-compatibility with newer elements
+      if (
+        "__future-rules" in default-data
+        and "cond-set" in default-data.__future-rules
+        and default-data.__future-rules.cond-set.max-version <= element-version
+      ) {
+        let output = (default-data.__future-rules.cond-set.call)(rule, elements: elements, __future-version: element-version)
+        if "elements" in output {
+          elements = output.elements
+        }
+        continue
+      }
 
       if eid not in elements {
         elements.insert(eid, element.default-data)
