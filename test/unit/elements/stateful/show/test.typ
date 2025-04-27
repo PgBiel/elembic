@@ -1,26 +1,39 @@
-#import "/test/unit/base.typ": template
-#show: template
+// Test the "e.show_" rule.
+
+#import "/test/unit/base.typ": empty
+#show: empty
 
 #import "/src/lib.typ" as e: field
 
-#show: e.stateful.enable()
-
 #let wock = e.element.declare(
   "wock",
-  display: it => {
-    square(width: 6pt, fill: it.color)[#it.inner]
-  },
+  display: it => {},
   fields: (
     field("color", color, default: red),
+    field("number", int, default: 0),
     field("inner", content, default: [])
   ),
   prefix: ""
 )
 
-#show e.selector(wock): it => {
-  let (body, fields) = e.data(it)
-  assert.eq(fields.color, red)
-  assert.eq(fields.inner, [Updated])
-  circle(radius: 3pt, fill: fields.color)
-}
-#wock(inner: [Updated])
+#let test-state = state("test", ())
+
+#show: e.stateful.enable()
+
+#[
+  #show: e.stateful.show_(wock, it => {
+    test-state.update(a => a + (e.fields(it).number,))
+    it
+  })
+  #show: e.stateful.show_(wock.with(color: blue), it => {
+    test-state.update(a => a + (e.fields(it).number,))
+    it
+  })
+  #wock(number: 39)
+  #wock(number: 48, color: blue)
+
+  #context {
+    // Both show rules match on the blue one
+    assert.eq(test-state.get(), (39, 48, 48))
+  }
+]
