@@ -2501,13 +2501,13 @@
                 ()
               }
 
-              show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
-
               if count-needs-fields {
                 count(synthesized-fields)
 
                 // Wrap in additional context so the counter step is detected
                 context {
+                  show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
+
                   let body = display(synthesized-fields)
                   let tag = tag
                   tag.body = body
@@ -2537,6 +2537,8 @@
                   }
                 }
               } else {
+                show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
+
                 let body = display(synthesized-fields)
                 let tag = tag
                 tag.body = body
@@ -2685,13 +2687,14 @@
               ()
             }
 
-            show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
 
             if count-needs-fields {
               count(synthesized-fields)
 
               // Wrap in additional context so the counter step is detected
               context {
+                show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
+
                 let body = display(synthesized-fields)
                 let tag = tag
                 tag.body = body
@@ -2721,6 +2724,8 @@
                 }
               }
             } else {
+              show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
+
               let body = display(synthesized-fields)
               tag.body = body
 
