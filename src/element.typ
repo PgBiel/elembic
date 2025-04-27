@@ -2493,7 +2493,7 @@
                 ()
               }
 
-              show: if show-rules == () { it => it } else { it => apply-show-rules(it, 0) }
+              show: if show-rules == () { it => it } else { it => apply-show-rules(it, 0, show-rules) }
 
               if count-needs-fields {
                 count(synthesized-fields)
@@ -2677,7 +2677,7 @@
               ()
             }
 
-            show: if show-rules == () { it => it } else { it => apply-show-rules(it, 0) }
+            show: if show-rules == () { it => it } else { it => apply-show-rules(it, 0, show-rules) }
 
             if count-needs-fields {
               count(synthesized-fields)
