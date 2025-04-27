@@ -34,7 +34,7 @@
   } else {
     let (res, typeinfo) = native.typeinfo(type(value))
     if not res {
-      assert(false, message: "types.typeof: " + typeinfo)
+      assert(false, message: "elembic: types.typeof: " + typeinfo)
     }
 
     typeinfo
@@ -121,7 +121,7 @@
   if type(typeinfo) != dictionary or type-key not in typeinfo {
     let (res, typeinfo-or-err) = validate(typeinfo)
     if not res {
-      assert(false, message: "types.cast: " + typeinfo-or-err)
+      assert(false, message: "elembic: types.cast: " + typeinfo-or-err)
     }
     typeinfo = typeinfo-or-err
   }
@@ -170,17 +170,17 @@
 
 // Wrap a type, altering its properties while keeping (or replacing) its input types and checks.
 #let wrap(type_, ..data) = {
-  assert(data.pos() == (), message: "types.wrap: unexpected positional arguments")
+  assert(data.pos() == (), message: "elembic: types.wrap: unexpected positional arguments")
   let (res, typeinfo) = validate(type_)
   if not res {
-    assert(false, message: "types.wrap: " + typeinfo)
+    assert(false, message: "elembic: types.wrap: " + typeinfo)
   }
 
   let overrides = data.named()
   for (key, value) in overrides {
     let (check: validate-value, error: key-error) = overridable-typeinfo-types.at(key, default: (check: none, error: none))
     if validate-value == none or key-error == none {
-      assert(false, message: "types.wrap: invalid key '" + key + "', must be one of " + overridable-typeinfo-types.keys().join(", ", last: " or "))
+      assert(false, message: "elembic: types.wrap: invalid key '" + key + "', must be one of " + overridable-typeinfo-types.keys().join(", ", last: " or "))
     }
 
     if type(value) == function {
@@ -188,7 +188,7 @@
     }
 
     if type(value) != function and not validate-value(value) {
-      assert(false, message: "types.wrap: invalid value for key '" + key + "', expected " + key-error)
+      assert(false, message: "elembic: types.wrap: invalid value for key '" + key + "', expected " + key-error)
     }
   }
 
@@ -236,7 +236,7 @@
     or "any" in new-output
     or base.typeid(new-default.first()) in new-output,
 
-    message: "types.wrap: new default (currently " + repr(if new-default == () { none } else { new-default.first() }) + ") must have a type within possible 'output' types of the new type (currently " + if new-output == () { "empty" } else { new-output.map(t => if type(t) == dictionary { t.name } else { str(t) }).join(", ", last: " or ") } + "), since it is itself an output\n  hint: you can either change the default, or update possible output types with 'output: (new, list)' to indicate which native or custom types your wrapped type might end up as after casts (if there are casts)."
+    message: "elembic: types.wrap: new default (currently " + repr(if new-default == () { none } else { new-default.first() }) + ") must have a type within possible 'output' types of the new type (currently " + if new-output == () { "empty" } else { new-output.map(t => if type(t) == dictionary { t.name } else { str(t) }).join(", ", last: " or ") } + "), since it is itself an output\n  hint: you can either change the default, or update possible output types with 'output: (new, list)' to indicate which native or custom types your wrapped type might end up as after casts (if there are casts)."
   )
 
   base.wrap(typeinfo, overrides)
@@ -245,11 +245,11 @@
 // Specifies that any from a given selection of types is accepted.
 #let union(..args) = {
   let types = args.pos()
-  assert(types != (), message: "types.union: please specify at least one type")
+  assert(types != (), message: "elembic: types.union: please specify at least one type")
 
   let typeinfos = types.map(type_ => {
     let (res, typeinfo-or-err) = validate(type_)
-    assert(res, message: if not res { "types.union: " + typeinfo-or-err } else { "" })
+    assert(res, message: if not res { "elembic: types.union: " + typeinfo-or-err } else { "" })
 
     typeinfo-or-err
   })
@@ -268,7 +268,7 @@
 #let exact(type_) = {
   let (res, type_) = validate(type_)
   if not res {
-    assert(false, message: "types.exact: " + type_)
+    assert(false, message: "elembic: types.exact: " + type_)
   }
 
   let key = if type(type_) == dictionary and "type-kind" in type_ { type_.type-kind } else { none }
@@ -290,7 +290,7 @@
     )
   } else if key == "literal" {
     // exact(literal) => literal with base type modified to exact(base type)
-    assert(type(type_.data.value) not in (dictionary, array), message: "types.exact: exact literal types for custom types, dictionaries and arrays are not supported\n  hint: consider customizing the check function to recursively check fields if the performance is acceptable")
+    assert(type(type_.data.value) not in (dictionary, array), message: "elembic: types.exact: exact literal types for custom types, dictionaries and arrays are not supported\n  hint: consider customizing the check function to recursively check fields if the performance is acceptable")
 
     base.literal(type_.data.value, exact(type_.data.typeinfo))
   } else if key == "any" or key == "never" {
@@ -304,14 +304,14 @@
       type_.data.pre-casts
     }
   } else {
-    assert(false, message: "types.exact: unsupported type kind " + key + ", supported kinds include native types, literals, custom types, 'any' and 'never'")
+    assert(false, message: "elembic: types.exact: unsupported type kind " + key + ", supported kinds include native types, literals, custom types, 'any' and 'never'")
   }
 }
 
 #let array_(type_) = {
   let (res, param) = validate(type_)
   if not res {
-    assert(false, message: "types.array: " + param)
+    assert(false, message: "elembic: types.array: " + param)
   }
 
   base.array_(
@@ -351,7 +351,7 @@
 #let dict_(type_) = {
   let (res, param) = validate(type_)
   if not res {
-    assert(false, message: "types.array: " + param)
+    assert(false, message: "elembic: types.array: " + param)
   }
 
   base.dict_(

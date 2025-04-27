@@ -180,7 +180,7 @@
 /// - args (arguments): ref and extra arguments
 /// -> content
 #let ref_(..args) = {
-  assert(args.pos().len() > 0, message: "element.ref: expected at least one positional argument (reference or label)")
+  assert(args.pos().len() > 0, message: "elembic: element.ref: expected at least one positional argument (reference or label)")
   let first-arg = args.pos().first()
 
   set ref(..args.named())
@@ -358,8 +358,8 @@
 /// - receiver (function): receives one requested selector per filter as separate arguments, must return content.
 /// -> content
 #let select(..args, receiver) = {
-  assert(args.named() == (:), message: "element.select: unexpected named arguments")
-  assert(type(receiver) == function, message: "element.select: last argument must be a function receiving each prepared selector as a separate argument")
+  assert(args.named() == (:), message: "elembic: element.select: unexpected named arguments")
+  assert(type(receiver) == function, message: "elembic: element.select: last argument must be a function receiving each prepared selector as a separate argument")
 
   let filters = args.pos()
 
@@ -378,17 +378,17 @@
 
     if type(filter) != dictionary or filter-key not in filter {
       if type(filter) == selector {
-        assert(false, message: "element.select: Typst-native selectors cannot be specified here, only those of custom elements")
+        assert(false, message: "elembic: element.select: Typst-native selectors cannot be specified here, only those of custom elements")
       }
-      assert(false, message: "element.select: expected a valid filter, such as 'custom-element' or 'custom-element.with(field-name: value, ...)', got " + base.typename(filter))
+      assert(false, message: "elembic: element.select: expected a valid filter, such as 'custom-element' or 'custom-element.with(field-name: value, ...)', got " + base.typename(filter))
     }
 
     if "eid" in filter {
       if "sel" not in filter {
-        assert(false, message: "element.select: filter did not have the element's selector")
+        assert(false, message: "elembic: element.select: filter did not have the element's selector")
       }
       if filter.eid in labels-by-eid and labels-by-eid.at(filter.eid) != filter.sel {
-        assert(false, message: "element.select: filter had a different selector from the others for the same element ID, check if you're not using conflicting library versions (could also be a bug)")
+        assert(false, message: "elembic: element.select: filter had a different selector from the others for the same element ID, check if you're not using conflicting library versions (could also be a bug)")
       } else if filter.eid not in labels-by-eid {
         labels-by-eid.insert(filter.eid, filter.sel)
       }
@@ -400,7 +400,7 @@
         ordered-eids.push(filter.eid)
       }
     } else {
-      assert(false, message: "element.select: non-element-specific filters are not supported yet\n  hint: try removing this filter: " + repr(filter))
+      assert(false, message: "elembic: element.select: non-element-specific filters are not supported yet\n  hint: try removing this filter: " + repr(filter))
     }
     i += 1
   }
@@ -615,7 +615,7 @@
     } else if kind == "filtered" {
       let (filter, rule: inner-rule, name) = rule
       if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
-        assert(false, message: "element.filtered: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+        assert(false, message: "elembic: element.filtered: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
       }
       let target-elements = if "elements" in filter {
         filter.elements
@@ -676,7 +676,7 @@
     } else if kind == "cond-set" {
       let (filter, args, name, element) = rule
       if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
-        assert(false, message: "element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+        assert(false, message: "elembic: element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
       }
       let (eid,) = element
 
@@ -725,7 +725,7 @@
         elements.at(eid).names.insert(name, true)
       }
     } else {
-      assert(false, message: "element: invalid rule kind '" + rule.kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+      assert(false, message: "elembic: element: invalid rule kind '" + rule.kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
     }
   }
 
@@ -984,7 +984,7 @@
 
         assert(
           global-data.stateful,
-          message: "element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
+          message: "elembic: element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
         )
 
         global-data += apply-rules(rules, elements: global-data.elements)
@@ -1128,7 +1128,7 @@
   if type(elem) == function {
     elem = data(elem)
   }
-  assert(type(elem) == dictionary, message: "element.set_: please specify the element's constructor or data in the first parameter")
+  assert(type(elem) == dictionary, message: "elembic: element.set_: please specify the element's constructor or data in the first parameter")
   let args = (elem.parse-args)(fields, include-required: false)
 
   prepare-rule(
@@ -1158,8 +1158,8 @@
   if type(filter) == function {
     filter = filter(__elembic_data: special-data-values.get-where)
   }
-  assert(type(filter) == dictionary and filter-key in filter, message: "element.filtered: invalid filter, please use 'custom-element.with(...)' to generate a filter.")
-  assert(type(rule) == function, message: "element.filtered: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
+  assert(type(filter) == dictionary and filter-key in filter, message: "elembic: element.filtered: invalid filter, please use 'custom-element.with(...)' to generate a filter.")
+  assert(type(rule) == function, message: "elembic: element.filtered: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
 
   let rule = rule([]).children.last().value.rule
   let filtered-rule = ((prepared-rule-key): true, version: element-version, kind: "filtered", filter: filter, rule: rule, name: none, mode: rule.at("mode", default: auto))
@@ -1167,7 +1167,7 @@
     // Transpose filtered(filter, apply(a, b, c)) into apply(filtered(filter, a), filtered(filter, b), filtered(filter, c))
     let i = 0
     for inner-rule in rule.rules {
-      assert(inner-rule.kind in ("set", "revoke", "reset", "cond-set", "filtered"), message: "element.filtered: can only filter apply, set, revoke, reset, filtered and cond-set rules at this moment, not '" + inner-rule.kind + "'")
+      assert(inner-rule.kind in ("set", "revoke", "reset", "cond-set", "filtered"), message: "elembic: element.filtered: can only filter apply, set, revoke, reset, filtered and cond-set rules at this moment, not '" + inner-rule.kind + "'")
 
       rule.rules.at(i) = (..filtered-rule, rule: inner-rule, mode: inner-rule.at("mode", default: auto))
 
@@ -1177,7 +1177,7 @@
     // Keep the apply but with everything filtered.
     prepare-rule(rule)
   } else {
-    assert(rule.kind in ("set", "revoke", "reset", "cond-set", "filtered"), message: "element.filtered: can only filter apply, set, revoke, reset, filtered and cond-set rules at this moment, not '" + rule.kind + "'")
+    assert(rule.kind in ("set", "revoke", "reset", "cond-set", "filtered"), message: "elembic: element.filtered: can only filter apply, set, revoke, reset, filtered and cond-set rules at this moment, not '" + rule.kind + "'")
 
     prepare-rule(filtered-rule)
   }
@@ -1215,10 +1215,10 @@
   if type(filter) == function {
     filter = filter(__elembic_data: special-data-values.get-where)
   }
-  assert(type(filter) == dictionary and filter-key in filter, message: "element.cond-set: invalid filter, please pass just 'custom-element' or use 'custom-element.with(...)' to generate a filter.")
-  assert("elements" in filter, message: "element.cond-set: this filter is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
-  assert(filter.elements != (:), message: "element.cond-set: this filter appears to not be restricted to any elements. It must apply to exactly one element (the one receiving the set rule).")
-  assert(filter.elements.len() == 1, message: "element.cond-set: this filter appears to apply to more than one element. It must apply to exactly one element (the one receiving the set rule).")
+  assert(type(filter) == dictionary and filter-key in filter, message: "elembic: element.cond-set: invalid filter, please pass just 'custom-element' or use 'custom-element.with(...)' to generate a filter.")
+  assert("elements" in filter, message: "elembic: element.cond-set: this filter is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
+  assert(filter.elements != (:), message: "elembic: element.cond-set: this filter appears to not be restricted to any elements. It must apply to exactly one element (the one receiving the set rule).")
+  assert(filter.elements.len() == 1, message: "elembic: element.cond-set: this filter appears to apply to more than one element. It must apply to exactly one element (the one receiving the set rule).")
   let (eid, elem) = filter.elements.pairs().first()
 
   let args = (elem.parse-args)(fields, include-required: false)
@@ -1251,12 +1251,12 @@
 /// - args (arguments): rules to apply
 /// -> function
 #let apply(mode: auto, ..args) = {
-  assert(args.named() == (:), message: "element.apply: unexpected named arguments")
-  assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "element.apply: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
+  assert(args.named() == (:), message: "elembic: element.apply: unexpected named arguments")
+  assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "elembic: element.apply: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
 
   let rules = args.pos().map(
     rule => {
-      assert(type(rule) == function, message: "element.apply: invalid rule of type " + str(type(rule)) + ", please use 'set_' or some other function from this library to generate it")
+      assert(type(rule) == function, message: "elembic: element.apply: invalid rule of type " + str(type(rule)) + ", please use 'set_' or some other function from this library to generate it")
 
       // Call it as if it we were in a show rule.
       // It will have some trailing metadata indicating its arguments.
@@ -1321,23 +1321,23 @@
 /// - rule (function): The rule to apply this name to.
 /// -> function
 #let named(name, rule) = {
-  assert(type(name) == str, message: "element.named: rule name must be a string, not " + str(type(name)))
-  assert(name != "", message: "element.named: name must not be empty")
-  assert(type(rule) == function, message: "element.named: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
+  assert(type(name) == str, message: "elembic: element.named: rule name must be a string, not " + str(type(name)))
+  assert(name != "", message: "elembic: element.named: name must not be empty")
+  assert(type(rule) == function, message: "elembic: element.named: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
 
   let rule = rule([]).children.last().value.rule
   if rule.kind == "apply" {
     let i = 0
     while i < rule.rules.len() {
       let inner-rule = rule.rules.at(i)
-      assert(inner-rule.kind in ("set", "revoke", "reset", "filtered", "cond-set"), message: "element.named: can only name set, revoke, reset, filtered and cond-set rules at this moment, not '" + inner-rule.kind + "'")
+      assert(inner-rule.kind in ("set", "revoke", "reset", "filtered", "cond-set"), message: "elembic: element.named: can only name set, revoke, reset, filtered and cond-set rules at this moment, not '" + inner-rule.kind + "'")
 
       rule.rules.at(i).insert("name", name)
 
       i += 1
     }
   } else {
-    assert(rule.kind in ("set", "revoke", "reset", "filtered", "cond-set"), message: "element.named: can only name set, revoke, reset, filtered and cond-set rules at this moment, not '" + rule.kind + "'")
+    assert(rule.kind in ("set", "revoke", "reset", "filtered", "cond-set"), message: "elembic: element.named: can only name set, revoke, reset, filtered and cond-set rules at this moment, not '" + rule.kind + "'")
     rule.insert("name", name)
   }
 
@@ -1373,8 +1373,8 @@
 /// - mode (int): style mode given by the `style-modes` dictionary
 /// -> function
 #let revoke(name, mode: auto) = {
-  assert(type(name) == str, message: "element.revoke: rule name must be a string, not " + str(type(name)))
-  assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "element.revoke: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
+  assert(type(name) == str, message: "elembic: element.revoke: rule name must be a string, not " + str(type(name)))
+  assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "elembic: element.revoke: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
 
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "revoke", revoking: name, name: none, mode: mode))
 }
@@ -1400,11 +1400,11 @@
 /// - mode (int): style mode given by the `style-modes` dictionary
 /// -> function
 #let reset(..args, mode: auto) = {
-  assert(args.named() == (:), message: "element.reset: unexpected named arguments")
-  assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "element.reset: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
+  assert(args.named() == (:), message: "elembic: element.reset: unexpected named arguments")
+  assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "elembic: element.reset: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
 
   let filters = args.pos().map(it => if type(it) == function { data(it) } else { x })
-  assert(filters.all(x => type(x) == dictionary and "eid" in x), message: "element.reset: invalid arguments, please provide a function or element data with at least an 'eid'")
+  assert(filters.all(x => type(x) == dictionary and "eid" in x), message: "elembic: element.reset: invalid arguments, please provide a function or element data with at least an 'eid'")
 
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "reset", eids: filters.map(x => x.eid), name: none, mode: mode))
 }
@@ -1558,7 +1558,7 @@
   let (eid, default-fields) = if type(element) == dictionary and "eid" in element and "default-fields" in element {
     (element.eid, element.default-fields)
   } else {
-    assert(false, message: "element.get: expected element (function / data dictionary), received " + str(type(element)))
+    assert(false, message: "elembic: element.get: expected element (function / data dictionary), received " + str(type(element)))
   }
 
   let element-data = elements.at(eid, default: default-data)
@@ -1623,10 +1623,10 @@
 // Obtain a Typst selector to use to match this element in show rules or in the outline.
 #let selector(elem, outline: false, outer: false) = {
   if outline {
-    assert(not outer, message: "element.selector: cannot have 'outline: true' and 'outer: true' at the same time, please pick one selector")
+    assert(not outer, message: "elembic: element.selector: cannot have 'outline: true' and 'outer: true' at the same time, please pick one selector")
     let elem-data = data(elem)
-    assert("outline-sel" in elem-data, message: "element.selector: this isn't a valid element")
-    assert(elem-data.outline-sel != none, message: "element.selector: this element isn't outlinable\n  hint: try asking its author to define it as such with 'outline: auto', 'outline: (caption: [...])' or 'outline: (caption: it => ...)'")
+    assert("outline-sel" in elem-data, message: "elembic: element.selector: this isn't a valid element")
+    assert(elem-data.outline-sel != none, message: "elembic: element.selector: this element isn't outlinable\n  hint: try asking its author to define it as such with 'outline: auto', 'outline: (caption: [...])' or 'outline: (caption: it => ...)'")
     elem-data.outline-sel
   } else if outer {
     data(elem).outer-sel
@@ -1664,7 +1664,7 @@
 #let prepare(
   ..args
 ) = {
-  assert(args.named() == (:), message: "element.prepare: unexpected named arguments")
+  assert(args.named() == (:), message: "elembic: element.prepare: unexpected named arguments")
   let default-rules = doc => {
     show ref: ref_
 
@@ -1678,10 +1678,10 @@
   let elems = args.pos().map(data)
 
   if elems.len() == 1 and type(args.pos().first()) == content {
-    assert(false, message: "element.prepare: expected (optional) element functions as arguments, not the document\n  hint: write '#show: e.prepare()', not '#show: e.prepare' - note the parentheses")
+    assert(false, message: "elembic: element.prepare: expected (optional) element functions as arguments, not the document\n  hint: write '#show: e.prepare()', not '#show: e.prepare' - note the parentheses")
   }
 
-  assert(elems.all(it => it.data-kind == "element"), message: "element.prepare: positional arguments must be elements")
+  assert(elems.all(it => it.data-kind == "element"), message: "elembic: element.prepare: positional arguments must be elements")
   let prepares = elems.filter(elem => "prepare" in elem and elem.prepare != none).map(elem => elem.prepare.with(elem.func))
 
   doc => {
@@ -1810,23 +1810,23 @@
   synthesize: none,
   contextual: false,
 ) = {
-  assert(type(display) == function, message: "element.declare: please specify a show rule in 'display:' to determine how your element is displayed.")
+  assert(type(display) == function, message: "elembic: element.declare: please specify a show rule in 'display:' to determine how your element is displayed.")
 
   let fields-hint = if type(fields) == dictionary { "\n  hint: check if you didn't forget to add a trailing comma for a single field: write 'fields: (field,)', not 'fields: (field)'" } else { "" }
-  assert(type(fields) == array, message: "element.declare: please specify an array of fields, creating each field with the 'field' function. It can be empty with '()'." + fields-hint)
-  assert(prefix != none, message: "element.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
-  assert(type(prefix) == str, message: "element.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
-  assert(parse-args == auto or type(parse-args) == function, message: "element.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function (default arg parser, fields: dictionary, typecheck: bool) => (user arguments, include-required: true (required fields must be specified - in constructor) / false (required fields must be omitted - in set rules)) => dictionary with parsed fields.")
-  assert(type(typecheck) == bool, message: "element.declare: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
-  assert(type(allow-unknown-fields) == bool, message: "element.declare: the 'allow-unknown-fields' argument must be a boolean.")
-  assert(template == none or type(template) == function, message: "element.declare: 'template' must be 'none' or a function displayed element => content (usually set rules applied on the displayed element). This is used to add a set of overridable set rules to the element, such as paragraph settings.")
-  assert(prepare == none or type(prepare) == function, message: "element.declare: 'prepare' must be 'none' or a function (element, document) => styled document (used to apply show and set rules to the document).")
-  assert(count == none or type(count) == function, message: "element.declare: 'count' must be 'none', a function counter => counter step/update element, or a function counter => final fields => counter step/update element.")
-  assert(synthesize == none or type(synthesize) == function, message: "element.declare: 'synthesize' must be 'none' or a function element fields => element fields.")
-  assert(contextual == auto or type(contextual) == bool, message: "element.declare: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
-  assert(construct == none or type(construct) == function, message: "element.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
-  assert(scope == none or type(scope) in (dictionary, module), message: "element.declare: 'scope' must be either 'none', a dictionary or a module")
-  assert(type(labelable) == bool, message: "element.declare: 'labelable' must be a boolean (true to enable the special 'label' constructor argument, false to disable it)")
+  assert(type(fields) == array, message: "elembic: element.declare: please specify an array of fields, creating each field with the 'field' function. It can be empty with '()'." + fields-hint)
+  assert(prefix != none, message: "elembic: element.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
+  assert(type(prefix) == str, message: "elembic: element.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
+  assert(parse-args == auto or type(parse-args) == function, message: "elembic: element.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function (default arg parser, fields: dictionary, typecheck: bool) => (user arguments, include-required: true (required fields must be specified - in constructor) / false (required fields must be omitted - in set rules)) => dictionary with parsed fields.")
+  assert(type(typecheck) == bool, message: "elembic: element.declare: the 'typecheck' argument must be a boolean (true to enable typechecking, false to disable).")
+  assert(type(allow-unknown-fields) == bool, message: "elembic: element.declare: the 'allow-unknown-fields' argument must be a boolean.")
+  assert(template == none or type(template) == function, message: "elembic: element.declare: 'template' must be 'none' or a function displayed element => content (usually set rules applied on the displayed element). This is used to add a set of overridable set rules to the element, such as paragraph settings.")
+  assert(prepare == none or type(prepare) == function, message: "elembic: element.declare: 'prepare' must be 'none' or a function (element, document) => styled document (used to apply show and set rules to the document).")
+  assert(count == none or type(count) == function, message: "elembic: element.declare: 'count' must be 'none', a function counter => counter step/update element, or a function counter => final fields => counter step/update element.")
+  assert(synthesize == none or type(synthesize) == function, message: "elembic: element.declare: 'synthesize' must be 'none' or a function element fields => element fields.")
+  assert(contextual == auto or type(contextual) == bool, message: "elembic: element.declare: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
+  assert(construct == none or type(construct) == function, message: "elembic: element.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
+  assert(scope == none or type(scope) in (dictionary, module), message: "elembic: element.declare: 'scope' must be either 'none', a dictionary or a module")
+  assert(type(labelable) == bool, message: "elembic: element.declare: 'labelable' must be a boolean (true to enable the special 'label' constructor argument, false to disable it)")
   assert(
     reference == none
     or type(reference) == dictionary
@@ -1834,21 +1834,21 @@
       and ("supplement" not in reference or reference.supplement == none or type(reference.supplement) in (str, content, function))
       and ("numbering" not in reference or reference.numbering == none or type(reference.numbering) in (str, function))
       and ("custom" not in reference or reference.custom == none or type(reference.custom) == function),
-    message: "element.declare: 'reference' must be 'none' or a dictionary (supplement: \"Name\" or [Name] or function fields => supplement, numbering: \"1.\" or function fields => (str / function numbers => content), custom (optional): none (default) or function fields => content)."
+    message: "elembic: element.declare: 'reference' must be 'none' or a dictionary (supplement: \"Name\" or [Name] or function fields => supplement, numbering: \"1.\" or function fields => (str / function numbers => content), custom (optional): none (default) or function fields => content)."
   )
   assert(
     reference == none or "supplement" in reference and "numbering" in reference or "custom" in reference,
-    message: "element.declare: reference must either have 'custom', or have both 'supplement' and 'numbering' (or all three, though 'custom' has priority when displaying references)."
+    message: "elembic: element.declare: reference must either have 'custom', or have both 'supplement' and 'numbering' (or all three, though 'custom' has priority when displaying references)."
   )
   assert(
     outline == none
     or outline == auto
     or type(outline) == dictionary
       and "caption" in outline,
-    message: "element.declare: 'outline' must be 'none', 'auto' (to use data from 'reference') or a dictionary with 'caption'."
+    message: "elembic: element.declare: 'outline' must be 'none', 'auto' (to use data from 'reference') or a dictionary with 'caption'."
   )
-  assert(outline != auto or reference != none, message: "element.declare: if 'outline' is set to 'auto', 'reference' must be specified and not be 'none'.")
-  assert(labelable or reference == none, message: "element.declare: 'labelable' must be true for 'reference' to not be 'none'")
+  assert(outline != auto or reference != none, message: "elembic: element.declare: if 'outline' is set to 'auto', 'reference' must be specified and not be 'none'.")
+  assert(labelable or reference == none, message: "elembic: element.declare: 'labelable' must be true for 'reference' to not be 'none'")
 
   if contextual == auto {
     // Provide separate context for synthesize.
@@ -1887,12 +1887,12 @@
   let (all-fields, user-fields, foldable-fields) = fields
 
   if labelable and "label" in all-fields {
-    assert(false, message: "element.declare: labelable element cannot have a conflicting 'label' field\n  hint: you can set 'labelable: false' to disable the special label parameter, but note that it will then be impossible to refer to your element")
+    assert(false, message: "elembic: element.declare: labelable element cannot have a conflicting 'label' field\n  hint: you can set 'labelable: false' to disable the special label parameter, but note that it will then be impossible to refer to your element")
   }
 
   let default-arg-parser = field-internals.generate-arg-parser(
     fields: fields,
-    general-error-prefix: "element '" + name + "': ",
+    general-error-prefix: "elembic: element '" + name + "': ",
     field-error-prefix: field-name => "field '" + field-name + "' of element '" + name + "': ",
     typecheck: typecheck
   )
@@ -1902,7 +1902,7 @@
   } else {
     let parse-args = parse-args(default-arg-parser, fields: fields, typecheck: typecheck)
     if type(parse-args) != function {
-      assert(false, message: "element.declare: 'parse-args', when specified as a function, receives the default arg parser alongside `fields: fields dictionary` and `typecheck: bool`, and must return a function (the new arg parser), and not " + base.typename(parse-args))
+      assert(false, message: "elembic: element.declare: 'parse-args', when specified as a function, receives the default arg parser alongside `fields: fields dictionary` and `typecheck: bool`, and must return a function (the new arg parser), and not " + base.typename(parse-args))
     }
 
     parse-args
@@ -1930,7 +1930,7 @@
   // This function will specify which field values for this
   // element should be matched.
   let where(..args) = {
-    assert(args.pos().len() == 0, message: "unexpected positional arguments\nhint: here, specify positional fields as named arguments, using their names")
+    assert(args.pos().len() == 0, message: "elembic: unexpected positional arguments\nhint: here, specify positional fields as named arguments, using their names")
     let args = args.named()
 
     if not allow-unknown-fields {
@@ -1939,7 +1939,7 @@
       let unknown-fields = args.keys().filter(k => k not in all-fields and (not labelable or k != "label"))
       if unknown-fields != () {
         let s = if unknown-fields.len() == 1 { "" } else { "s" }
-        assert(false, message: "element.where: element '" + name + "': unknown field" + s + " " + unknown-fields.map(f => "'" + f + "'").join(", "))
+        assert(false, message: "elembic: element.where: element '" + name + "': unknown field" + s + " " + unknown-fields.map(f => "'" + f + "'").join(", "))
       }
     }
 
@@ -1988,7 +1988,7 @@
       reference.numbering
     } else if numbering-type == function {
       let numbering = (reference.numbering)(synthesized-fields)
-      assert(type(numbering) in (str, function), message: "element: 'reference.numbering' must be a function fields => numbering (a string or a function), but returned " + str(type(numbering)))
+      assert(type(numbering) in (str, function), message: "elembic: element: 'reference.numbering' must be a function fields => numbering (a string or a function), but returned " + str(type(numbering)))
       numbering
     } else {
       none
@@ -2061,7 +2061,7 @@
           where(..args, label: label)
         }
       } else {
-        assert(false, message: "element: invalid data key to constructor: " + repr(__elembic_data))
+        assert(false, message: "elembic: element: invalid data key to constructor: " + repr(__elembic_data))
       }
     }
 
@@ -2074,7 +2074,7 @@
         ref-label = std-label(lbl-ref-figure-label-head + str(label))
         labeling = true
       } else if label != none {
-        assert(false, message: "element '" + name + "': expected label or 'none' for 'label', found " + base.typename(label))
+        assert(false, message: "elembic: element '" + name + "': expected label or 'none' for 'label', found " + base.typename(label))
       }
     } else if label == _missing {
       label = none
@@ -2236,7 +2236,7 @@
                 // have its own copy of the tag
                 let new-fields = synthesize(constructed-fields + ((stored-data-key): tag))
                 if type(new-fields) != dictionary {
-                  assert(false, message: "element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
+                  assert(false, message: "elembic: element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
                 }
                 if stored-data-key in new-fields {
                   _ = new-fields.remove(stored-data-key)
@@ -2398,7 +2398,7 @@
               // have its own copy of the tag
               let new-fields = synthesize(constructed-fields + ((stored-data-key): tag))
               if type(new-fields) != dictionary {
-                assert(false, message: "element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
+                assert(false, message: "elembic: element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
               }
               if stored-data-key in new-fields {
                 _ = new-fields.remove(stored-data-key)
@@ -2597,7 +2597,7 @@
   let final-constructor = if construct != none {
     {
       let test-construct = construct(default-constructor)
-      assert(type(test-construct) == function, message: "element.declare: the 'construct' function must receive original constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
+      assert(type(test-construct) == function, message: "elembic: element.declare: the 'construct' function must receive original constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
     }
 
     let final-constructor(..args, __elembic_data: none) = {
@@ -2607,7 +2607,7 @@
         } else if __elembic_data == special-data-values.get-where {
           where(..args)
         } else {
-          assert(false, message: "element: invalid data key to constructor: " + repr(__elembic_data))
+          assert(false, message: "elembic: element: invalid data key to constructor: " + repr(__elembic_data))
         }
       }
 

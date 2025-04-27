@@ -48,15 +48,15 @@
 
   let fields-hint = if type(fields) == dictionary { "\n  hint: check if you didn't forget to add a trailing comma for a single field: write 'fields: (field,)', not 'fields: (field)'" } else { "" }
   let casts-hint = if type(casts) == dictionary { "\n  hint: check if you didn't forget to add a trailing comma for a single cast: write 'casts: ((from: ..., with: ...),)', not 'casts: ((from: ..., with: ...))'" } else { "" }
-  assert(type(fields) == array, message: "types.declare: please specify an array of fields, creating each field with the 'field' function." + fields-hint)
-  assert(prefix != none, message: "types.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
-  assert(type(prefix) == str, message: "types.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
-  assert(parse-args == auto or type(parse-args) == function, message: "types.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function (default arg parser, fields: dictionary, typecheck: bool) => (user arguments, include-required: true) => dictionary with parsed fields.")
-  assert(type(typecheck) == bool, message: "types.declare: the 'typecheck' argument must be a boolean (true to enable typechecking in the constructor, false to disable).")
-  assert(type(allow-unknown-fields) == bool, message: "types.declare: the 'allow-unknown-fields' argument must be a boolean.")
-  assert(construct == none or type(construct) == function, message: "types.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
-  assert(default == none or type(default) == function, message: "types.declare: 'default' must be none or a function receiving the constructor and returning the default.")
-  assert(scope == none or type(scope) in (dictionary, module), message: "types.declare: 'scope' must be either 'none', a dictionary or a module")
+  assert(type(fields) == array, message: "elembic: types.declare: please specify an array of fields, creating each field with the 'field' function." + fields-hint)
+  assert(prefix != none, message: "elembic: types.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
+  assert(type(prefix) == str, message: "elembic: types.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
+  assert(parse-args == auto or type(parse-args) == function, message: "elembic: types.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function (default arg parser, fields: dictionary, typecheck: bool) => (user arguments, include-required: true) => dictionary with parsed fields.")
+  assert(type(typecheck) == bool, message: "elembic: types.declare: the 'typecheck' argument must be a boolean (true to enable typechecking in the constructor, false to disable).")
+  assert(type(allow-unknown-fields) == bool, message: "elembic: types.declare: the 'allow-unknown-fields' argument must be a boolean.")
+  assert(construct == none or type(construct) == function, message: "elembic: types.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
+  assert(default == none or type(default) == function, message: "elembic: types.declare: 'default' must be none or a function receiving the constructor and returning the default.")
+  assert(scope == none or type(scope) in (dictionary, module), message: "elembic: types.declare: 'scope' must be either 'none', a dictionary or a module")
   assert(
     casts == none
     or type(casts) == array and casts.all(
@@ -69,9 +69,9 @@
         and ("check" not in d or type(d.check) == function)
       )
     ),
-    message: "types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): casted value => bool, with: constructor => casted value => your type)." + casts-hint
+    message: "elembic: types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): casted value => bool, with: constructor => casted value => your type)." + casts-hint
   )
-  assert(fold == none or fold == auto or type(fold) == function, message: "types.declare: 'fold' must be 'none' (no folding), 'auto' (fold each field individually) or a function 'default constructor => auto (same as (a, b) => a + b but more efficient) or function (outer, inner) => combined value'.")
+  assert(fold == none or fold == auto or type(fold) == function, message: "elembic: types.declare: 'fold' must be 'none' (no folding), 'auto' (fold each field individually) or a function 'default constructor => auto (same as (a, b) => a + b but more efficient) or function (outer, inner) => combined value'.")
 
   let tid = base.unique-id("t", prefix, name)
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
@@ -80,7 +80,7 @@
 
   let default-arg-parser = field-internals.generate-arg-parser(
     fields: fields,
-    general-error-prefix: "type '" + name + "': ",
+    general-error-prefix: "elembic: type '" + name + "': ",
     field-error-prefix: field-name => "field '" + field-name + "' of type '" + name + "': ",
     typecheck: typecheck
   )
@@ -90,7 +90,7 @@
   } else {
     let parse-args = parse-args(default-arg-parser, fields: fields, typecheck: typecheck)
     if type(parse-args) != function {
-      assert(false, message: "types.declare: 'parse-args', when specified as a function, receives the default arg parser alongside `fields: fields dictionary` and `typecheck: bool`, and must return a function (the new arg parser), and not " + base.typename(parse-args))
+      assert(false, message: "elembic: types.declare: 'parse-args', when specified as a function, receives the default arg parser alongside `fields: fields dictionary` and `typecheck: bool`, and must return a function (the new arg parser), and not " + base.typename(parse-args))
     }
 
     parse-args
@@ -160,14 +160,14 @@
       let typeinfos = casts.map(cast => {
         let (res, from) = types.validate(cast.from)
         if not res {
-          assert(false, message: "types.declare: invalid cast-from type: " + from)
+          assert(false, message: "elembic: types.declare: invalid cast-from type: " + from)
         }
 
         let with = (cast.with)(default-constructor)
         if type(with) != function {
           assert(
             false,
-            message: "types.declare: cast 'with' must receive the default constructor and return a function 'casted value => your type'. Received " + base.typename(with)
+            message: "elembic: types.declare: cast 'with' must receive the default constructor and return a function 'casted value => your type'. Received " + base.typename(with)
           )
         }
 
@@ -210,7 +210,7 @@
 
       assert(
         union.output == (typeid,) and union.default == () and union.fold == none,
-        message: "types.declare: internal error: cast generated invalid union: " + repr(union)
+        message: "elembic: types.declare: internal error: cast generated invalid union: " + repr(union)
       )
 
       (
@@ -246,14 +246,14 @@
         } else if type(fold) == function {
           let fold = fold(default-constructor)
           if fold != auto and type(fold) != function {
-            assert(false, message: "types: custom type did not specify a valid fold, must be a function default constructor => value, got " + base.typename(fold))
+            assert(false, message: "elembic: types: custom type did not specify a valid fold, must be a function default constructor => value, got " + base.typename(fold))
           }
           typeinfo.fold = fold
         }
 
         (data-kind: "custom-type-data", ..type-data, typeinfo: typeinfo, func: __elembic_func, default-constructor: default-constructor)
       } else {
-        assert(false, message: "types: invalid data key to constructor: " + repr(__elembic_data))
+        assert(false, message: "elembic: types: invalid data key to constructor: " + repr(__elembic_data))
       }
     }
 
@@ -299,7 +299,7 @@
     let default = default(default-constructor)
     assert(
       type(default) == dictionary and custom-type-key in default and default.at(custom-type-key).id == typeid,
-      message: "types.declare: the 'default' function must return an instance of the new type using the provided constructor, not " + repr(default)
+      message: "elembic: types.declare: the 'default' function must return an instance of the new type using the provided constructor, not " + repr(default)
     )
 
 
@@ -311,7 +311,7 @@
   } else if type(fold) == function {
     let fold = fold(default-constructor)
     if fold != auto and type(fold) != function {
-      assert(false, message: "types.declare: a valid fold was not specified, must be a function default constructor => value, got " + base.typename(fold))
+      assert(false, message: "elembic: types.declare: a valid fold was not specified, must be a function default constructor => value, got " + base.typename(fold))
     }
     fold
   } else {
@@ -328,7 +328,7 @@
   let final-constructor = if construct != none {
     {
       let test-construct = construct(default-constructor)
-      assert(type(test-construct) == function, message: "types.declare: the 'construct' function must receive the default constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
+      assert(type(test-construct) == function, message: "elembic: types.declare: the 'construct' function must receive the default constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
     }
 
     let final-constructor(..args, __elembic_data: none) = {
@@ -336,7 +336,7 @@
         return if __elembic_data == special-data-values.get-data {
           (data-kind: "custom-type-data", ..type-data, func: final-constructor, default-constructor: default-constructor.with(__elembic_func: final-constructor))
         } else {
-          assert(false, message: "types: invalid data key to constructor: " + repr(__elembic_data))
+          assert(false, message: "elembic: types: invalid data key to constructor: " + repr(__elembic_data))
         }
       }
 

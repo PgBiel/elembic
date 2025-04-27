@@ -74,7 +74,7 @@
 )
 
 #let native-elem(func) = {
-  assert(type(func) == function, message: "types.native-elem: expected native element constructor, got " + str(type(func)))
+  assert(type(func) == function, message: "elembic: types.native-elem: expected native element constructor, got " + str(type(func)))
 
   (
     ..base-typeinfo,

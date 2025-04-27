@@ -14,7 +14,7 @@
 // PROPERTY: if type key is native, then output has the native type,
 // and input has a list of native types that can be cast to it.
 #let generic-typeinfo(native-type) = {
-  assert(type(native-type) == type(str), message: "internal error: not a type")
+  assert(type(native-type) == type(str), message: "elembic: internal error: not a type")
 
   (
     ..native-base,

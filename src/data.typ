@@ -275,7 +275,7 @@
   if type(info) == dictionary and "data-kind" in info and (info.data-kind == "element" or info.data-kind == "element-instance") {
     info.counter
   } else {
-    assert(false, message: "e.counter: this is not an element")
+    assert(false, message: "elembic: e.counter: this is not an element")
   }
 }
 

@@ -18,9 +18,9 @@
   synthesized: false,
   default: _missing,
 ) = {
-  assert(type(name) == str, message: "field: Field name must be a string, not " + str(type(name)))
+  assert(type(name) == str, message: "elembic: field: Field name must be a string, not " + str(type(name)))
 
-  let error-prefix = "field '" + name + "': "
+  let error-prefix = "elembic: field '" + name + "': "
   assert(doc == none or type(doc) == str, message: error-prefix + "'doc' must be none or a string (add documentation)")
   assert(type(synthesized) == bool, message: error-prefix + "'synthesized' must be a boolean (true: field is automatically synthesized and cannot be specified or overridden by the user; false: field can be manually specified and overridden by the user)")
   assert(type(required) == bool, message: error-prefix + "'required' must be a boolean")
@@ -95,7 +95,7 @@
 }
 
 #let parse-fields(fields, allow-unknown-fields: false) = {
-  assert(type(allow-unknown-fields) == bool, message: "element.fields: 'allow-unknown-fields' must be a boolean, not " + str(type(allow-unknown-fields)))
+  assert(type(allow-unknown-fields) == bool, message: "elembic: element.fields: 'allow-unknown-fields' must be a boolean, not " + str(type(allow-unknown-fields)))
 
   let required-pos-fields = ()
   let optional-pos-fields = ()
@@ -108,9 +108,9 @@
   let synthesized-fields = (:)
 
   for field in fields {
-    assert(type(field) == dictionary and field.at(field-key, default: none) == true, message: "element.fields: Invalid field received, please use the 'e.fields.field' constructor.")
-    assert(field.named or not field.required or optional-pos-fields == (), message: "element.fields: field '" + field.name + "' cannot be positional and required and appear after other positional but optional fields. Ensure there are only optional fields after the first positional optional field.")
-    assert(field.name not in all-fields, message: "element.fields: duplicate field name '" + field.name + "'")
+    assert(type(field) == dictionary and field.at(field-key, default: none) == true, message: "elembic: element.fields: Invalid field received, please use the 'e.fields.field' constructor.")
+    assert(field.named or not field.required or optional-pos-fields == (), message: "elembic: element.fields: field '" + field.name + "' cannot be positional and required and appear after other positional but optional fields. Ensure there are only optional fields after the first positional optional field.")
+    assert(field.name not in all-fields, message: "elembic: element.fields: duplicate field name '" + field.name + "'")
 
     if field.required {
       if field.named {
@@ -176,17 +176,17 @@
   field-term: "field",
   typecheck: true,
 ) = {
-  assert(type(fields) == dictionary and fields-key in fields, message: "generate-arg-parser: please use 'parse-fields' to generate the fields input.")
-  assert(type(general-error-prefix) == str, message: "generate-arg-parser: 'general-error-prefix' must be a string")
-  assert(type(field-error-prefix) == function, message: "generate-arg-parser: 'field-error-prefix' must be a function receiving field name and returning string")
-  assert(type(typecheck) == bool, message: "generate-arg-parser: 'typecheck' must be a boolean, not " + str(type(typecheck)))
+  assert(type(fields) == dictionary and fields-key in fields, message: "elembic: generate-arg-parser: please use 'parse-fields' to generate the fields input.")
+  assert(type(general-error-prefix) == str, message: "elembic: generate-arg-parser: 'general-error-prefix' must be a string")
+  assert(type(field-error-prefix) == function, message: "elembic: generate-arg-parser: 'field-error-prefix' must be a function receiving field name and returning string")
+  assert(type(typecheck) == bool, message: "elembic: generate-arg-parser: 'typecheck' must be a boolean, not " + str(type(typecheck)))
 
   let (field-singular, field-plural) = if type(field-term) == str {
     (field-term, field-term + "s")
   } else if type(field-term) == array and field-term.len() == 2 and field-term.all(term => type(term) == str) {
     field-term
   } else {
-    assert(false, message: "generate-arg-parser: 'field-term' must either be a string (plural with 's') or a two-element array of strings (singular, plural).")
+    assert(false, message: "elembic: generate-arg-parser: 'field-term' must either be a string (plural with 's') or a two-element array of strings (singular, plural).")
   }
 
   let (required-pos-fields, optional-pos-fields, required-named-fields, optional-named-fields, all-fields, user-fields, user-named-fields, allow-unknown-fields) = fields
