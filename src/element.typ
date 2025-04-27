@@ -166,9 +166,21 @@
     args: (),
     // Data associated with each conditional set rule.
     // Format:
-    // ((names: ("name1", "name2", ...)), ...)
+    // ((names: ("name1", "name2", ...), index: 0), ...)
     data: (),
-  )
+  ),
+
+  // Show rules that might apply to this element.
+  show-rules: (
+    // Filters for each show rule.
+    filters: (),
+    // For each filter above, the associated show rule function.
+    callbacks: (),
+    // Data associated with each show rule.
+    // Format:
+    // ((names: ("name1", "name2", ...), index: 0), ...)
+    data: (),
+  ),
 )
 
 /// This is meant to be used in a show rule of the form `#show ref: e.ref` to ensure
@@ -665,6 +677,67 @@
         // Keep "name" for some compatibility with older versions...
         elements.at(eid).data-chain.push(
           (kind: "filtered", name: if data.names == () { none } else { data.names.last() }, names: data.names)
+        )
+
+        for name in data.names {
+          // Ensure the name is registered so revoke rules on this name are
+          // treated as valid.
+          elements.at(eid).names.insert(name, true)
+        }
+      }
+    } else if kind == "show" {
+      let (filter, callback, name) = rule
+      if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
+        assert(false, message: "elembic: element.show_: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+      }
+      let target-elements = if "elements" in filter {
+        filter.elements
+      } else {
+        // Old version
+        // Likely a where filter
+        ((filter.eid): (default-data: default-data))
+      }
+      let base-data = (names: if name == none { () } else { (name,) })
+
+      for (eid, all-elem-data) in target-elements {
+        // Forward-compatibility with newer elements
+        if (
+          "__future-rules" in all-elem-data.default-data
+          and "show_" in all-elem-data.default-data.__future-rules
+          and all-elem-data.default-data.__future-rules.show_.max-version <= element-version
+        ) {
+          let output = (all-elem-data.default-data.__future-rules.show_.call)(rule, elements: elements, __future-version: element-version)
+          if "elements" in output {
+            elements = output.elements
+          }
+          continue
+        }
+
+        if eid not in elements {
+          elements.insert(eid, all-elem-data.default-data)
+        }
+        if "show-rules" not in elements.at(eid) {
+          // Old version
+          elements.at(eid).show-rules = default-data.show-rules
+        }
+
+        let index = elements.at(eid).chain.len()
+        let data = (..base-data, index: index)
+
+        elements.at(eid).show-rules.filters.push(filter)
+        elements.at(eid).show-rules.callbacks.push(callback)
+        elements.at(eid).show-rules.data.push(data)
+
+        // Push an entry to the data chain so we have an index to assign to
+        // this show rule. This allows us to reset() it later.
+        elements.at(eid).chain.push((:))
+
+        // Lazily fill the data chain with 'none'
+        elements.at(eid).data-chain += (none,) * (index - elements.at(eid).data-chain.len())
+
+        // Keep "name" for some compatibility with older versions...
+        elements.at(eid).data-chain.push(
+          (kind: "show", name: if data.names == () { none } else { data.names.last() }, names: data.names)
         )
 
         for name in data.names {
@@ -1226,6 +1299,35 @@
   prepare-rule(
     ((prepared-rule-key): true, version: element-version, kind: "cond-set", name: none, mode: auto, filter: filter, element: (eid: elem.eid, default-data: elem.default-data, fields: elem.fields), args: args)
   )
+}
+
+/// Applies a show rule through the elembic stylechain, thus making it
+/// revokable and also allowing easy usage of filters.
+///
+/// Show rules allow you to transform all occurrences of one or more elements,
+/// replacing them with arbitrary document content.
+///
+/// For example:
+///
+/// ```typ
+/// #show: e.show_(elem.with(fill: blue), it => [Hello *#it*!])
+///
+/// #elem(fill: red)[First]
+/// #elem(fill: blue)[Second] // displays as "Hello *Second*!"
+/// ```
+///
+/// - filter (filter): which element(s) to apply the rule to, with which fields etc.
+/// - callback (function): transformation function (content -> content)
+/// receiving any matched elements and returning what to replace it with.
+/// -> function
+#let show_(filter, callback, mode: auto) = {
+  if type(filter) == function {
+    filter = filter(__elembic_data: special-data-values.get-where)
+  }
+  assert(type(filter) == dictionary and filter-key in filter, message: "elembic: element.show_: invalid filter, please use 'custom-element.with(...)' to generate a filter.")
+  assert(type(callback) == function, message: "elembic: element.show_: this is not a valid show rule callback (not a function 'it => content').")
+
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "show", filter: filter, callback: callback, name: none, names: (), mode: mode))
 }
 
 /// Apply multiple rules (set rules, etc.) at once.
@@ -2059,6 +2161,31 @@
     tagged-figure
   }
 
+  let apply-show-rules(body, rule, show-rules) = {
+    if rule >= show-rules.len() {
+      body
+    } else if rule == show-rules.len() - 1 {
+      show: show-rules.at(rule)
+      body
+    } else {
+      // Don't recursively apply show rules immediately.
+      // Do it lazily through a matching show rule.
+      // This is so that a show rule that doesn't place down 'it'
+      // stops further show rules from executing.
+      //
+      // We could use 'context' for this, but then the show rule
+      // limit is lower even for 'it => it' (60 vs 30). It is always
+      // lower when the show rule is of the form 'it => element(it)',
+      // however, but it still feels like a waste to force it to be
+      // lower in all cases.
+      let lbl-tmp-show = std.label(str(lbl-show) + "-rule" + str(rule))
+      (show-rules.at(rule))({
+        show lbl-tmp-show: it => apply-show-rules(it.children.first(), rule + 1, show-rules)
+        [#[#body#metadata(data(body))#lbl-tag]#lbl-tmp-show]
+      })
+    }
+  }
+
   // Sentinel for 'unspecified value'
   let _missing() = {}
   let std-label = label
@@ -2168,6 +2295,8 @@
         let has-filters = filters.all != ()
         let cond-sets = element-data.at("cond-sets", default: default-data.cond-sets)
         let has-cond-sets = cond-sets.args != ()
+        let show-rules = element-data.at("show-rules", default: default-data.show-rules)
+        let has-show-rules = show-rules.callbacks != ()
 
         let (constructed-fields, active-revokes, first-active-index) = if (
           element-data.revoke-chain == default-data.revoke-chain
@@ -2212,7 +2341,7 @@
           // match).
           editable-global-data = global-data
           filter-revokes = active-revokes
-        } else if has-cond-sets {
+        } else if has-cond-sets or has-show-rules {
           // No need for global data, but still need revokes to see which
           // conditional sets were revoked
           filter-revokes = active-revokes
@@ -2276,7 +2405,7 @@
                   let data = cond-sets.data.at(i)
                   if (
                     filter != none
-                    and data.index >= first-active-index
+                    and (data.index == none or data.index >= first-active-index)
                     and data.names.all(n => n not in filter-revokes)
                     and verify-filter(synthesized-fields, eid, filter)
                   ) {
@@ -2316,7 +2445,7 @@
                   let data = filters.data.at(i)
                   if (
                     filter != none
-                    and data.index >= first-active-index
+                    and (data.index == none or data.index >= first-active-index)
                     and data.names.all(n => n not in filter-revokes)
                     and verify-filter(synthesized-fields, eid, filter)
                   ) {
@@ -2340,6 +2469,29 @@
                   chain
                 })
               }
+
+              // Filter show rules
+              let show-rules = if has-show-rules {
+                let i = 0
+                let final-rules = ()
+                for filter in show-rules.filters {
+                  let data = show-rules.data.at(i)
+                  if (
+                    filter != none
+                    and (data.index == none or data.index >= first-active-index)
+                    and data.names.all(n => n not in filter-revokes)
+                    and verify-filter(synthesized-fields, eid, filter)
+                  ) {
+                    final-rules.push(show-rules.callbacks.at(i))
+                  }
+                  i += 1
+                }
+                final-rules
+              } else {
+                ()
+              }
+
+              show: if show-rules == () { it => it } else { it => apply-show-rules(it, 0) }
 
               if count-needs-fields {
                 count(synthesized-fields)
@@ -2438,7 +2590,7 @@
                 let data = cond-sets.data.at(i)
                 if (
                   filter != none
-                  and data.index >= first-active-index
+                  and (data.index == none or data.index >= first-active-index)
                   and data.names.all(n => n not in filter-revokes)
                   and verify-filter(synthesized-fields, eid, filter)
                 ) {
@@ -2477,7 +2629,7 @@
                 let data = filters.data.at(i)
                 if (
                   filter != none
-                  and data.index >= first-active-index
+                  and (data.index == none or data.index >= first-active-index)
                   and data.names.all(n => n not in filter-revokes)
                   and verify-filter(synthesized-fields, eid, filter)
                 ) {
@@ -2502,31 +2654,25 @@
               })
             }
 
-            // TODO
-            let show-rules = ()
-            let apply-show-rules(body, rule) = {
-              if rule >= show-rules.len() {
-                body
-              } else if rule == show-rules.len() - 1 {
-                show: show-rules.at(rule)
-                body
-              } else {
-                // Don't recursively apply show rules immediately.
-                // Do it lazily through a matching show rule.
-                // This is so that a show rule that doesn't place down 'it'
-                // stops further show rules from executing.
-                //
-                // We could use 'context' for this, but then the show rule
-                // limit is lower even for 'it => it' (60 vs 30). It is always
-                // lower when the show rule is of the form 'it => element(it)',
-                // however, but it still feels like a waste to force it to be
-                // lower in all cases.
-                let lbl-tmp-show = std.label(str(lbl-show) + "-rule" + str(rule))
-                (show-rules.at(rule))({
-                  show lbl-tmp-show: it => apply-show-rules(it.children.first(), rule + 1)
-                  [#[#body#metadata(data(body))#lbl-tag]#lbl-tmp-show]
-                })
+            // Filter show rules
+            let show-rules = if has-show-rules {
+              let i = 0
+              let final-rules = ()
+              for filter in show-rules.filters {
+                let data = show-rules.data.at(i)
+                if (
+                  filter != none
+                  and (data.index == none or data.index >= first-active-index)
+                  and data.names.all(n => n not in filter-revokes)
+                  and verify-filter(synthesized-fields, eid, filter)
+                ) {
+                  final-rules.push(show-rules.callbacks.at(i))
+                }
+                i += 1
               }
+              final-rules
+            } else {
+              ()
             }
 
             show: if show-rules == () { it => it } else { it => apply-show-rules(it, 0) }
