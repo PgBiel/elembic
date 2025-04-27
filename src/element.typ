@@ -2502,6 +2502,22 @@
               })
             }
 
+            // idea:
+            // let show-rules = (it => [*doof*], it => text(red, it)) * 32
+            let show-rules = (it => it,) * 60
+            let apply-show-rules(body, rule) = {
+              if rule >= show-rules.len() {
+                body
+              } else {
+                (show-rules.at(rule))({
+                  show metadata: it => if type(it.value) == dictionary and "abc" in it.value { apply-show-rules(it.value.abc, rule + 1) } else { it }
+                  metadata((abc: body))
+                })
+              }
+            }
+
+            show: if show-rules.len() == 0 { it => it } else { it => apply-show-rules(it, 0) }
+
             if count-needs-fields {
               count(synthesized-fields)
 
