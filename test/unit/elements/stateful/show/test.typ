@@ -7,7 +7,7 @@
 
 #let wock = e.element.declare(
   "wock",
-  display: it => {},
+  display: it => it.inner,
   fields: (
     field("color", color, default: red),
     field("number", int, default: 0),
@@ -16,11 +16,10 @@
   prefix: ""
 )
 
-#let test-state = state("test", ())
-
 #show: e.stateful.enable()
 
 #[
+  #let test-state = state("test", ())
   #show: e.stateful.show_(wock, it => {
     test-state.update(a => a + (e.fields(it).number,))
     it
@@ -41,5 +40,37 @@
   #context {
     // Both show rules match on the blue one
     assert.eq(test-state.get(), (39, 48, 48))
+  }
+]
+
+#[
+  #let test-state = state("test2", ())
+  #show: e.named("wowzers", e.stateful.show_(wock.with(color: blue), it => {
+    test-state.update(a => a + (e.fields(it).number,))
+    it
+  }))
+  #wock(number: 39)
+
+  #[
+    #wock(number: 48, color: blue)
+    #show: e.stateful.revoke("wowzers")
+    #wock(number: 77, color: blue)
+  ]
+
+  #[
+    #wock(number: 33, color: blue)
+    #show: e.stateful.reset()
+    #wock(number: 79, color: blue)
+  ]
+
+  #[
+    #wock(number: 22, color: blue)
+    #show: e.stateful.reset(wock)
+    #wock(number: 80, color: blue)
+  ]
+
+  #context {
+    // No match after revoke
+    assert.eq(test-state.get(), (48, 33, 22))
   }
 ]
