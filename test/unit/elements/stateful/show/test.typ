@@ -29,8 +29,14 @@
     test-state.update(a => a + (e.fields(it).number,))
     it
   })
+  #show: e.stateful.show_(wock.with(color: orange), it => {
+    // This should stop other show rules from applying.
+    // We will never see the number of an orange wock
+    none
+  })
   #wock(number: 39)
   #wock(number: 48, color: blue)
+  #wock(number: 59, color: orange)
 
   #context {
     // Both show rules match on the blue one

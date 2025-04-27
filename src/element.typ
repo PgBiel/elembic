@@ -2165,8 +2165,14 @@
 
   let apply-show-rules(body, rule, show-rules) = {
     if rule >= show-rules.len() {
-      body
-    } else if rule == show-rules.len() - 1 {
+      rule = show-rules.len() - 1
+    } else if rule < 0 {
+      assert(false, "elembic: internal error: show rule index cannot be negative")
+    }
+
+    // Show rules are applied from last to first.
+    // The first is the base case.
+    if rule == 0 {
       show: show-rules.at(rule)
       body
     } else {
@@ -2184,7 +2190,7 @@
       (show-rules.at(rule))({
         // Take just the first child to remove the label.
         // Add tag AFTER the show rule so data() can still pick it up.
-        show lbl-tmp-show: it => apply-show-rules(it.children.first(), rule + 1, show-rules)
+        show lbl-tmp-show: it => apply-show-rules(it.children.first(), rule - 1, show-rules)
         [#[#body#[]]#lbl-tmp-show]
       } + [#metadata(data(body))#lbl-tag])
     }
@@ -2495,7 +2501,7 @@
                 ()
               }
 
-              show: if show-rules == () { it => it } else { it => apply-show-rules(it, 0, show-rules) }
+              show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
 
               if count-needs-fields {
                 count(synthesized-fields)
@@ -2679,7 +2685,7 @@
               ()
             }
 
-            show: if show-rules == () { it => it } else { it => apply-show-rules(it, 0, show-rules) }
+            show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
 
             if count-needs-fields {
               count(synthesized-fields)
