@@ -2180,11 +2180,13 @@
       // lower when the show rule is of the form 'it => element(it)',
       // however, but it still feels like a waste to force it to be
       // lower in all cases.
-      let lbl-tmp-show = std.label(str(lbl-show) + "-rule" + str(rule))
+      let lbl-tmp-show = label(str(lbl-show) + "-rule" + str(rule))
       (show-rules.at(rule))({
+        // Take just the first child to remove the label.
+        // Add tag AFTER the show rule so data() can still pick it up.
         show lbl-tmp-show: it => apply-show-rules(it.children.first(), rule + 1, show-rules)
-        [#[#body#metadata(data(body))#lbl-tag]#lbl-tmp-show]
-      })
+        [#[#body#[]]#lbl-tmp-show]
+      } + [#metadata(data(body))#lbl-tag])
     }
   }
 
