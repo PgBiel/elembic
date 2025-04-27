@@ -1551,7 +1551,7 @@
 }
 
 // Retrieves the final chain data for an element, after applying all set rules so far.
-#let get-styles(element, elements: (:)) = {
+#let get-styles(element, elements: (:), use-routine: false) = {
   if type(element) == function {
     element = data(element)
   }
@@ -1559,6 +1559,17 @@
     (element.eid, element.default-fields)
   } else {
     assert(false, message: "elembic: element.get: expected element (function / data dictionary), received " + str(type(element)))
+  }
+
+  if (
+    use-routine
+    and ("version" not in element or element.version != element-version)
+    and "routines" in element
+    and "get-styles" in element.routines
+    and type(element.routines.get-styles) == function
+  ) {
+    // Use the element's own "get styles".
+    return (element.routines.get-styles)(element, elements: elements)
   }
 
   let element-data = elements.at(eid, default: default-data)
@@ -1591,7 +1602,7 @@
 /// })
 /// ```
 ///
-/// - receiver (function):
+/// - receiver (function): function ('get' function) -> content
 /// -> content
 #let prepare-get(receiver) = context {
   let previous-bib-title = bibliography.title
@@ -1616,7 +1627,7 @@
     }
 
     set bibliography(title: previous-bib-title)
-    receiver(get-styles.with(elements: global-data.elements))
+    receiver(get-styles.with(elements: global-data.elements, use-routine: true))
   }#lbl-get]
 }
 
@@ -1924,6 +1935,12 @@
     default-global-data: default-global-data,
     fields: fields,
     sel: lbl-show,
+    routines: (
+      apply-rules: apply-rules,
+      get-styles: get-styles,
+      fold-styles: fold-styles,
+      verify-filter: verify-filter,
+    )
   )
 
   // Prepare a filter which should be passed to 'select()'.
@@ -1971,6 +1988,7 @@
     default-data: default-data,
     default-global-data: default-global-data,
     default-fields: default-fields,
+    routines: partial-element-data.routines,
     user-fields: user-fields,
     all-fields: all-fields,
     fields: fields,
@@ -2205,6 +2223,9 @@
           cond-set-foldable-fields = foldable-fields
         }
 
+        // Code below is duplicated.
+        // This is to avoid an additional function call, as we need to be generic
+        // over the necessity of 'context {}'.
         let shown = {
           let tag = (
             data-kind: "element-instance",
