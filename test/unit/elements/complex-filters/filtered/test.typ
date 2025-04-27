@@ -153,7 +153,7 @@
   e.filters.or_(
     e.filters.and_(
       wobble,
-      e.filters.custom(wobble, (it, ..) => it.inner.func() == strong)
+      e.filters.custom((it, ..) => it.inner.func() == strong)
     ),
     e.filters.and_(
       wibble,

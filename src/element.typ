@@ -372,7 +372,7 @@
     } else if kind == "where" {
       eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
     } else if kind == "custom" {
-      eid in filter.elements and (filter.call)(fields, eid: eid, __please-use-var-args: true)
+      (filter.elements == none or eid in filter.elements) and (filter.call)(fields, eid: eid, __please-use-var-args: true)
     } else if "operands" in filter {
       let operand-count = filter.operands.len()
       let first-applied-operand = operands.len() - operand-count
@@ -393,28 +393,28 @@
       } else if kind == "or" {
         applied-operands.any(c => c)
       } else if kind == "not" {
-        assert(applied-operands.len() == 1, message: "element.verify-filter: expected one child filter for 'not'")
-        eid in filter.elements and not applied-operands.first()
+        assert(applied-operands.len() == 1, message: "elembic: element.verify-filter: expected one child filter for 'not'")
+        (filter.elements == none or eid in filter.elements) and not applied-operands.first()
       } else if kind == "xor" {
-        assert(operands.len() == 2, message: "element.verify-filter: expected two children filters for 'xor'")
+        assert(operands.len() == 2, message: "elembic: element.verify-filter: expected two children filters for 'xor'")
         // Here the order doesn't matter, since we always need to evaluate both
         // XOR operands (no short-circuit).
         applied-operands.first() != applied-operands.at(1)
       } else {
-        assert(false, "element.verify-filter: unsupported filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+        assert(false, "elembic: element.verify-filter: unsupported filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
       }
 
       operands = operands.slice(0, first-applied-operand)
       value
     } else {
-      assert(false, "element.verify-filter: unsupported or invalid filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+      assert(false, "elembic: element.verify-filter: unsupported or invalid filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
     }
 
     operands.push(value)
   }
 
   if operands.len() != 1 {
-    assert(false, message: "element.verify-filter: filter didn't receive enough operands.")
+    assert(false, message: "elembic: element.verify-filter: filter didn't receive enough operands.")
   }
 
   operands.first()
@@ -435,16 +435,56 @@
     filter
   })
 
+  let elements = if kind == "and" {
+    // Intersect elements.
+    // Start accepting all elements and narrow it down from there.
+    let elements = none
+
+    for filter in filters {
+      assert("elements" in filter, message: "filters.and: this filter operand is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
+      if elements == none {
+        elements = filter.elements
+      } else if filter.elements != none {
+        // Cannot add new elements, only remove non-shared elements.
+        for (eid, elem-data) in elements {
+          if eid not in filter.elements {
+            _ = elements.remove(eid)
+          }
+        }
+      }
+    }
+
+    elements
+  } else if kind == "or" or kind == "xor" {
+    // Join together.
+    let elements = (:)
+    for filter in filters {
+      if "elements" in filter and filter.elements == none {
+        // OR(Any, ...) is always Any.
+        // For XOR, we still have to check all operands so this would also be
+        // Any.
+        elements = none
+        break
+      } else if "elements" not in filter or type(filter.elements) != dictionary {
+        assert(false, message: "filters: invalid operand filter received by '" + kind + "' filter constructor\n\nhint: this filter was likely constructed with an old elembic version. Please update your packages.")
+      }
+      elements += filter.elements
+    }
+    elements
+  } else if kind == "not" {
+    // No elements for NOT since it is unrestricted.
+    // User will have to restrict it manually.
+    none
+  } else {
+    assert(false, "filters: internal error: invalid kind '" + kind + "'")
+  }
+
   (
     (filter-key): true,
     element-version: element-version,
     kind: kind,
     operands: filters,
-    elements: filters.map(f => if "elements" in f and type(f.elements) == dictionary {
-      f.elements
-    } else {
-      assert(false, message: "filters: invalid operand filter received by '" + kind + "' filter constructor\n\nhint: this filter was likely constructed with an old elembic version. Please update your packages.")
-    }).sum(default: (:)),
+    elements: elements,
   )
 }
 
@@ -452,26 +492,7 @@
 #let and-filter = multi-operand-filter(kind: "and")
 #let not-filter = multi-operand-filter(kind: "not", arg-count: 1)
 #let xor-filter = multi-operand-filter(kind: "xor", arg-count: 2)
-#let custom-filter(elements, callback) = {
-  if type(elements) == function {
-    elements = (data(elements),)
-  } else if type(elements) == dictionary {
-    elements = (elements,)
-  } else if type(elements) != array or elements == () {
-    assert(false, message: "filters.custom: first parameter must be either an element to limit this filter down to, or a non-empty array of such elements.")
-  }
-
-  elements = elements.map(elem => {
-    if type(elem) == function {
-      elem = data(elem)
-    }
-
-    assert(type(elem) == dictionary, message: "filters.custom: please specify the element's constructor or data dictionary in the first parameter (or an array of such).")
-    assert("eid" in elem and "version" in elem and "default-data" in elem, message: "filters.custom: invalid element constructor or data received")
-
-    ((elem.eid): elem)
-  }).sum(default: (:))
-
+#let custom-filter(callback) = {
   assert(type(callback) == function, message: "filters.custom: 'callback' for custom filter must be a function (fields, eid: eid, ..) => bool.")
 
   (
@@ -479,7 +500,7 @@
     element-version: element-version,
     kind: "custom",
     call: callback,
-    elements: elements
+    elements: none
   )
 }
 
@@ -799,15 +820,12 @@
       }
     } else if kind == "filtered" {
       let (filter, rule: inner-rule, names) = rule
-      if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
-        assert(false, message: "elembic: element.filtered: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+      if type(filter) != dictionary or "elements" not in filter or "kind" not in filter {
+        assert(false, message: "elembic: element.filtered: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
       }
-      let target-elements = if "elements" in filter {
-        filter.elements
-      } else {
-        // Old version
-        // Likely a where filter
-        ((filter.eid): (default-data: default-data))
+      let target-elements = filter.elements
+      if target-elements == none {
+        assert(false, message: "elembic: element.filtered: this filter appears to apply to any element (e.g. it's a 'not' or 'custom' filter). It must match only within a certain set of elements. Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
       }
       let base-data = (names: names)
 
@@ -860,15 +878,12 @@
       }
     } else if kind == "show" {
       let (filter, callback, names) = rule
-      if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
-        assert(false, message: "elembic: element.show_: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+      if type(filter) != dictionary or "elements" not in filter or "kind" not in filter {
+        assert(false, message: "elembic: element.show_: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
       }
-      let target-elements = if "elements" in filter {
-        filter.elements
-      } else {
-        // Old version
-        // Likely a where filter
-        ((filter.eid): (default-data: default-data))
+      let target-elements = filter.elements
+      if target-elements == none {
+        assert(false, message: "elembic: element.show_: this filter appears to apply to any element (e.g. it's a 'not' or 'custom' filter). It must match only within a certain set of elements. Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
       }
       let base-data = (names: names)
 
@@ -1406,6 +1421,9 @@
   }
   assert(type(filter) == dictionary and filter-key in filter, message: "elembic: element.filtered: invalid filter, please use 'custom-element.with(...)' to generate a filter.")
   assert(type(rule) == function, message: "elembic: element.filtered: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
+  assert("elements" in filter, message: "elembic: element.filtered: this filter is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
+  assert(filter.elements != (:), message: "elembic: element.filtered: this filter appears to not be restricted to any elements and is thus impossible to match. It must apply to exactly one element (the one receiving the set rule). Consider using a different filter.")
+  assert(filter.elements != none, message: "elembic: element.filtered: this filter appears to apply to any element (e.g. it's a 'not' or 'custom' filter). It must match only within a certain set of elements. Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
 
   let rule = rule([]).children.last().value.rule
   let filtered-rule = ((prepared-rule-key): true, version: element-version, kind: "filtered", filter: filter, rule: rule, name: none, names: (), mode: rule.at("mode", default: auto))
@@ -1463,7 +1481,8 @@
   }
   assert(type(filter) == dictionary and filter-key in filter, message: "elembic: element.cond-set: invalid filter, please pass just 'custom-element' or use 'custom-element.with(...)' to generate a filter.")
   assert("elements" in filter, message: "elembic: element.cond-set: this filter is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
-  assert(filter.elements != (:), message: "elembic: element.cond-set: this filter appears to not be restricted to any elements. It must apply to exactly one element (the one receiving the set rule).")
+  assert(filter.elements != (:), message: "elembic: element.cond-set: this filter appears to not be restricted to any elements and is thus impossible to match. It must apply to exactly one element (the one receiving the set rule). Consider using a different filter.")
+  assert(filter.elements != none, message: "elembic: element.cond-set: this filter appears to apply to any element. It must apply to exactly one element (the one receiving the set rule). Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
   assert(filter.elements.len() == 1, message: "elembic: element.cond-set: this filter appears to apply to more than one element. It must apply to exactly one element (the one receiving the set rule).")
   let (eid, elem) = filter.elements.pairs().first()
 
