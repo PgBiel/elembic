@@ -111,8 +111,8 @@
   //     values: (4pt, orange, ...)  // list of all set values for this field (length = amount of times this field was changed)
   //                                 // only 'values' is used if possible, for efficiency. E.g.: values.sum(default: stroke())
   //     data: (                                   // list to associate each value with the real style chain index and name.
-  //       (index: 3, name: none, value: 4pt),     // If 'revoke' or 'reset' are used, this list is used instead
-  //       (index: 5, name: none, value: orange),  // so we can know which values were revoked.
+  //       (index: 3, name: none, names: (), value: 4pt),     // If 'revoke' or 'reset' are used, this list is used instead
+  //       (index: 5, name: none, names: (), value: orange),  // so we can know which values were revoked.
   //       ...
   //     )
   //   ),
@@ -534,14 +534,21 @@
         elements.insert(eid, (..default-data, chain: (args,)))
       }
 
-      if rule.name != none {
+      let names = if "names" in rule { rule.names } else if "name" in rule and rule.name != none { (rule.name,) } else { () }
+      let compat-name = none
+      if names != () {
         let element-data = elements.at(eid)
         let index = element-data.chain.len() - 1
+        compat-name = names.last()
 
         // Lazily fill the data chain with 'none'
+        // Add 'name' for compatibility with older elembic versions
         elements.at(eid).data-chain += (none,) * (index - element-data.data-chain.len())
-        elements.at(eid).data-chain.push((kind: "set", name: rule.name))
-        elements.at(eid).names.insert(rule.name, true)
+        elements.at(eid).data-chain.push((kind: "set", name: compat-name, names: names))
+
+        for rule-name in names {
+          elements.at(eid).names.insert(rule-name, true)
+        }
       }
 
       if fields.foldable-fields != (:) and args.keys().any(n => n in fields.foldable-fields) {
@@ -552,7 +559,7 @@
         for (field-name, fold-data) in fields.foldable-fields {
           if field-name in args {
             let value = args.at(field-name)
-            let value-data = (index: index, name: rule.name, value: value)
+            let value-data = (index: index, name: compat-name, names: names, value: value)
             if field-name in element-data.fold-chain {
               elements.at(eid).fold-chain.at(field-name).values.push(value)
               elements.at(eid).fold-chain.at(field-name).data.push(value-data)
@@ -571,6 +578,13 @@
         }
       }
     } else if kind == "revoke" {
+      let rule-names = if "names" in rule { rule.names } else if "name" in rule and rule.name != none { (rule.name,) } else { () }
+      let compat-name = if rule-names == () {
+        none
+      } else {
+        rule-names.last()
+      }
+
       for (name, element-data) in elements {
         // Forward-compatibility with newer elements
         if (
@@ -590,16 +604,25 @@
         // we shouldn't revoke names that come after us (inner rules).
         // Note that this potentially includes named revokes as well.
         if rule.revoking in element-data.names {
-          elements.at(name).revoke-chain.push((kind: "revoke", name: rule.name, index: element-data.chain.len(), revoking: rule.revoking))
+          elements.at(name).revoke-chain.push((kind: "revoke", name: compat-name, names: rule-names, index: element-data.chain.len(), revoking: rule.revoking))
 
-          if rule.name != none {
-            elements.at(name).names.insert(rule.name, true)
+          if rule-names != () {
+            for rule-name in rule-names {
+              elements.at(name).names.insert(rule-name, true)
+            }
           }
         }
       }
     } else if kind == "reset" {
       // Whether the list of elements that this reset applies to is restricted.
       let filtering = rule.eids != ()
+      let rule-names = if "names" in rule { rule.names } else if "name" in rule and rule.name != none { (rule.name,) } else { () }
+      let compat-name = if rule-names == () {
+        none
+      } else {
+        rule-names.last()
+      }
+
       for (name, element-data) in elements {
         // Forward-compatibility with newer elements
         if (
@@ -617,15 +640,17 @@
         // Can only revoke what's before us.
         // If this element has no rules, no need to add a reset.
         if (not filtering or name in rule.eids) and element-data.chain != () {
-          elements.at(name).revoke-chain.push((kind: "reset", name: rule.name, index: element-data.chain.len()))
+          elements.at(name).revoke-chain.push((kind: "reset", name: compat-name, names: rule-names, index: element-data.chain.len()))
 
-          if rule.name != none {
-            elements.at(name).names.insert(rule.name, true)
+          if rule-names != () {
+            for rule-name in rule-names {
+              elements.at(name).names.insert(rule-name, true)
+            }
           }
         }
       }
     } else if kind == "filtered" {
-      let (filter, rule: inner-rule, name) = rule
+      let (filter, rule: inner-rule, names) = rule
       if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
         assert(false, message: "elembic: element.filtered: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
       }
@@ -636,7 +661,7 @@
         // Likely a where filter
         ((filter.eid): (default-data: default-data))
       }
-      let base-data = (names: if name == none { () } else { (name,) })
+      let base-data = (names: names)
 
       for (eid, all-elem-data) in target-elements {
         // Forward-compatibility with newer elements
@@ -747,7 +772,7 @@
         }
       }
     } else if kind == "cond-set" {
-      let (filter, args, name, element) = rule
+      let (filter, args, names, element) = rule
       if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
         assert(false, message: "elembic: element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
       }
@@ -775,7 +800,7 @@
       }
 
       let index = elements.at(eid).chain.len()
-      let data = (names: if name == none { () } else { (name,) }, index: index)
+      let data = (names: names, index: index)
       elements.at(eid).cond-sets.filters.push(filter)
       elements.at(eid).cond-sets.args.push(args)
       elements.at(eid).cond-sets.data.push(data)
@@ -1205,7 +1230,7 @@
   let args = (elem.parse-args)(fields, include-required: false)
 
   prepare-rule(
-    ((prepared-rule-key): true, version: element-version, kind: "set", name: none, mode: auto, element: (eid: elem.eid, default-data: elem.default-data, fields: elem.fields), args: args)
+    ((prepared-rule-key): true, version: element-version, kind: "set", name: none, names: (), mode: auto, element: (eid: elem.eid, default-data: elem.default-data, fields: elem.fields), args: args)
   )
 }
 
@@ -1235,7 +1260,7 @@
   assert(type(rule) == function, message: "elembic: element.filtered: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
 
   let rule = rule([]).children.last().value.rule
-  let filtered-rule = ((prepared-rule-key): true, version: element-version, kind: "filtered", filter: filter, rule: rule, name: none, mode: rule.at("mode", default: auto))
+  let filtered-rule = ((prepared-rule-key): true, version: element-version, kind: "filtered", filter: filter, rule: rule, name: none, names: (), mode: rule.at("mode", default: auto))
   if rule.kind == "apply" {
     // Transpose filtered(filter, apply(a, b, c)) into apply(filtered(filter, a), filtered(filter, b), filtered(filter, c))
     let i = 0
@@ -1297,7 +1322,7 @@
   let args = (elem.parse-args)(fields, include-required: false)
 
   prepare-rule(
-    ((prepared-rule-key): true, version: element-version, kind: "cond-set", name: none, mode: auto, filter: filter, element: (eid: elem.eid, default-data: elem.default-data, fields: elem.fields), args: args)
+    ((prepared-rule-key): true, version: element-version, kind: "cond-set", name: none, names: (), mode: auto, filter: filter, element: (eid: elem.eid, default-data: elem.default-data, fields: elem.fields), args: args)
   )
 }
 
@@ -1428,25 +1453,43 @@
 /// - name (str): The name to give to the rule.
 /// - rule (function): The rule to apply this name to.
 /// -> function
-#let named(name, rule) = {
-  assert(type(name) == str, message: "elembic: element.named: rule name must be a string, not " + str(type(name)))
-  assert(name != "", message: "elembic: element.named: name must not be empty")
-  assert(type(rule) == function, message: "elembic: element.named: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
+#let named(..names, rule) = {
+  assert(names.named() == (:), message: "elembic: element.named: unexpected named arguments")
+  let names = names.pos()
+  assert(names != (), message: "elembic: element.named: expected at least two arguments (one or more names and a rule)")
+  assert(type(rule) == function, message: "elembic: element.named: last parameter is not a valid rule (not a function), please use functions such as 'set_' to create one.")
+  for name in names {
+    assert(type(name) == str, message: "elembic: element.named: rule name must be a string, not " + str(type(name)))
+    assert(name != "", message: "elembic: element.named: name must not be empty")
+  }
 
+  // For backwards compatibility when only one name was possible
+  let compat-name = names.last()
   let rule = rule([]).children.last().value.rule
   if rule.kind == "apply" {
     let i = 0
-    while i < rule.rules.len() {
-      let inner-rule = rule.rules.at(i)
+    for inner-rule in rule.rules {
       assert(inner-rule.kind in ("show", "set", "revoke", "reset", "filtered", "cond-set"), message: "elembic: element.named: can only name show, set, revoke, reset, filtered and cond-set rules at this moment, not '" + inner-rule.kind + "'")
 
-      rule.rules.at(i).insert("name", name)
+      rule.rules.at(i).insert("name", compat-name)
+
+      if "names" in inner-rule {
+        rule.rules.at(i).names += names
+      } else {
+        rule.rules.at(i).insert("names", names)
+      }
 
       i += 1
     }
   } else {
     assert(rule.kind in ("show", "set", "revoke", "reset", "filtered", "cond-set"), message: "elembic: element.named: can only name show, set, revoke, reset, filtered and cond-set rules at this moment, not '" + rule.kind + "'")
-    rule.insert("name", name)
+    rule.insert("name", compat-name)
+
+    if "names" in rule {
+      rule.names += names
+    } else {
+      rule.insert("names", names)
+    }
   }
 
   // Re-prepare the rule
@@ -1484,7 +1527,7 @@
   assert(type(name) == str, message: "elembic: element.revoke: rule name must be a string, not " + str(type(name)))
   assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "elembic: element.revoke: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
 
-  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "revoke", revoking: name, name: none, mode: mode))
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "revoke", revoking: name, name: none, names: (), mode: mode))
 }
 
 /// Temporarily revoke all active set rules for certain elements (or even all elements if none are specified).
@@ -1514,7 +1557,7 @@
   let filters = args.pos().map(it => if type(it) == function { data(it) } else { x })
   assert(filters.all(x => type(x) == dictionary and "eid" in x), message: "elembic: element.reset: invalid arguments, please provide a function or element data with at least an 'eid'")
 
-  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "reset", eids: filters.map(x => x.eid), name: none, mode: mode))
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "reset", eids: filters.map(x => x.eid), name: none, names: (), mode: mode))
 }
 
 // Stateful variants
