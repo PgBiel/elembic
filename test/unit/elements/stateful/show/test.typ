@@ -1,4 +1,4 @@
-// Test the "e.show_" rule.
+// Test the "e.show_" rule (stateful).
 
 #import "/test/unit/base.typ": empty
 #show: empty
