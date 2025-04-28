@@ -74,3 +74,28 @@
     assert.eq(test-state.get(), (48, 33, 22))
   }
 ]
+
+#[
+  #show: e.stateful.show_(wock, _ => panic())
+  #show: e.stateful.show_(wock, none)
+  #wock()
+]
+
+#[
+  #let test-state = state("test-string-exists", false)
+  #show "abc": test-state.update(true)
+  #show: e.stateful.show_(wock, _ => panic())
+  #show: e.stateful.show_(wock, "abc")
+  #wock()
+
+  #context assert(test-state.get())
+]
+
+#[
+  #let test-state = state("test-state-update-exists", false)
+  #show: e.stateful.show_(wock, _ => panic())
+  #show: e.stateful.show_(wock, test-state.update(true))
+  #wock()
+
+  #context assert(test-state.get())
+]

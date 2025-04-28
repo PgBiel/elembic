@@ -1317,15 +1317,21 @@
 /// ```
 ///
 /// - filter (filter): which element(s) to apply the rule to, with which fields etc.
-/// - callback (function): transformation function (content -> content)
+/// - callback (function | content | str | none): replacement content or transformation function (content -> content)
 /// receiving any matched elements and returning what to replace it with.
 /// -> function
-#let show_(filter, callback, mode: auto) = {
+#let show_(filter, replacement, mode: auto) = {
   if type(filter) == function {
     filter = filter(__elembic_data: special-data-values.get-where)
   }
   assert(type(filter) == dictionary and filter-key in filter, message: "elembic: element.show_: invalid filter, please use 'custom-element.with(...)' to generate a filter.")
-  assert(type(callback) == function, message: "elembic: element.show_: this is not a valid show rule callback (not a function 'it => content').")
+  assert(replacement == none or type(replacement) in (function, str, content), message: "elembic: element.show_: second parameter is not a valid show rule replacement or callback. Must be either a function 'it => content', or the content to unconditionally replace by (if it does not depend on the matched element). For example, you can write 'show: e.show_(elem, it => [*#it*])' to make an element bold, or 'show: e.show_(elem, [Hi])' to always replace it with the word 'Hi'.")
+
+  let callback = replacement
+  if type(replacement) != function {
+    replacement = [#replacement]
+    callback = it => replacement
+  }
 
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "show", filter: filter, callback: callback, name: none, names: (), mode: mode))
 }
