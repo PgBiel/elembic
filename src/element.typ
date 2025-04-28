@@ -1330,7 +1330,7 @@
   let callback = replacement
   if type(replacement) != function {
     replacement = [#replacement]
-    callback = it => replacement
+    callback = _ => replacement
   }
 
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "show", filter: filter, callback: callback, name: none, names: (), mode: mode))
