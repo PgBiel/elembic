@@ -2348,6 +2348,7 @@
         }
 
         let filter-revokes
+        let filter-first-active-index
         let editable-global-data
         if has-filters {
           // The closures inside context {} below will capture global-data,
@@ -2357,10 +2358,12 @@
           // match).
           editable-global-data = global-data
           filter-revokes = active-revokes
+          filter-first-active-index = first-active-index
         } else if has-cond-sets or has-show-rules {
           // No need for global data, but still need revokes to see which
           // conditional sets were revoked
           filter-revokes = active-revokes
+          filter-first-active-index = first-active-index
         }
 
         let cond-set-foldable-fields
@@ -2421,7 +2424,7 @@
                   let data = cond-sets.data.at(i)
                   if (
                     filter != none
-                    and (data.index == none or data.index >= first-active-index)
+                    and (data.index == none or data.index >= filter-first-active-index)
                     and data.names.all(n => n not in filter-revokes)
                     and verify-filter(synthesized-fields, eid, filter)
                   ) {
@@ -2461,7 +2464,7 @@
                   let data = filters.data.at(i)
                   if (
                     filter != none
-                    and (data.index == none or data.index >= first-active-index)
+                    and (data.index == none or data.index >= filter-first-active-index)
                     and data.names.all(n => n not in filter-revokes)
                     and verify-filter(synthesized-fields, eid, filter)
                   ) {
@@ -2494,7 +2497,7 @@
                   let data = show-rules.data.at(i)
                   if (
                     filter != none
-                    and (data.index == none or data.index >= first-active-index)
+                    and (data.index == none or data.index >= filter-first-active-index)
                     and data.names.all(n => n not in filter-revokes)
                     and verify-filter(synthesized-fields, eid, filter)
                   ) {
@@ -2608,7 +2611,7 @@
                 let data = cond-sets.data.at(i)
                 if (
                   filter != none
-                  and (data.index == none or data.index >= first-active-index)
+                  and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes)
                   and verify-filter(synthesized-fields, eid, filter)
                 ) {
@@ -2647,7 +2650,7 @@
                 let data = filters.data.at(i)
                 if (
                   filter != none
-                  and (data.index == none or data.index >= first-active-index)
+                  and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes)
                   and verify-filter(synthesized-fields, eid, filter)
                 ) {
@@ -2680,7 +2683,7 @@
                 let data = show-rules.data.at(i)
                 if (
                   filter != none
-                  and (data.index == none or data.index >= first-active-index)
+                  and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes)
                   and verify-filter(synthesized-fields, eid, filter)
                 ) {
