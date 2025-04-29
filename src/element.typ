@@ -711,7 +711,7 @@
         }
       }
     } else if kind == "show" {
-      let (filter, callback, name) = rule
+      let (filter, callback, names) = rule
       if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
         assert(false, message: "elembic: element.show_: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
       }
@@ -722,7 +722,7 @@
         // Likely a where filter
         ((filter.eid): (default-data: default-data))
       }
-      let base-data = (names: if name == none { () } else { (name,) })
+      let base-data = (names: names)
 
       for (eid, all-elem-data) in target-elements {
         // Forward-compatibility with newer elements
