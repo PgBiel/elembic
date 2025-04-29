@@ -1554,7 +1554,7 @@
   assert(args.named() == (:), message: "elembic: element.reset: unexpected named arguments")
   assert(mode == auto or mode == style-modes.normal or mode == style-modes.leaky or mode == style-modes.stateful, message: "elembic: element.reset: invalid mode, must be auto or e.style-modes.(normal / leaky / stateful)")
 
-  let filters = args.pos().map(it => if type(it) == function { data(it) } else { x })
+  let filters = args.pos().map(it => if type(it) == function { data(it) } else { it })
   assert(filters.all(x => type(x) == dictionary and "eid" in x), message: "elembic: element.reset: invalid arguments, please provide a function or element data with at least an 'eid'")
 
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "reset", eids: filters.map(x => x.eid), name: none, names: (), mode: mode))
