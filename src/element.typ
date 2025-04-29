@@ -1628,9 +1628,18 @@
     // (before reversing), with revoke 1 applying up to chain index B and revoke 2 up to index C,
     // then B <= C. This is enforced in 'prepare-rules' as we analyze revokes and push their
     // information to the chain in order (outer to inner / earlier to later).)
-    if revoke.kind == "revoke" and revoke.revoking not in active-revokes and (revoke.name == none or revoke.name not in active-revokes) {
+    let was-not-revoked = (
+      (
+        "names" not in revoke or revoke.names.all(n => n not in active-revokes)
+      )
+      and (
+        "names" in revoke or "name" in revoke and (revoke.name == none or revoke.name not in active-revokes)
+      )
+    )
+
+    if revoke.kind == "revoke" and revoke.revoking not in active-revokes and was-not-revoked {
       active-revokes.insert(revoke.revoking, revoke.index)
-    } else if revoke.kind == "reset" and (revoke.name == none or revoke.name not in active-revokes) {
+    } else if revoke.kind == "reset" and was-not-revoked {
       // Applying a reset, so we delete everything before this index and stop revoking since
       // any revokes before this reset won't count anymore.
       first-active-index = revoke.index
@@ -1668,7 +1677,10 @@
   if active-revokes != (:) {
     let i = first-active-index
     for data in data-chain {
-      if data != none and data.name in active-revokes and i < active-revokes.at(data.name) {
+      if data != none and (
+        "names" in data and data.names.any(n => n in active-revokes and i < active-revokes.at(n))
+        or "names" not in data and "name" in data and data.name in active-revokes and i < active-revokes.at(data.name)
+      ) {
         // Nullify changes at this stage
         chain.at(i) = (:)
       }
@@ -1677,7 +1689,12 @@
     }
 
     for (field-name, fold-data) in fold-chain {
-      let filtered-data = fold-data.data.filter(d => d.name == none or d.name not in active-revokes or d.index >= active-revokes.at(d.name))
+      let filtered-data = fold-data.data.filter(d => (
+        // Only keep data without a name in the revoked name map, or, if the
+        // name is there, then data that came after the name was revoked.
+        ("names" not in d or d.names.all(n => n not in active-revokes or d.index >= active-revokes.at(n)))
+        and ("names" in d or "name" not in d or (d.name == none or d.name not in active-revokes or d.index >= active-revokes.at(d.name)))
+      ))
       if filtered-data == () {
         _ = fold-chain.remove(field-name)
       } else {
