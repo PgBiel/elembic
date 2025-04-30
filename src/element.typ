@@ -1633,7 +1633,7 @@
         "names" not in revoke or revoke.names.all(n => n not in active-revokes)
       )
       and (
-        "names" in revoke or "name" in revoke and (revoke.name == none or revoke.name not in active-revokes)
+        "names" in revoke or "name" not in revoke or revoke.name == none or revoke.name not in active-revokes
       )
     )
 
