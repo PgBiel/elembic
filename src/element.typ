@@ -1769,7 +1769,7 @@
 /// #context {
 ///   // OK
 ///   assert(e.stateful.get(elem).fill == green)
-/// })
+/// }
 /// ```
 ///
 /// - receiver (function): function ('get' function) -> content
