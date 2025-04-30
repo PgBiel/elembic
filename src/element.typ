@@ -1471,24 +1471,24 @@
     for inner-rule in rule.rules {
       assert(inner-rule.kind in ("show", "set", "revoke", "reset", "filtered", "cond-set"), message: "elembic: element.named: can only name show, set, revoke, reset, filtered and cond-set rules at this moment, not '" + inner-rule.kind + "'")
 
-      rule.rules.at(i).insert("name", compat-name)
+      rule.rules.at(i).name = compat-name
 
       if "names" in inner-rule {
         rule.rules.at(i).names += names
       } else {
-        rule.rules.at(i).insert("names", names)
+        rule.rules.at(i).names = names
       }
 
       i += 1
     }
   } else {
     assert(rule.kind in ("show", "set", "revoke", "reset", "filtered", "cond-set"), message: "elembic: element.named: can only name show, set, revoke, reset, filtered and cond-set rules at this moment, not '" + rule.kind + "'")
-    rule.insert("name", compat-name)
+    rule.name = compat-name
 
     if "names" in rule {
       rule.names += names
     } else {
-      rule.insert("names", names)
+      rule.names = names
     }
   }
 
