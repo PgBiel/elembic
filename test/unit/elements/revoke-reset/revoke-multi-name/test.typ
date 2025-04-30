@@ -1,4 +1,4 @@
-/// Test 'reset' usage
+/// Test revoking set and revoking rules with multiple names
 
 #import "/test/unit/base.typ": empty
 #show: empty
