@@ -26,3 +26,8 @@
     assert.eq(get(wock).inner, [Hello!])
   }
 )
+
+#context {
+  assert.eq(e.stateful.get(wock).color, blue)
+  assert.eq(e.stateful.get(wock).inner, [Hello!])
+}

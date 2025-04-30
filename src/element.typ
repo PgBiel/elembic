@@ -1082,7 +1082,7 @@
 
         assert(
           global-data.stateful,
-          message: "elembic: element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
+          message: "elembic: element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
         )
 
         global-data += apply-rules(rules, elements: global-data.elements)
@@ -1754,6 +1754,40 @@
   // its default, or it is a required field which has no default and
   // thus it is not returned here since it can't be set.
   default-fields + folded-chain
+}
+
+/// Reads the current values of element fields after applying set rules.
+/// Must be in a context block.
+///
+/// This is a stateful version, which doesn't require a callback, but only
+/// works on stateful mode (less performant).
+///
+/// USAGE:
+/// ```typ
+/// #show: e.set_(elem, fill: green)
+/// // ...
+/// #context {
+///   // OK
+///   assert(e.stateful.get(elem).fill == green)
+/// })
+/// ```
+///
+/// - receiver (function): function ('get' function) -> content
+/// -> content
+#let stateful-get(element) = {
+  let chain = style-state.get()
+  let global-data = if chain == () {
+    default-global-data
+  } else {
+    chain.last()
+  }
+
+  assert(
+    global-data.stateful,
+    message: "elembic: stateful.get: cannot use this function without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.toggle(true)' somewhere above the 'context {}' in which this call happens, or at the top of the document to apply to all rules as well"
+  )
+
+  get-styles(element, elements: global-data.elements, use-routine: true)
 }
 
 /// Reads the current values of element fields after applying set rules.
