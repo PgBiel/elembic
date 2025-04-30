@@ -2485,7 +2485,7 @@
                   if (
                     filter != none
                     and (data.index == none or data.index >= filter-first-active-index)
-                    and data.names.all(n => n not in filter-revokes)
+                    and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
                     and verify-filter(synthesized-fields, eid, filter)
                   ) {
                     let args = cond-sets.args.at(i)
@@ -2525,7 +2525,7 @@
                   if (
                     filter != none
                     and (data.index == none or data.index >= filter-first-active-index)
-                    and data.names.all(n => n not in filter-revokes)
+                    and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
                     and verify-filter(synthesized-fields, eid, filter)
                   ) {
                     let rule = filters.rules.at(i)
@@ -2558,7 +2558,7 @@
                   if (
                     filter != none
                     and (data.index == none or data.index >= filter-first-active-index)
-                    and data.names.all(n => n not in filter-revokes)
+                    and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
                     and verify-filter(synthesized-fields, eid, filter)
                   ) {
                     final-rules.push(show-rules.callbacks.at(i))
@@ -2672,7 +2672,7 @@
                 if (
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
-                  and data.names.all(n => n not in filter-revokes)
+                  and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
                   and verify-filter(synthesized-fields, eid, filter)
                 ) {
                   let args = cond-sets.args.at(i)
@@ -2711,7 +2711,7 @@
                 if (
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
-                  and data.names.all(n => n not in filter-revokes)
+                  and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
                   and verify-filter(synthesized-fields, eid, filter)
                 ) {
                   let rule = filters.rules.at(i)
@@ -2744,7 +2744,7 @@
                 if (
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
-                  and data.names.all(n => n not in filter-revokes)
+                  and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
                   and verify-filter(synthesized-fields, eid, filter)
                 ) {
                   final-rules.push(show-rules.callbacks.at(i))
