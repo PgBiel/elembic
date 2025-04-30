@@ -17,6 +17,9 @@
   named: auto,
   synthesized: false,
   default: _missing,
+  folds: true,
+  internal: false,
+  meta: (:),
 ) = {
   assert(type(name) == str, message: "elembic: field: Field name must be a string, not " + str(type(name)))
 
@@ -24,6 +27,9 @@
   assert(doc == none or type(doc) == str, message: error-prefix + "'doc' must be none or a string (add documentation)")
   assert(type(synthesized) == bool, message: error-prefix + "'synthesized' must be a boolean (true: field is automatically synthesized and cannot be specified or overridden by the user; false: field can be manually specified and overridden by the user)")
   assert(type(required) == bool, message: error-prefix + "'required' must be a boolean")
+  assert(type(folds) == bool, message: error-prefix + "'folds' must be a boolean")
+  assert(type(internal) == bool, message: error-prefix + "'internal' must be a boolean")
+  assert(type(meta) == dictionary, message: error-prefix + "'meta' must be a dictionary")
   assert(named == auto or type(named) == bool, message: error-prefix + "'named' must be a boolean or auto")
   let typeinfo = {
     let (res, value) = types.validate(type_)
@@ -50,7 +56,7 @@
     value
   }
 
-  let fold = if not synthesized and "fold" in typeinfo and typeinfo.fold != none {
+  let fold = if folds and not synthesized and "fold" in typeinfo and typeinfo.fold != none {
     assert(typeinfo.fold == auto or type(typeinfo.fold) == function, message: error-prefix + "type '" + typeinfo.name + "' doesn't appear to have a valid fold field (must be auto or function)")
     let fold-default = if required {
       // No field default, use the type's own default to begin folding
@@ -91,6 +97,9 @@
     synthesized: synthesized,
     named: named,
     fold: fold,
+    folds: folds,
+    internal: internal,
+    meta: meta,
   )
 }
 

@@ -6,8 +6,8 @@
   "wock",
   display: it => {},
   fields: (
-    field("run", function, doc: "What to run", required: true),
-    field("color", color, doc: "The color", default: red),
+    field("run", function, doc: "What to run", required: true, folds: false),
+    field("color", color, doc: "The color", default: red, internal: true, meta: (a: 10)),
     field("inner", content, doc: "Inner stuff", default: [Hello!]),
   ),
   prefix: ""
@@ -22,3 +22,8 @@
 #assert.eq(wock-data.all-fields.run.doc, "What to run")
 #assert.eq(wock-data.all-fields.color.doc, "The color")
 #assert.eq(wock-data.all-fields.inner.doc, "Inner stuff")
+
+#assert.eq(wock-data.all-fields.run.folds, false)
+#assert.eq(wock-data.all-fields.color.folds, true)
+#assert.eq(wock-data.all-fields.color.internal, true)
+#assert.eq(wock-data.all-fields.color.meta, (a: 10))
