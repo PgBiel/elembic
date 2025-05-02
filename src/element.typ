@@ -351,7 +351,12 @@
   // - If operands is empty or has more than one element, something bad
   // happened. Otherwise, its only remaining element is the evaluated result of
   // the root filter.
+  //
+  // We also have an "op-stack" to indicate the current operation.
+  // The idea is to allow short circuiting when the latest operation is an AND
+  // or OR. Otherwise, the operation is ignored.
   let filter-stack = (filter,)
+  let op-stack = ()
   let operands = ()
   while filter-stack != () {
     let last = filter-stack.last()
@@ -359,9 +364,16 @@
       // Ensure we don't reach the parent operation until we have evaluated
       // each child operation.
       let new-operands = last.operands
+      op-stack.push((last.kind, filter-stack.len()))
       filter-stack.last().at(filter-key) = "visited"
-      filter-stack += new-operands
+      // In reverse order to pop the first operand first.
+      filter-stack += new-operands.rev()
       last = filter-stack.last()
+    }
+
+    if op-stack != () and op-stack.last().at(1) == filter-stack.len() {
+      // We are about to evaluate this operation.
+      _ = op-stack.pop()
     }
 
     let filter = filter-stack.pop()
@@ -380,23 +392,18 @@
       // stack.
       let applied-operands = operands.slice(first-applied-operand)
       let value = if kind == "and" {
-        // Reverse since we push from last to first operand, but from first
-        // to last group of operands, so the groups themselves are in the right
-        // order, but not the operands inside them.
-        //
-        // It is important we check operands in the correct order for
-        // short-circuiting to work.
-        //
-        // TODO: actually, operands are always evaluated, so the order doesn't
-        // really matter. Need to short-circuit in some other way.
-        applied-operands.all(c => c)
+        // Due to short-circuiting, a false would have failed earlier.
+        true
       } else if kind == "or" {
-        applied-operands.any(c => c)
+        // Due to short-circuiting, a true would have succeeded earlier.
+        false
       } else if kind == "not" {
         assert(applied-operands.len() == 1, message: "elembic: element.verify-filter: expected one child filter for 'not'")
+        operands = operands.slice(0, first-applied-operand)
         (filter.elements == none or eid in filter.elements) and not applied-operands.first()
       } else if kind == "xor" {
-        assert(operands.len() == 2, message: "elembic: element.verify-filter: expected two children filters for 'xor'")
+        assert(applied-operands.len() == 2, message: "elembic: element.verify-filter: expected two children filters for 'xor'")
+        operands = operands.slice(0, first-applied-operand)
         // Here the order doesn't matter, since we always need to evaluate both
         // XOR operands (no short-circuit).
         applied-operands.first() != applied-operands.at(1)
@@ -404,13 +411,27 @@
         assert(false, "elembic: element.verify-filter: unsupported filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
       }
 
-      operands = operands.slice(0, first-applied-operand)
       value
     } else {
       assert(false, "elembic: element.verify-filter: unsupported or invalid filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
     }
 
-    operands.push(value)
+    // Short-circuit: for certain operations, a specific value must stop all
+    // other operand filters from running.
+    let (current-op, op-pos) = if op-stack == () { (none, none) } else { op-stack.last() }
+    while current-op == "and" and value == false or current-op == "or" and value == true {
+      filter-stack = filter-stack.slice(0, op-pos)
+      _ = op-stack.pop()
+      if op-stack == () {
+        break
+      } else {
+        (current-op, op-pos) = op-stack.last()
+      }
+    }
+
+    if current-op not in ("and", "or") {
+      operands.push(value)
+    }
   }
 
   if operands.len() != 1 {
