@@ -385,33 +385,31 @@
       eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
     } else if kind == "custom" {
       (filter.elements == none or eid in filter.elements) and (filter.call)(fields, eid: eid, __please-use-var-args: true)
+    } else if kind == "and" {
+      // Due to short-circuiting, a false would have failed earlier.
+      true
+    } else if kind == "or" {
+      // Due to short-circuiting, a true would have succeeded earlier.
+      false
     } else if "operands" in filter {
       let operand-count = filter.operands.len()
       let first-applied-operand = operands.len() - operand-count
       // Operation requires N operands => take N operands from the top of the
       // stack.
       let applied-operands = operands.slice(first-applied-operand)
-      let value = if kind == "and" {
-        // Due to short-circuiting, a false would have failed earlier.
-        true
-      } else if kind == "or" {
-        // Due to short-circuiting, a true would have succeeded earlier.
-        false
-      } else if kind == "not" {
+      operands = operands.slice(0, first-applied-operand)
+
+      if kind == "not" {
         assert(applied-operands.len() == 1, message: "elembic: element.verify-filter: expected one child filter for 'not'")
-        operands = operands.slice(0, first-applied-operand)
         (filter.elements == none or eid in filter.elements) and not applied-operands.first()
       } else if kind == "xor" {
         assert(applied-operands.len() == 2, message: "elembic: element.verify-filter: expected two children filters for 'xor'")
-        operands = operands.slice(0, first-applied-operand)
         // Here the order doesn't matter, since we always need to evaluate both
         // XOR operands (no short-circuit).
         applied-operands.first() != applied-operands.at(1)
       } else {
         assert(false, "elembic: element.verify-filter: unsupported filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
       }
-
-      value
     } else {
       assert(false, "elembic: element.verify-filter: unsupported or invalid filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
     }
@@ -419,10 +417,12 @@
     // Short-circuit: for certain operations, a specific value must stop all
     // other operand filters from running.
     let (current-op, op-pos) = if op-stack == () { (none, none) } else { op-stack.last() }
-    while current-op == "and" and value == false or current-op == "or" and value == true {
+    while current-op == "and" and not value or current-op == "or" and value {
       filter-stack = filter-stack.slice(0, op-pos)
       _ = op-stack.pop()
       if op-stack == () {
+        current-op = none
+        op-pos = none
         break
       } else {
         (current-op, op-pos) = op-stack.last()
@@ -434,7 +434,7 @@
     }
   }
 
-  if operands.len() != 1 {
+  if operands.len() != 1 or op-stack != () {
     assert(false, message: "elembic: element.verify-filter: filter didn't receive enough operands.")
   }
 
