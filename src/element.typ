@@ -421,17 +421,17 @@
 }
 
 #let multi-operand-filter(kind: "", arg-count: none) = (..args) => {
-  assert(args.named() == (:), message: "filters: invalid named arguments given to '" + kind + "' filter constructor.")
+  assert(args.named() == (:), message: "elembic: filters: invalid named arguments given to '" + kind + "' filter constructor.")
   let filters = args.pos()
   if arg-count != none and filters.len() != arg-count {
-    assert(false, message: "filters: must give exactly " + str(arg-count) + " arguments to a '" + kind + "' filter constructor.")
+    assert(false, message: "elembic: filters: must give exactly " + str(arg-count) + " arguments to a '" + kind + "' filter constructor.")
   }
 
   filters = filters.map(filter => {
     if type(filter) == function {
       filter = filter(__elembic_data: special-data-values.get-where)
     }
-    assert(type(filter) == dictionary and filter-key in filter, message: "filters: invalid filter passed to '" + kind + "' constructor, please use 'custom-element.with(...)' to generate a filter.")
+    assert(type(filter) == dictionary and filter-key in filter, message: "elembic: filters: invalid filter passed to '" + kind + "' constructor, please use 'custom-element.with(...)' to generate a filter.")
     filter
   })
 
@@ -441,7 +441,7 @@
     let elements = none
 
     for filter in filters {
-      assert("elements" in filter, message: "filters.and: this filter operand is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
+      assert("elements" in filter, message: "elembic: filters.and: this filter operand is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
       if elements == none {
         elements = filter.elements
       } else if filter.elements != none {
@@ -466,7 +466,7 @@
         elements = none
         break
       } else if "elements" not in filter or type(filter.elements) != dictionary {
-        assert(false, message: "filters: invalid operand filter received by '" + kind + "' filter constructor\n\nhint: this filter was likely constructed with an old elembic version. Please update your packages.")
+        assert(false, message: "elembic: filters: invalid operand filter received by '" + kind + "' filter constructor\n\nhint: this filter was likely constructed with an old elembic version. Please update your packages.")
       }
       elements += filter.elements
     }
@@ -476,7 +476,7 @@
     // User will have to restrict it manually.
     none
   } else {
-    assert(false, "filters: internal error: invalid kind '" + kind + "'")
+    assert(false, "elembic: filters: internal error: invalid kind '" + kind + "'")
   }
 
   (
@@ -493,7 +493,7 @@
 #let not-filter = multi-operand-filter(kind: "not", arg-count: 1)
 #let xor-filter = multi-operand-filter(kind: "xor", arg-count: 2)
 #let custom-filter(callback) = {
-  assert(type(callback) == function, message: "filters.custom: 'callback' for custom filter must be a function (fields, eid: eid, ..) => bool.")
+  assert(type(callback) == function, message: "elembic: filters.custom: 'callback' for custom filter must be a function (fields, eid: eid, ..) => bool.")
 
   (
     (filter-key): true,
@@ -936,8 +936,8 @@
       }
     } else if kind == "cond-set" {
       let (filter, args, names, element) = rule
-      if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
-        assert(false, message: "elembic: element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+      if type(filter) != dictionary or "elements" not in filter or "kind" not in filter {
+        assert(false, message: "elembic: element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
       }
       let (eid,) = element
 
