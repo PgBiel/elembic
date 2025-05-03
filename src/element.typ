@@ -325,10 +325,13 @@
   if filter == none {
     return false
   }
-  if filter.kind == "where" {
+
+  if "__future" in filter and filter.__future.max-version <= element-version {
+      return (filter.__future.call)(fields, eid, filter, __future-version: element-version)
+  } else if filter.kind == "where" {
     return eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
-  } else if "__future" in filter and filter.__future.max-version <= element-version {
-    return (filter.__future.call)(fields, eid, filter, __future-version: element-version)
+  } else if filter.kind == "where-any" {
+    return eid in filter.fields-any and filter.fields-any.at(eid).any(f => f.pairs().all(((k, v)) => k in fields and fields.at(k) == v))
   }
 
   // Manually simulate a recursive algorithm.
@@ -391,6 +394,8 @@
       (filter.__future.call)(fields, eid: eid, filter: filter, __future-version: element-version)
     } else if kind == "where" {
       eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
+    } else if kind == "where-any" {
+      eid in filter.fields-any and filter.fields-any.at(eid).any(f => f.pairs().all(((k, v)) => k in fields and fields.at(k) == v))
     } else if kind == "custom" {
       (filter.elements == none or eid in filter.elements) and (filter.call)(fields, eid: eid, __please-use-var-args: true)
     } else if kind == "and" {
@@ -477,6 +482,12 @@
 
   let elements = none
   if kind == "and" {
+    let is-contradictory = false
+    // Merge where filters as an optimization
+    let where-fields = (:)
+    let where-eid = none
+    let may-merge-filters = filters != ()
+
     // Intersect elements.
     // Start accepting all elements and narrow it down from there.
     for filter in filters {
@@ -491,24 +502,95 @@
           }
         }
       }
+
+      if filter.kind == "where" and may-merge-filters {
+        if where-eid == none {
+          where-eid = filter.eid
+        } else if where-eid != filter.eid {
+          // More than one element to check will never match.
+          may-merge-filters = false
+          continue
+        }
+        let (eid, fields) = filter
+        if where-fields == (:) {
+          where-fields = fields
+        } else {
+          for (field, value) in fields {
+            if field in where-fields and value != where-fields.at(field) {
+              // and(elem.with(a: 1), elem.with(a: 2))
+              // impossible to match
+              may-merge-filters = false
+              break
+            }
+
+            where-fields.insert(field, value)
+          }
+        }
+      } else if may-merge-filters {
+        // Has a custom filter, don't merge
+        may-merge-filters = false
+      }
     }
+
+    if may-merge-filters and where-eid != none {
+      // and(elem, elem.with(a: 0), elem.with(b: 1))
+      return (
+        (filter-key): true,
+        element-version: element-version,
+        kind: "where",
+        eid: where-eid,
+        fields: where-fields,
+        elements: ((where-eid): elements.at(where-eid))
+      )
+    }
+
+    // Ensure the filters won't match on the wrong elements.
+    // Workaround for e.filters.and_(custom, element)
+    filters = filters.map(f => f + (elements: elements,))
 
     elements
   } else if kind == "or" or kind == "xor" {
     // Join together.
     elements = (:)
+    let may-merge-filters = kind == "or" and filters != ()
+    let wheres = (:)
+
     for filter in filters {
       if "elements" in filter and filter.elements == none {
         // OR(Any, ...) is always Any.
         // For XOR, we still have to check all operands so this would also be
         // Any.
         elements = none
-        break
       } else if "elements" not in filter or type(filter.elements) != dictionary {
         assert(false, message: "elembic: filters: invalid operand filter received by '" + kind + "' filter constructor\n\nhint: this filter was likely constructed with an old elembic version. Please update your packages.")
+      } else if elements != none {
+        elements += filter.elements
       }
-      elements += filter.elements
+
+      if may-merge-filters and filter.kind in ("where", "where-any") {
+        for (eid, fields) in if filter.kind == "where-any" { filter.fields-any } else { ((filter.eid): (filter.fields,)) } {
+          if eid in wheres {
+            wheres.at(eid) += fields
+          } else {
+            wheres.insert(eid, fields)
+          }
+        }
+      } else if may-merge-filters {
+        // Not all "where"
+        may-merge-filters = false
+      }
     }
+
+    if may-merge-filters {
+      return (
+        (filter-key): true,
+        element-version: element-version,
+        kind: "where-any",
+        fields-any: wheres,
+        elements: elements
+      )
+    }
+
     elements
   } else if kind == "not" {
     // No elements for NOT since it is unrestricted.
