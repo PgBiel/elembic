@@ -466,14 +466,19 @@
       filter = filter(__elembic_data: special-data-values.get-where)
     }
     assert(type(filter) == dictionary and filter-key in filter, message: "elembic: filters: invalid filter passed to '" + kind + "' constructor, please use 'custom-element.with(...)' to generate a filter.")
-    filter
-  })
 
-  let elements = if kind == "and" {
+    // Flatten "and", "or"
+    if filter.kind == kind and kind in ("and", "or") {
+      filter.operands
+    } else {
+      (filter,)
+    }
+  }).flatten()
+
+  let elements = none
+  if kind == "and" {
     // Intersect elements.
     // Start accepting all elements and narrow it down from there.
-    let elements = none
-
     for filter in filters {
       assert("elements" in filter, message: "elembic: filters.and: this filter operand is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
       if elements == none {
@@ -491,7 +496,7 @@
     elements
   } else if kind == "or" or kind == "xor" {
     // Join together.
-    let elements = (:)
+    elements = (:)
     for filter in filters {
       if "elements" in filter and filter.elements == none {
         // OR(Any, ...) is always Any.

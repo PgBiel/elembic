@@ -137,21 +137,45 @@
 
 // Test NOT, custom filters
 #show: e.reset()
-#show: e.cond-set(
-  e.filters.or_(
-    e.filters.and_(
-      wobble,
-      e.filters.custom((it, ..) => it.data.len() == 3)
+#[
+  #show: e.cond-set(
+    e.filters.or_(
+      e.filters.and_(
+        wobble,
+        e.filters.custom((it, ..) => it.data.len() == 3)
+      ),
+      e.filters.and_(
+        wobble,
+        e.filters.not_(wobble.with(data: "dont"))
+      ),
     ),
-    e.filters.and_(
-      wobble,
-      e.filters.not_(wobble.with(data: "dont"))
-    ),
-  ),
-  inner: [yay!]
-)
+    inner: [yay!]
+  )
 
-// Test custom and not
-#wobble(data: "dont", run: it => assert.eq(it.inner, [Hello!]))
-#wobble(data: "abc", run: it => assert.eq(it.inner, [yay!]))
-#wobble(data: "doit", run: it => assert.eq(it.inner, [yay!]))
+  // Test custom and not
+  #wobble(data: "dont", run: it => assert.eq(it.inner, [Hello!]))
+  #wobble(data: "abc", run: it => assert.eq(it.inner, [yay!]))
+  #wobble(data: "doit", run: it => assert.eq(it.inner, [yay!]))
+]
+
+// Test nested AND
+#[
+  #let nested-and = e.filters.and_(wobble, e.filters.and_(wobble.with(color: green), wobble.with(inner: [match me])))
+  #show: e.cond-set(nested-and, data: "matched!")
+
+  #wobble(color: green, inner: [match me], run: it => assert.eq(it.data, "matched!"))
+  #wobble(color: red, inner: [match me], run: it => assert.eq(it.data, "data"))
+  #wobble(color: green, inner: [don't match me], run: it => assert.eq(it.data, "data"))
+]
+
+// Test nested OR
+#[
+  #let nested-or = e.filters.or_(e.filters.and_(wibble, wobble), e.filters.or_(wobble.with(color: green), wobble.with(inner: [match me])))
+  #assert.eq(nested-or.operands.len(), 3)
+  #show: e.cond-set(nested-or, data: "matched!")
+
+  #wobble(color: green, inner: [match me], run: it => assert.eq(it.data, "matched!"))
+  #wobble(color: red, inner: [match me], run: it => assert.eq(it.data, "matched!"))
+  #wobble(color: green, inner: [don't match me], run: it => assert.eq(it.data, "matched!"))
+  #wobble(color: red, inner: [don't match me], run: it => assert.eq(it.data, "data"))
+]
