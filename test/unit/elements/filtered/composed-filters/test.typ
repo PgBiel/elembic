@@ -1,5 +1,4 @@
-
-/// Test filtered rules.
+/// Test filtered rules with composed filters.
 
 #import "/test/unit/base.typ": empty
 #show: empty
