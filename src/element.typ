@@ -83,6 +83,12 @@
   // this 'counter' by one each time.
   where-rule-count: 0,
 
+  // Some global settings changeable through set rules.
+  settings: (
+    // Whether non-stateful rules should default to leaky mode.
+    prefer-leaky: false,
+  ),
+
   // Per-element data (set rules and other style chain info).
   elements: (:)
 )
@@ -796,12 +802,17 @@
 }
 
 // Apply set and revoke rules to the current per-element data.
-#let apply-rules(rules, elements: none) = {
+#let apply-rules(rules, elements: none, settings: (:)) = {
+  let extra-output = (:)
   for rule in rules {
     if "__future" in rule and element-version <= rule.__future.max-version {
-      let output = (rule.__future.call)(rule, elements: elements, __future-version: element-version)
+      let output = (rule.__future.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+      extra-output += output
       if "elements" in output {
         elements = output.elements
+      }
+      if "settings" in output {
+        settings = output.settings
       }
       continue
     }
@@ -817,9 +828,13 @@
         and "set" in default-data.__future-rules
         and element-version <= default-data.__future-rules.set.max-version
       ) {
-        let output = (default-data.__future-rules.set.call)(rule, elements: elements, __future-version: element-version)
+        let output = (default-data.__future-rules.set.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+        extra-output += output
         if "elements" in output {
           elements = output.elements
+        }
+        if "settings" in output {
+          settings = output.settings
         }
         continue
       }
@@ -888,9 +903,13 @@
           and "revoke" in element-data.__future-rules
           and element-version <= element-data.__future-rules.revoke.max-version
         ) {
-          let output = (element-data.__future-rules.revoke.call)(rule, elements: elements, __future-version: element-version)
+          let output = (element-data.__future-rules.revoke.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          extra-output += output
           if "elements" in output {
             elements = output.elements
+          }
+          if "settings" in output {
+            settings = output.settings
           }
           continue
         }
@@ -926,9 +945,13 @@
           and "reset" in element-data.__future-rules
           and element-version <= element-data.__future-rules.reset.max-version
         ) {
-          let output = (element-data.__future-rules.reset.call)(rule, elements: elements, __future-version: element-version)
+          let output = (element-data.__future-rules.reset.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          extra-output += output
           if "elements" in output {
             elements = output.elements
+          }
+          if "settings" in output {
+            settings = output.settings
           }
           continue
         }
@@ -963,9 +986,13 @@
           and "filtered" in all-elem-data.default-data.__future-rules
           and element-version <= all-elem-data.default-data.__future-rules.filtered.max-version
         ) {
-          let output = (all-elem-data.default-data.__future-rules.filtered.call)(rule, elements: elements, __future-version: element-version)
+          let output = (all-elem-data.default-data.__future-rules.filtered.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          extra-output += output
           if "elements" in output {
             elements = output.elements
+          }
+          if "settings" in output {
+            settings = output.settings
           }
           continue
         }
@@ -1021,9 +1048,13 @@
           and "show_" in all-elem-data.default-data.__future-rules
           and element-version <= all-elem-data.default-data.__future-rules.show_.max-version
         ) {
-          let output = (all-elem-data.default-data.__future-rules.show_.call)(rule, elements: elements, __future-version: element-version)
+          let output = (all-elem-data.default-data.__future-rules.show_.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          extra-output += output
           if "elements" in output {
             elements = output.elements
+          }
+          if "settings" in output {
+            settings = output.settings
           }
           continue
         }
@@ -1074,9 +1105,13 @@
         and "cond-set" in default-data.__future-rules
         and element-version <= default-data.__future-rules.cond-set.max-version
       ) {
-        let output = (default-data.__future-rules.cond-set.call)(rule, elements: elements, __future-version: element-version)
+        let output = (default-data.__future-rules.cond-set.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+        extra-output += output
         if "elements" in output {
           elements = output.elements
+        }
+        if "settings" in output {
+          settings = output.settings
         }
         continue
       }
@@ -1117,7 +1152,7 @@
     }
   }
 
-  (elements: elements)
+  (..extra-output, elements: elements, settings: settings)
 }
 
 // Prepare rule(s), returning a function `doc => ...` to be used in
@@ -1375,7 +1410,11 @@
           message: "elembic: element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
         )
 
-        global-data += apply-rules(rules, elements: global-data.elements)
+        if "settings" not in global-data {
+          global-data.settings = default-global-data.settings
+        }
+
+        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
 
         chain.push(global-data)
         chain
@@ -1416,7 +1455,11 @@
           }
         }
 
-        global-data += apply-rules(rules, elements: global-data.elements)
+        if "settings" not in global-data {
+          global-data.settings = default-global-data.settings
+        }
+
+        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
 
         set bibliography(title: previous-bib-title)
         show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
@@ -1466,7 +1509,11 @@
           }
         }
 
-        global-data += apply-rules(rules, elements: global-data.elements)
+        if "settings" not in global-data {
+          global-data.settings = default-global-data.settings
+        }
+
+        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
 
         set bibliography(title: first-bib-title)
         show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
@@ -2861,6 +2908,7 @@
                     new-global-data += apply-rules(
                       if rule.kind == "apply" { rule.rules } else { (rule,) },
                       elements: new-global-data.elements,
+                      settings: new-global-data.at("settings", default: default-global-data.settings)
                     )
                   }
                   i += 1
@@ -3047,6 +3095,7 @@
                   new-global-data += apply-rules(
                     if rule.kind == "apply" { rule.rules } else { (rule,) },
                     elements: new-global-data.elements,
+                    settings: new-global-data.at("settings", default: default-global-data.settings)
                   )
                 }
                 i += 1
