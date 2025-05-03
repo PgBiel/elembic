@@ -409,8 +409,7 @@
       // Due to short-circuiting, a true would have succeeded earlier.
       false
     } else if "operands" in filter {
-      let operand-count = filter.operands.len()
-      let first-applied-operand = operands.len() - operand-count
+      let first-applied-operand = operands.len() - filter.operands.len()
       // Operation requires N operands => take N operands from the top of the
       // stack.
       let applied-operands = operands.slice(first-applied-operand)
@@ -486,7 +485,6 @@
 
   let elements = none
   if kind == "and" {
-    let is-contradictory = false
     // Merge where filters as an optimization
     let where-fields = (:)
     let where-eid = none
