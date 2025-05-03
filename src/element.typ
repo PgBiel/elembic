@@ -818,7 +818,15 @@
     }
 
     let kind = rule.kind
-    if kind == "set" {
+    if kind == "settings" {
+      let (write, transform) = rule
+      if write != none {
+        settings += rule.write
+      }
+      if transform == none {
+        settings = transform(settings)
+      }
+    } else if kind == "set" {
       let (element, args) = rule
       let (eid, default-data, fields) = element
 
@@ -1769,6 +1777,27 @@
   // Set this apply rule's mode as an optimization, but note that we have forcefully altered
   // its children's modes above.
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: mode))
+}
+
+#let settings(..args) = {
+  assert(args.pos() == (), message: "elembic: element.settings: unexpected positional args")
+  let args = args.named()
+  assert(args != (:), message: "elembic: element.settings: please specify some setting, e.g. e.settings(prefer-leaky: true)")
+
+  for (key, val) in args {
+    if key not in default-global-data.settings {
+      assert(false, message: "elembic: element.settings: invalid setting '" + key + "', valid keys are " + default-global-data.settings.keys().map(repr).join(", "))
+    }
+
+    // Lazy type-checking for now
+    // Can improve if structured types are needed later
+    let default-setting = default-global-data.settings.at(key)
+    if type(val) != type(default-setting) {
+      assert(false, message: "elembic: element.settings: expected type of '" + str(type(default-setting)) + "' for setting '" + key + "', got '" + str(type(val)) + "'")
+    }
+  }
+
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "settings", write: args, transform: none, mode: mode))
 }
 
 /// Name a certain rule. Use `e.apply` to name a group of rules.
