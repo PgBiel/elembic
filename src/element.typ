@@ -598,24 +598,28 @@
       assert(false, message: "elembic: element.select: expected a valid filter, such as 'custom-element' or 'custom-element.with(field-name: value, ...)', got " + base.typename(filter))
     }
 
-    if "eid" in filter {
-      if "sel" not in filter {
+    if "elements" not in filter {
+      assert(false, message: "elembic: element.select: invalid filter found while applying rule, as it did not have an 'elements' field: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
+    }
+
+    for (eid, elem-data) in filter.elements {
+      if "sel" not in elem-data {
         assert(false, message: "elembic: element.select: filter did not have the element's selector")
       }
-      if filter.eid in labels-by-eid and labels-by-eid.at(filter.eid) != filter.sel {
+      if elem-data.eid in labels-by-eid and labels-by-eid.at(elem-data.eid) != elem-data.sel {
         assert(false, message: "elembic: element.select: filter had a different selector from the others for the same element ID, check if you're not using conflicting library versions (could also be a bug)")
-      } else if filter.eid not in labels-by-eid {
-        labels-by-eid.insert(filter.eid, filter.sel)
       }
 
-      if filter.eid in filters-by-eid {
-        filters-by-eid.at(filter.eid).push((i, filter))
-      } else {
-        filters-by-eid.insert(filter.eid, ((i, filter),))
-        ordered-eids.push(filter.eid)
+      if elem-data.eid not in labels-by-eid {
+        labels-by-eid.insert(elem-data.eid, elem-data.sel)
       }
-    } else {
-      assert(false, message: "elembic: element.select: non-element-specific filters are not supported yet\n  hint: try removing this filter: " + repr(filter))
+
+      if elem-data.eid in filters-by-eid {
+        filters-by-eid.at(elem-data.eid).push((i, filter))
+      } else {
+        filters-by-eid.insert(elem-data.eid, ((i, filter),))
+        ordered-eids.push(elem-data.eid)
+      }
     }
     i += 1
   }
