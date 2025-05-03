@@ -384,11 +384,10 @@
     ) {
       // Ensure we don't reach the parent operation until we have evaluated
       // each child operation.
-      let new-operands = last.operands
       op-stack.push((last.kind, filter-stack.len() - 1))
       filter-stack.last().at(filter-key) = "visited"
       // In reverse order to pop the first operand first.
-      filter-stack += new-operands.rev()
+      filter-stack += last.operands.rev()
       last = filter-stack.last()
     }
 
