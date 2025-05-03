@@ -416,10 +416,10 @@
         // XOR operands (no short-circuit).
         applied-operands.first() != applied-operands.at(1)
       } else {
-        assert(false, "elembic: element.verify-filter: unsupported filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+        assert(false, message: "elembic: element.verify-filter: unsupported filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
       }
     } else {
-      assert(false, "elembic: element.verify-filter: unsupported or invalid filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+      assert(false, message: "elembic: element.verify-filter: unsupported or invalid filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
     }
 
     if op-stack != () and op-stack.last().at(1) == filter-stack.len() {
@@ -515,7 +515,7 @@
     // User will have to restrict it manually.
     none
   } else {
-    assert(false, "elembic: filters: internal error: invalid kind '" + kind + "'")
+    assert(false, message: "elembic: filters: internal error: invalid kind '" + kind + "'")
   }
 
   (
@@ -2477,7 +2477,7 @@
     if rule >= show-rules.len() {
       rule = show-rules.len() - 1
     } else if rule < 0 {
-      assert(false, "elembic: internal error: show rule index cannot be negative")
+      assert(false, message: "elembic: internal error: show rule index cannot be negative")
     }
 
     // Show rules are applied from last to first.
