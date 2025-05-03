@@ -336,11 +336,14 @@
   // recursive calls are limited and expensive.
   // We instead do the following:
   // - Have a stack of filters pending evaluation.
-  // - Have a stack of evaluation results (operands).
+  // - Have a stack of evaluation results (operands). This is only used for
+  // non-short circuiting operations (see below).
   // - Each time a filter is pushed to the pending stack, we push its operands
   // to the pending stack too, until the top of the stack has no further
   // operands, and mark the filter as "visited" so we don't add its operands
-  // again.
+  // again. Note that operands are always pushed in reverse for short circuit
+  // to work, since we have to evaluate - thus pop from the end - each operand
+  // in its original order.
   // - We evaluate each leaf filter (where or custom) and push their results to
   // 'operands' (in reverse order, from last to first).
   // - We then reach the filter that will use the latest N results from
@@ -352,9 +355,19 @@
   // happened. Otherwise, its only remaining element is the evaluated result of
   // the root filter.
   //
-  // We also have an "op-stack" to indicate the current operation.
+  // We also have an "op-stack" to indicate the latest operation whose operands
+  // were expanded into the filter stack.
+  //
   // The idea is to allow short circuiting when the latest operation is an AND
-  // or OR. Otherwise, the operation is ignored.
+  // or OR. Otherwise, the operation in op-stack is only used to indicate the
+  // latest operation doesn't short-circuit.
+  //
+  // It works as follows: we store the filter stack state in "op-stack"
+  // whenever we push an operation, such as and, or, xor etc. When the latest
+  // pushed operation is an "and" and the current filter returned false, we
+  // immediately restore the filter state at the "and" (ignore its other
+  // operands) and assign its value to "false". If it was an "or", we do the
+  // same if the current filter returned true, assigning its value to true.
   let filter-stack = (filter,)
   let op-stack = ()
   let operands = ()
@@ -364,16 +377,11 @@
       // Ensure we don't reach the parent operation until we have evaluated
       // each child operation.
       let new-operands = last.operands
-      op-stack.push((last.kind, filter-stack.len()))
+      op-stack.push((last.kind, filter-stack.len() - 1))
       filter-stack.last().at(filter-key) = "visited"
       // In reverse order to pop the first operand first.
       filter-stack += new-operands.rev()
       last = filter-stack.last()
-    }
-
-    if op-stack != () and op-stack.last().at(1) == filter-stack.len() {
-      // We are about to evaluate this operation.
-      _ = op-stack.pop()
     }
 
     let filter = filter-stack.pop()
@@ -412,6 +420,11 @@
       }
     } else {
       assert(false, "elembic: element.verify-filter: unsupported or invalid filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+    }
+
+    if op-stack != () and op-stack.last().at(1) == filter-stack.len() {
+      // We have just evaluated this operation.
+      _ = op-stack.pop()
     }
 
     // Short-circuit: for certain operations, a specific value must stop all
