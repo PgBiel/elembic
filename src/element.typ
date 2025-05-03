@@ -326,7 +326,7 @@
     return false
   }
 
-  if "__future" in filter and filter.__future.max-version <= element-version {
+  if "__future" in filter and element-version <= filter.__future.max-version {
       return (filter.__future.call)(fields, eid, filter, __future-version: element-version)
   } else if filter.kind == "where" {
     return eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
@@ -376,7 +376,12 @@
   let operands = ()
   while filter-stack != () {
     let last = filter-stack.last()
-    while last.at(filter-key) != "visited" and "operands" in last and last.operands != () {
+    while (
+      last.at(filter-key) != "visited"
+      and "operands" in last
+      and last.operands != ()
+      and ("__future" not in last or element-version > last.__future.max-version)
+    ) {
       // Ensure we don't reach the parent operation until we have evaluated
       // each child operation.
       let new-operands = last.operands
@@ -390,7 +395,7 @@
     let filter = filter-stack.pop()
     let (kind,) = filter
 
-    let value = if "__future" in filter and filter.__future.max-version <= element-version {
+    let value = if "__future" in filter and element-version <= filter.__future.max-version {
       (filter.__future.call)(fields, eid: eid, filter: filter, __future-version: element-version)
     } else if kind == "where" {
       eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
@@ -796,7 +801,7 @@
 // Apply set and revoke rules to the current per-element data.
 #let apply-rules(rules, elements: none) = {
   for rule in rules {
-    if "__future" in rule and rule.__future.max-version <= element-version {
+    if "__future" in rule and element-version <= rule.__future.max-version {
       let output = (rule.__future.call)(rule, elements: elements, __future-version: element-version)
       if "elements" in output {
         elements = output.elements
@@ -813,7 +818,7 @@
       if (
         "__future-rules" in default-data
         and "set" in default-data.__future-rules
-        and default-data.__future-rules.set.max-version <= element-version
+        and element-version <= default-data.__future-rules.set.max-version
       ) {
         let output = (default-data.__future-rules.set.call)(rule, elements: elements, __future-version: element-version)
         if "elements" in output {
@@ -884,7 +889,7 @@
         if (
           "__future-rules" in element-data
           and "revoke" in element-data.__future-rules
-          and element-data.__future-rules.revoke.max-version <= element-version
+          and element-version <= element-data.__future-rules.revoke.max-version
         ) {
           let output = (element-data.__future-rules.revoke.call)(rule, elements: elements, __future-version: element-version)
           if "elements" in output {
@@ -922,7 +927,7 @@
         if (
           "__future-rules" in element-data
           and "reset" in element-data.__future-rules
-          and element-data.__future-rules.reset.max-version <= element-version
+          and element-version <= element-data.__future-rules.reset.max-version
         ) {
           let output = (element-data.__future-rules.reset.call)(rule, elements: elements, __future-version: element-version)
           if "elements" in output {
@@ -959,7 +964,7 @@
         if (
           "__future-rules" in all-elem-data.default-data
           and "filtered" in all-elem-data.default-data.__future-rules
-          and all-elem-data.default-data.__future-rules.filtered.max-version <= element-version
+          and element-version <= all-elem-data.default-data.__future-rules.filtered.max-version
         ) {
           let output = (all-elem-data.default-data.__future-rules.filtered.call)(rule, elements: elements, __future-version: element-version)
           if "elements" in output {
@@ -1017,7 +1022,7 @@
         if (
           "__future-rules" in all-elem-data.default-data
           and "show_" in all-elem-data.default-data.__future-rules
-          and all-elem-data.default-data.__future-rules.show_.max-version <= element-version
+          and element-version <= all-elem-data.default-data.__future-rules.show_.max-version
         ) {
           let output = (all-elem-data.default-data.__future-rules.show_.call)(rule, elements: elements, __future-version: element-version)
           if "elements" in output {
@@ -1070,7 +1075,7 @@
       if (
         "__future-rules" in default-data
         and "cond-set" in default-data.__future-rules
-        and default-data.__future-rules.cond-set.max-version <= element-version
+        and element-version <= default-data.__future-rules.cond-set.max-version
       ) {
         let output = (default-data.__future-rules.cond-set.call)(rule, elements: elements, __future-version: element-version)
         if "elements" in output {
@@ -2662,7 +2667,7 @@
 
         if "__futures" in global-data {
           for future in global-data.__futures {
-            if "__future" in future and future.__future.max-version <= element-version {
+            if "__future" in future and element-version <= future.__future.max-version {
               global-data = (future.__future.call)(
                 global-data,
                 args: args,
@@ -2680,7 +2685,7 @@
 
         if "__futures" in element-data {
           for future in element-data.__futures {
-            if "__future" in future and future.__future.max-version <= element-version {
+            if "__future" in future and element-version <= future.__future.max-version {
               element-data = (future.__future.call)(
                 element-data,
                 args: args,
