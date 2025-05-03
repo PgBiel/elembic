@@ -2434,6 +2434,7 @@
     fields: fields,
     sel: lbl-show,
     routines: (
+      prepare-rule: prepare-rule,
       apply-rules: apply-rules,
       get-styles: get-styles,
       fold-styles: fold-styles,
