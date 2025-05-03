@@ -160,7 +160,9 @@
 
 // Test nested AND
 #[
-  #let nested-and = e.filters.and_(wobble, e.filters.and_(wobble.with(color: green), wobble.with(inner: [match me])))
+  #let true_ = e.filters.or_(wobble, e.filters.not_(wobble))
+  #let nested-and = e.filters.and_(true_, wobble, e.filters.and_(true_, wobble.with(color: green), wobble.with(inner: [match me])))
+  #assert.eq(nested-and.operands.len(), 5)
   #show: e.cond-set(nested-and, data: "matched!")
 
   #wobble(color: green, inner: [match me], run: it => assert.eq(it.data, "matched!"))
@@ -170,9 +172,32 @@
 
 // Test nested OR
 #[
-  #let nested-or = e.filters.or_(e.filters.and_(wibble, wobble), e.filters.or_(wobble.with(color: green), wobble.with(inner: [match me])))
-  #assert.eq(nested-or.operands.len(), 3)
+  #let nested-or = e.filters.or_(e.filters.and_(wibble, wobble), e.filters.or_(e.filters.and_(wibble, wobble), wobble.with(color: green), wobble.with(inner: [match me])))
+  #assert.eq(nested-or.operands.len(), 4)
   #show: e.cond-set(nested-or, data: "matched!")
+
+  #wobble(color: green, inner: [match me], run: it => assert.eq(it.data, "matched!"))
+  #wobble(color: red, inner: [match me], run: it => assert.eq(it.data, "matched!"))
+  #wobble(color: green, inner: [don't match me], run: it => assert.eq(it.data, "matched!"))
+  #wobble(color: red, inner: [don't match me], run: it => assert.eq(it.data, "data"))
+]
+
+// Test simplified AND
+#[
+  #let combined-and = e.filters.and_(e.filters.and_(wobble.with(color: green), wobble.with(inner: [match me])))
+  #assert.eq(combined-and, e.filters.and_(wobble.with(color: green, inner: [match me])))
+  #show: e.cond-set(combined-and, data: "matched!")
+
+  #wobble(color: green, inner: [match me], run: it => assert.eq(it.data, "matched!"))
+  #wobble(color: red, inner: [match me], run: it => assert.eq(it.data, "data"))
+  #wobble(color: green, inner: [don't match me], run: it => assert.eq(it.data, "data"))
+]
+
+// Test simplified OR
+#[
+  #let combined-or = e.filters.or_(e.filters.or_(wobble.with(color: green), wobble.with(inner: [match me])))
+  #assert.eq(combined-or.fields-any, ((e.eid(wobble)): ((color: green), (inner: [match me]))))
+  #show: e.cond-set(combined-or, data: "matched!")
 
   #wobble(color: green, inner: [match me], run: it => assert.eq(it.data, "matched!"))
   #wobble(color: red, inner: [match me], run: it => assert.eq(it.data, "matched!"))
