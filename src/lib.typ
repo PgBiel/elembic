@@ -2,6 +2,7 @@
 #import "fields.typ": field
 #import "pub/data.typ": *
 #import "pub/element.typ"
+#import "pub/filters.typ"
 #import "pub/parsing.typ"
 #import "pub/types.typ"
 #import "pub/leaky.typ"

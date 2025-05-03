@@ -322,17 +322,309 @@
 //
 // Assumes this filter already accepts this element, so eid is not checked.
 #let verify-filter(fields, eid, filter) = {
-  // TODO(filters): more complex filters
   if filter == none {
     return false
   }
-  if filter.kind == "where" {
-    eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
-  } else if "__future" in filter and filter.__future.max-version <= element-version {
-    (filter.__future.call)(fields, eid, filter, __future-version: element-version)
-  } else {
-    assert(false, "element/verify-filter: unsupported filter kind\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+
+  if "__future" in filter and element-version <= filter.__future.max-version {
+      return (filter.__future.call)(fields, eid, filter, __future-version: element-version)
+  } else if filter.kind == "where" {
+    return eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
+  } else if filter.kind == "where-any" {
+    return eid in filter.fields-any and filter.fields-any.at(eid).any(f => f.pairs().all(((k, v)) => k in fields and fields.at(k) == v))
   }
+
+  // Manually simulate a recursive algorithm.
+  // Normally, for OR(A, B), we could just call (verify(A), verify(B)), but
+  // recursive calls are limited and expensive.
+  // We instead do the following:
+  // - Have a stack of filters pending evaluation.
+  // - Have a stack of evaluation results (operands). This is only used for
+  // non-short circuiting operations (see below).
+  // - Each time a filter is pushed to the pending stack, we push its operands
+  // to the pending stack too, until the top of the stack has no further
+  // operands, and mark the filter as "visited" so we don't add its operands
+  // again. Note that operands are always pushed in reverse for short circuit
+  // to work, since we have to evaluate - thus pop from the end - each operand
+  // in its original order.
+  // - We evaluate each leaf filter (where or custom) and push their results to
+  // 'operands' (in reverse order, from last to first).
+  // - We then reach the filter that will use the latest N results from
+  // 'operands' and push that filter's evaluated result (e.g. AND of the latest
+  // two results) into 'operands'.
+  // - Repeat the process until the filter stack is empty (all evaluated) and
+  // operands has only a single element (for the root filter).
+  // - If operands is empty or has more than one element, something bad
+  // happened. Otherwise, its only remaining element is the evaluated result of
+  // the root filter.
+  //
+  // We also have an "op-stack" to indicate the latest operation whose operands
+  // were expanded into the filter stack.
+  //
+  // The idea is to allow short circuiting when the latest operation is an AND
+  // or OR. Otherwise, the operation in op-stack is only used to indicate the
+  // latest operation doesn't short-circuit.
+  //
+  // It works as follows: we store the filter stack state in "op-stack"
+  // whenever we push an operation, such as and, or, xor etc. When the latest
+  // pushed operation is an "and" and the current filter returned false, we
+  // immediately restore the filter state at the "and" (ignore its other
+  // operands) and assign its value to "false". If it was an "or", we do the
+  // same if the current filter returned true, assigning its value to true.
+  let filter-stack = (filter,)
+  let op-stack = ()
+  let operands = ()
+  while filter-stack != () {
+    let last = filter-stack.last()
+    while (
+      last.at(filter-key) != "visited"
+      and "operands" in last
+      and last.operands != ()
+      and ("__future" not in last or element-version > last.__future.max-version)
+    ) {
+      // Ensure we don't reach the parent operation until we have evaluated
+      // each child operation.
+      op-stack.push((last.kind, filter-stack.len() - 1))
+      filter-stack.last().at(filter-key) = "visited"
+      // In reverse order to pop the first operand first.
+      filter-stack += last.operands.rev()
+      last = filter-stack.last()
+    }
+
+    let filter = filter-stack.pop()
+    let (kind,) = filter
+
+    let value = if "__future" in filter and element-version <= filter.__future.max-version {
+      (filter.__future.call)(fields, eid: eid, filter: filter, __future-version: element-version)
+    } else if kind == "where" {
+      eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
+    } else if kind == "where-any" {
+      eid in filter.fields-any and filter.fields-any.at(eid).any(f => f.pairs().all(((k, v)) => k in fields and fields.at(k) == v))
+    } else if kind == "custom" {
+      (filter.elements == none or eid in filter.elements) and (filter.call)(fields, eid: eid, __please-use-var-args: true)
+    } else if kind == "and" {
+      // Due to short-circuiting, a false would have failed earlier.
+      true
+    } else if kind == "or" {
+      // Due to short-circuiting, a true would have succeeded earlier.
+      false
+    } else if "operands" in filter {
+      let first-applied-operand = operands.len() - filter.operands.len()
+      // Operation requires N operands => take N operands from the top of the
+      // stack.
+      let applied-operands = operands.slice(first-applied-operand)
+      operands = operands.slice(0, first-applied-operand)
+
+      if kind == "not" {
+        assert(applied-operands.len() == 1, message: "elembic: element.verify-filter: expected one child filter for 'not'")
+        (filter.elements == none or eid in filter.elements) and not applied-operands.first()
+      } else if kind == "xor" {
+        assert(applied-operands.len() == 2, message: "elembic: element.verify-filter: expected two children filters for 'xor'")
+        // Here the order doesn't matter, since we always need to evaluate both
+        // XOR operands (no short-circuit).
+        applied-operands.first() != applied-operands.at(1)
+      } else {
+        assert(false, message: "elembic: element.verify-filter: unsupported filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+      }
+    } else {
+      assert(false, message: "elembic: element.verify-filter: unsupported or invalid filter kind '" + kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
+    }
+
+    if op-stack != () and op-stack.last().at(1) == filter-stack.len() {
+      // We have just evaluated this operation.
+      _ = op-stack.pop()
+    }
+
+    // Short-circuit: for certain operations, a specific value must stop all
+    // other operand filters from running.
+    let (current-op, op-pos) = if op-stack == () { (none, none) } else { op-stack.last() }
+    while current-op == "and" and not value or current-op == "or" and value {
+      filter-stack = filter-stack.slice(0, op-pos)
+      _ = op-stack.pop()
+      if op-stack == () {
+        current-op = none
+        op-pos = none
+        break
+      } else {
+        (current-op, op-pos) = op-stack.last()
+      }
+    }
+
+    if current-op not in ("and", "or") {
+      operands.push(value)
+    }
+  }
+
+  if operands.len() != 1 or op-stack != () {
+    assert(false, message: "elembic: element.verify-filter: filter didn't receive enough operands.")
+  }
+
+  operands.first()
+}
+
+#let multi-operand-filter(kind: "", arg-count: none) = (..args) => {
+  assert(args.named() == (:), message: "elembic: filters: invalid named arguments given to '" + kind + "' filter constructor.")
+  let filters = args.pos()
+  if arg-count != none and filters.len() != arg-count {
+    assert(false, message: "elembic: filters: must give exactly " + str(arg-count) + " arguments to a '" + kind + "' filter constructor.")
+  }
+
+  filters = filters.map(filter => {
+    if type(filter) == function {
+      filter = filter(__elembic_data: special-data-values.get-where)
+    }
+    assert(type(filter) == dictionary and filter-key in filter, message: "elembic: filters: invalid filter passed to '" + kind + "' constructor, please use 'custom-element.with(...)' to generate a filter.")
+
+    // Flatten "and", "or"
+    if filter.kind == kind and kind in ("and", "or") {
+      filter.operands
+    } else {
+      (filter,)
+    }
+  }).flatten()
+
+  let elements = none
+  if kind == "and" {
+    // Merge where filters as an optimization
+    let where-fields = (:)
+    let where-eid = none
+    let may-merge-filters = filters != ()
+
+    // Intersect elements.
+    // Start accepting all elements and narrow it down from there.
+    for filter in filters {
+      assert("elements" in filter, message: "elembic: filters.and: this filter operand is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
+      if elements == none {
+        elements = filter.elements
+      } else if filter.elements != none {
+        // Cannot add new elements, only remove non-shared elements.
+        for (eid, elem-data) in elements {
+          if eid not in filter.elements {
+            _ = elements.remove(eid)
+          }
+        }
+      }
+
+      if filter.kind == "where" and may-merge-filters {
+        if where-eid == none {
+          where-eid = filter.eid
+        } else if where-eid != filter.eid {
+          // More than one element to check will never match.
+          may-merge-filters = false
+          continue
+        }
+        let (eid, fields) = filter
+        if where-fields == (:) {
+          where-fields = fields
+        } else {
+          for (field, value) in fields {
+            if field in where-fields and value != where-fields.at(field) {
+              // and(elem.with(a: 1), elem.with(a: 2))
+              // impossible to match
+              may-merge-filters = false
+              break
+            }
+
+            where-fields.insert(field, value)
+          }
+        }
+      } else if may-merge-filters {
+        // Has a custom filter, don't merge
+        may-merge-filters = false
+      }
+    }
+
+    if may-merge-filters and where-eid != none {
+      // and(elem, elem.with(a: 0), elem.with(b: 1))
+      return (
+        (filter-key): true,
+        element-version: element-version,
+        kind: "where",
+        eid: where-eid,
+        fields: where-fields,
+        elements: ((where-eid): elements.at(where-eid))
+      )
+    }
+
+    // Ensure the filters won't match on the wrong elements.
+    // Workaround for e.filters.and_(custom, element)
+    filters = filters.map(f => f + (elements: elements,))
+
+    elements
+  } else if kind == "or" or kind == "xor" {
+    // Join together.
+    elements = (:)
+    let may-merge-filters = kind == "or" and filters != ()
+    let wheres = (:)
+
+    for filter in filters {
+      if "elements" in filter and filter.elements == none {
+        // OR(Any, ...) is always Any.
+        // For XOR, we still have to check all operands so this would also be
+        // Any.
+        elements = none
+      } else if "elements" not in filter or type(filter.elements) != dictionary {
+        assert(false, message: "elembic: filters: invalid operand filter received by '" + kind + "' filter constructor\n\nhint: this filter was likely constructed with an old elembic version. Please update your packages.")
+      } else if elements != none {
+        elements += filter.elements
+      }
+
+      if may-merge-filters and filter.kind in ("where", "where-any") {
+        for (eid, fields) in if filter.kind == "where-any" { filter.fields-any } else { ((filter.eid): (filter.fields,)) } {
+          if eid in wheres {
+            wheres.at(eid) += fields
+          } else {
+            wheres.insert(eid, fields)
+          }
+        }
+      } else if may-merge-filters {
+        // Not all "where"
+        may-merge-filters = false
+      }
+    }
+
+    if may-merge-filters {
+      return (
+        (filter-key): true,
+        element-version: element-version,
+        kind: "where-any",
+        fields-any: wheres,
+        elements: elements
+      )
+    }
+
+    elements
+  } else if kind == "not" {
+    // No elements for NOT since it is unrestricted.
+    // User will have to restrict it manually.
+    none
+  } else {
+    assert(false, message: "elembic: filters: internal error: invalid kind '" + kind + "'")
+  }
+
+  (
+    (filter-key): true,
+    element-version: element-version,
+    kind: kind,
+    operands: filters,
+    elements: elements,
+  )
+}
+
+#let or-filter = multi-operand-filter(kind: "or")
+#let and-filter = multi-operand-filter(kind: "and")
+#let not-filter = multi-operand-filter(kind: "not", arg-count: 1)
+#let xor-filter = multi-operand-filter(kind: "xor", arg-count: 2)
+#let custom-filter(callback) = {
+  assert(type(callback) == function, message: "elembic: filters.custom: 'callback' for custom filter must be a function (fields, eid: eid, ..) => bool.")
+
+  (
+    (filter-key): true,
+    element-version: element-version,
+    kind: "custom",
+    call: callback,
+    elements: none
+  )
 }
 
 /// Prepare a selector similar to 'element.where(..args)'
@@ -395,24 +687,28 @@
       assert(false, message: "elembic: element.select: expected a valid filter, such as 'custom-element' or 'custom-element.with(field-name: value, ...)', got " + base.typename(filter))
     }
 
-    if "eid" in filter {
-      if "sel" not in filter {
+    if "elements" not in filter {
+      assert(false, message: "elembic: element.select: invalid filter found while applying rule, as it did not have an 'elements' field: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
+    }
+
+    for (eid, elem-data) in filter.elements {
+      if "sel" not in elem-data {
         assert(false, message: "elembic: element.select: filter did not have the element's selector")
       }
-      if filter.eid in labels-by-eid and labels-by-eid.at(filter.eid) != filter.sel {
+      if elem-data.eid in labels-by-eid and labels-by-eid.at(elem-data.eid) != elem-data.sel {
         assert(false, message: "elembic: element.select: filter had a different selector from the others for the same element ID, check if you're not using conflicting library versions (could also be a bug)")
-      } else if filter.eid not in labels-by-eid {
-        labels-by-eid.insert(filter.eid, filter.sel)
       }
 
-      if filter.eid in filters-by-eid {
-        filters-by-eid.at(filter.eid).push((i, filter))
-      } else {
-        filters-by-eid.insert(filter.eid, ((i, filter),))
-        ordered-eids.push(filter.eid)
+      if elem-data.eid not in labels-by-eid {
+        labels-by-eid.insert(elem-data.eid, elem-data.sel)
       }
-    } else {
-      assert(false, message: "elembic: element.select: non-element-specific filters are not supported yet\n  hint: try removing this filter: " + repr(filter))
+
+      if elem-data.eid in filters-by-eid {
+        filters-by-eid.at(elem-data.eid).push((i, filter))
+      } else {
+        filters-by-eid.insert(elem-data.eid, ((i, filter),))
+        ordered-eids.push(elem-data.eid)
+      }
     }
     i += 1
   }
@@ -502,7 +798,7 @@
 // Apply set and revoke rules to the current per-element data.
 #let apply-rules(rules, elements: none) = {
   for rule in rules {
-    if "__future" in rule and rule.__future.max-version <= element-version {
+    if "__future" in rule and element-version <= rule.__future.max-version {
       let output = (rule.__future.call)(rule, elements: elements, __future-version: element-version)
       if "elements" in output {
         elements = output.elements
@@ -519,7 +815,7 @@
       if (
         "__future-rules" in default-data
         and "set" in default-data.__future-rules
-        and default-data.__future-rules.set.max-version <= element-version
+        and element-version <= default-data.__future-rules.set.max-version
       ) {
         let output = (default-data.__future-rules.set.call)(rule, elements: elements, __future-version: element-version)
         if "elements" in output {
@@ -590,7 +886,7 @@
         if (
           "__future-rules" in element-data
           and "revoke" in element-data.__future-rules
-          and element-data.__future-rules.revoke.max-version <= element-version
+          and element-version <= element-data.__future-rules.revoke.max-version
         ) {
           let output = (element-data.__future-rules.revoke.call)(rule, elements: elements, __future-version: element-version)
           if "elements" in output {
@@ -628,7 +924,7 @@
         if (
           "__future-rules" in element-data
           and "reset" in element-data.__future-rules
-          and element-data.__future-rules.reset.max-version <= element-version
+          and element-version <= element-data.__future-rules.reset.max-version
         ) {
           let output = (element-data.__future-rules.reset.call)(rule, elements: elements, __future-version: element-version)
           if "elements" in output {
@@ -651,15 +947,12 @@
       }
     } else if kind == "filtered" {
       let (filter, rule: inner-rule, names) = rule
-      if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
-        assert(false, message: "elembic: element.filtered: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+      if type(filter) != dictionary or "elements" not in filter or "kind" not in filter {
+        assert(false, message: "elembic: element.filtered: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
       }
-      let target-elements = if "elements" in filter {
-        filter.elements
-      } else {
-        // Old version
-        // Likely a where filter
-        ((filter.eid): (default-data: default-data))
+      let target-elements = filter.elements
+      if target-elements == none {
+        assert(false, message: "elembic: element.filtered: this filter appears to apply to any element (e.g. it's a 'not' or 'custom' filter). It must match only within a certain set of elements. Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
       }
       let base-data = (names: names)
 
@@ -668,7 +961,7 @@
         if (
           "__future-rules" in all-elem-data.default-data
           and "filtered" in all-elem-data.default-data.__future-rules
-          and all-elem-data.default-data.__future-rules.filtered.max-version <= element-version
+          and element-version <= all-elem-data.default-data.__future-rules.filtered.max-version
         ) {
           let output = (all-elem-data.default-data.__future-rules.filtered.call)(rule, elements: elements, __future-version: element-version)
           if "elements" in output {
@@ -712,15 +1005,12 @@
       }
     } else if kind == "show" {
       let (filter, callback, names) = rule
-      if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
-        assert(false, message: "elembic: element.show_: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+      if type(filter) != dictionary or "elements" not in filter or "kind" not in filter {
+        assert(false, message: "elembic: element.show_: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
       }
-      let target-elements = if "elements" in filter {
-        filter.elements
-      } else {
-        // Old version
-        // Likely a where filter
-        ((filter.eid): (default-data: default-data))
+      let target-elements = filter.elements
+      if target-elements == none {
+        assert(false, message: "elembic: element.show_: this filter appears to apply to any element (e.g. it's a 'not' or 'custom' filter). It must match only within a certain set of elements. Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
       }
       let base-data = (names: names)
 
@@ -729,7 +1019,7 @@
         if (
           "__future-rules" in all-elem-data.default-data
           and "show_" in all-elem-data.default-data.__future-rules
-          and all-elem-data.default-data.__future-rules.show_.max-version <= element-version
+          and element-version <= all-elem-data.default-data.__future-rules.show_.max-version
         ) {
           let output = (all-elem-data.default-data.__future-rules.show_.call)(rule, elements: elements, __future-version: element-version)
           if "elements" in output {
@@ -773,8 +1063,8 @@
       }
     } else if kind == "cond-set" {
       let (filter, args, names, element) = rule
-      if type(filter) != dictionary or "eid" not in filter and "elements" not in filter or "kind" not in filter {
-        assert(false, message: "elembic: element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.")
+      if type(filter) != dictionary or "elements" not in filter or "kind" not in filter {
+        assert(false, message: "elembic: element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
       }
       let (eid,) = element
 
@@ -782,7 +1072,7 @@
       if (
         "__future-rules" in default-data
         and "cond-set" in default-data.__future-rules
-        and default-data.__future-rules.cond-set.max-version <= element-version
+        and element-version <= default-data.__future-rules.cond-set.max-version
       ) {
         let output = (default-data.__future-rules.cond-set.call)(rule, elements: elements, __future-version: element-version)
         if "elements" in output {
@@ -1258,6 +1548,9 @@
   }
   assert(type(filter) == dictionary and filter-key in filter, message: "elembic: element.filtered: invalid filter, please use 'custom-element.with(...)' to generate a filter.")
   assert(type(rule) == function, message: "elembic: element.filtered: this is not a valid rule (not a function), please use functions such as 'set_' to create one.")
+  assert("elements" in filter, message: "elembic: element.filtered: this filter is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
+  assert(filter.elements != (:), message: "elembic: element.filtered: this filter appears to not be restricted to any elements and is thus impossible to match. It must apply to exactly one element (the one receiving the set rule). Consider using a different filter.")
+  assert(filter.elements != none, message: "elembic: element.filtered: this filter appears to apply to any element (e.g. it's a 'not' or 'custom' filter). It must match only within a certain set of elements. Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
 
   let rule = rule([]).children.last().value.rule
   let filtered-rule = ((prepared-rule-key): true, version: element-version, kind: "filtered", filter: filter, rule: rule, name: none, names: (), mode: rule.at("mode", default: auto))
@@ -1315,7 +1608,8 @@
   }
   assert(type(filter) == dictionary and filter-key in filter, message: "elembic: element.cond-set: invalid filter, please pass just 'custom-element' or use 'custom-element.with(...)' to generate a filter.")
   assert("elements" in filter, message: "elembic: element.cond-set: this filter is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
-  assert(filter.elements != (:), message: "elembic: element.cond-set: this filter appears to not be restricted to any elements. It must apply to exactly one element (the one receiving the set rule).")
+  assert(filter.elements != (:), message: "elembic: element.cond-set: this filter appears to not be restricted to any elements and is thus impossible to match. It must apply to exactly one element (the one receiving the set rule). Consider using a different filter.")
+  assert(filter.elements != none, message: "elembic: element.cond-set: this filter appears to apply to any element. It must apply to exactly one element (the one receiving the set rule). Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
   assert(filter.elements.len() == 1, message: "elembic: element.cond-set: this filter appears to apply to more than one element. It must apply to exactly one element (the one receiving the set rule).")
   let (eid, elem) = filter.elements.pairs().first()
 
@@ -2267,7 +2561,7 @@
     if rule >= show-rules.len() {
       rule = show-rules.len() - 1
     } else if rule < 0 {
-      assert(false, "elembic: internal error: show rule index cannot be negative")
+      assert(false, message: "elembic: internal error: show rule index cannot be negative")
     }
 
     // Show rules are applied from last to first.
@@ -2370,7 +2664,7 @@
 
         if "__futures" in global-data {
           for future in global-data.__futures {
-            if "__future" in future and future.__future.max-version <= element-version {
+            if "__future" in future and element-version <= future.__future.max-version {
               global-data = (future.__future.call)(
                 global-data,
                 args: args,
@@ -2388,7 +2682,7 @@
 
         if "__futures" in element-data {
           for future in element-data.__futures {
-            if "__future" in future and future.__future.max-version <= element-version {
+            if "__future" in future and element-version <= future.__future.max-version {
               element-data = (future.__future.call)(
                 element-data,
                 args: args,
