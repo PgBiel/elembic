@@ -3028,8 +3028,6 @@
 
                 // Wrap in additional context so the counter step is detected
                 context {
-                  show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
-
                   let body = display(synthesized-fields)
                   let tag = tag
                   tag.body = body
@@ -3052,15 +3050,18 @@
                     ref-figure(tag, synthesized-fields, ref-label)
                   }
 
+                  let body = [#[#body#metadata(tag)]#lbl-show]
+                  if show-rules != () {
+                    body = apply-show-rules(body, show-rules.len() - 1, show-rules)
+                  }
+
                   if labeling {
-                    [#[#[#body#metadata(tag)#lbl-tag]#label#metadata(tag)]#lbl-show]
+                    [#[#body#metadata(tag)#lbl-tag]#label]
                   } else {
-                    [#[#body#metadata(tag)]#lbl-show]
+                    body
                   }
                 }
               } else {
-                show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
-
                 let body = display(synthesized-fields)
                 let tag = tag
                 tag.body = body
@@ -3081,10 +3082,15 @@
                   ref-figure(tag, synthesized-fields, ref-label)
                 }
 
+                let body = [#[#body#metadata(tag)]#lbl-show]
+                if show-rules != () {
+                  body = apply-show-rules(body, show-rules.len() - 1, show-rules)
+                }
+
                 if labeling {
-                  [#[#[#body#metadata(tag)#lbl-tag]#label#metadata(tag)]#lbl-show]
+                  [#[#body#metadata(tag)#lbl-tag]#label]
                 } else {
-                  [#[#body#metadata(tag)]#lbl-show]
+                  body
                 }
               }
 
@@ -3248,8 +3254,6 @@
 
               // Wrap in additional context so the counter step is detected
               context {
-                show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
-
                 let body = display(synthesized-fields)
                 let tag = tag
                 tag.body = body
@@ -3272,15 +3276,18 @@
                   ref-figure(tag, synthesized-fields, ref-label)
                 }
 
+                let body = [#[#body#metadata(tag)]#lbl-show]
+                if show-rules != () {
+                  body = apply-show-rules(body, show-rules.len() - 1, show-rules)
+                }
+
                 if labeling {
-                  [#[#[#body#metadata(tag)#lbl-tag]#label#metadata(tag)]#lbl-show]
+                  [#[#body#metadata(tag)#lbl-tag]#label]
                 } else {
-                  [#[#body#metadata(tag)]#lbl-show]
+                  body
                 }
               }
             } else {
-              show: if show-rules == () { it => it } else { it => apply-show-rules(it, show-rules.len() - 1, show-rules) }
-
               let body = display(synthesized-fields)
               tag.body = body
 
@@ -3300,10 +3307,15 @@
                 ref-figure(tag, synthesized-fields, ref-label)
               }
 
+              let body = [#[#body#metadata(tag)]#lbl-show]
+              if show-rules != () {
+                body = apply-show-rules(body, show-rules.len() - 1, show-rules)
+              }
+
               if labeling {
-                [#[#[#body#metadata(tag)#lbl-tag]#label#metadata(tag)]#lbl-show]
+                [#[#body#metadata(tag)#lbl-tag]#label]
               } else {
-                [#[#body#metadata(tag)]#lbl-show]
+                body
               }
             }
 

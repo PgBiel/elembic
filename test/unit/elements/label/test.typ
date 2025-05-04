@@ -16,6 +16,7 @@
 
 #show <badbad>: it => {
   let fields = e.fields(it)
+  assert.eq(fields.label, <badbad>)
   rect(width: 10pt, height: 5pt, fill: fields.color)
 }
 
