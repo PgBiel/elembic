@@ -821,7 +821,7 @@
     if kind == "settings" {
       let (write, transform) = rule
       if write != none {
-        settings += rule.write
+        settings += write
       }
       if transform == none {
         settings = transform(settings)
