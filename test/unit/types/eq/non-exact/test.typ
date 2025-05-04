@@ -126,3 +126,4 @@
 #assert(e.eq((a: elem("a", 10)), (a: elem2("a", 10))))
 #assert(not e.eq((a: elem("a", 10)), (a: elem2("a", 20))))
 #assert(not e.eq((a: elem("a", 10)), (b: elem2("a", 10))))
+#assert(not e.eq((b: elem("a", 10)), (a: elem2("a", 10))))
