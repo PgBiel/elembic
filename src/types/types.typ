@@ -263,51 +263,6 @@
 // A type which can be 'auto'.
 #let smart(type_) = union(type(auto), type_)
 
-// Force the type to only accept its outputs (disallow casting).
-// Folding is kept if possible.
-#let exact(type_) = {
-  let (res, type_) = validate(type_)
-  if not res {
-    assert(false, message: "elembic: types.exact: " + type_)
-  }
-
-  let key = if type(type_) == dictionary and "type-kind" in type_ { type_.type-kind } else { none }
-  if key == "union" {
-    // exact(union(A, B)) === union(exact(A), exact(B))
-    union(..type_.data.map(exact))
-  } else if type(type_) == type or key == "native" {
-    // exact(float) => can only pass float, not int
-    // exact(stroke) => can only pass stroke, not length, gradient, dict, etc.
-    let native-type = type_.data
-    (
-      ..native.generic-typeinfo(native-type),
-      default: if type_.default != () and type(type_.default.first()) == native-type { type_.default } else { () },
-
-      // Fold is an output => output function. The new output will be just (native-type,),
-      // so if fold previously accepted that native type, it will still accept it, so it
-      // can be kept.
-      fold: if native-type in type_.output { type_.fold } else { none },
-    )
-  } else if key == "literal" {
-    // exact(literal) => literal with base type modified to exact(base type)
-    assert(type(type_.data.value) not in (dictionary, array), message: "elembic: types.exact: exact literal types for custom types, dictionaries and arrays are not supported\n  hint: consider customizing the check function to recursively check fields if the performance is acceptable")
-
-    base.literal(type_.data.value, exact(type_.data.typeinfo))
-  } else if key == "any" or key == "never" {
-    // exact(any) => any (same)
-    // exact(never) => never (same)
-    type_
-  } else if key == "custom" {
-    if type_.data.pre-casts == none {
-      type_
-    } else {
-      type_.data.pre-casts
-    }
-  } else {
-    assert(false, message: "elembic: types.exact: unsupported type kind " + key + ", supported kinds include native types, literals, custom types, 'any' and 'never'")
-  }
-}
-
 #let array_(type_) = {
   let (res, param) = validate(type_)
   if not res {
@@ -390,3 +345,61 @@
 
 // Native paint type. Can be used for fills, strokes and so on.
 #let paint = union(color, gradient, native.tiling_)
+
+// Force the type to only accept its outputs (disallow casting).
+// Folding is kept if possible.
+#let exact(type_) = {
+  let (res, type_) = validate(type_)
+  if not res {
+    assert(false, message: "elembic: types.exact: " + type_)
+  }
+
+  let key = if type(type_) == dictionary and "type-kind" in type_ { type_.type-kind } else { none }
+  if key == "union" {
+    // exact(union(A, B)) === union(exact(A), exact(B))
+    union(..type_.data.map(exact))
+  } else if type(type_) == type or key == "native" {
+    // exact(float) => can only pass float, not int
+    // exact(stroke) => can only pass stroke, not length, gradient, dict, etc.
+    let native-type = type_.data
+    (
+      ..native.generic-typeinfo(native-type),
+      default: if type_.default != () and type(type_.default.first()) == native-type { type_.default } else { () },
+
+      // Fold is an output => output function. The new output will be just (native-type,),
+      // so if fold previously accepted that native type, it will still accept it, so it
+      // can be kept.
+      fold: if native-type in type_.output { type_.fold } else { none },
+    )
+  } else if key == "literal" {
+    // exact(literal) => literal with base type modified to exact(base type)
+    assert(type(type_.data.value) not in (dictionary, array), message: "elembic: types.exact: exact literal types for custom types, dictionaries and arrays are not supported\n  hint: consider customizing the check function to recursively check fields if the performance is acceptable")
+
+    base.literal(type_.data.value, exact(type_.data.typeinfo))
+  } else if key == "any" or key == "never" {
+    // exact(any) => any (same)
+    // exact(never) => never (same)
+    type_
+  } else if key == "collection" {
+    if "base" in type_.data and "parameters" in type_.data {
+      let base-kind = type_.data.base.at("type-kind", default: none)
+      if base-kind == "native" and type_.data.base.data == array {
+        array_(..type_.data.parameters.map(exact))
+      } else if base-kind == "native" and type_.data.base.data == dictionary {
+        dict_(..type_.data.parameters.map(exact))
+      } else {
+        assert(false, message: "elembic: types.exact: unknown collecton with type kind '" + base-kind + "'" + if base-kind == "native" { ", base native type '" + type_.data.base.name + "'" } else { "" })
+      }
+    } else {
+      assert(false, message: "elembic: types.exact: invalid collection given")
+    }
+  } else if key == "custom" {
+    if type_.data.pre-casts == none {
+      type_
+    } else {
+      type_.data.pre-casts
+    }
+  } else {
+    assert(false, message: "elembic: types.exact: unsupported type kind " + key + ", supported kinds include native types, literals, custom types, arrays, dicts, 'any' and 'never'")
+  }
+}
