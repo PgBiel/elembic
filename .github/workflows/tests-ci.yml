@@ -36,7 +36,7 @@ jobs:
           version: 1.0
 
       - name: 📥 Install typst-test from GitHub
-        uses: baptiste0928/cargo-install@v3.0.0
+        uses: baptiste0928/cargo-install@91c5da15570085bcde6f4d7aed98cb82d6769fd3
         with:
           crate: typst-test
           git: https://github.com/tingerrr/typst-test.git
