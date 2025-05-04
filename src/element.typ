@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key
+#import "data.typ": data, lbl-show-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key
 #import "fields.typ" as field-internals
 #import "types/base.typ"
 #import "types/types.typ"
@@ -1434,6 +1434,55 @@
       })
     }
 
+    // Leaky mode: one context resetting bibliography.title.
+    let leaky = [#context {
+      let global-data = if (
+        type(bibliography.title) == content
+        and bibliography.title.func() == metadata
+        and bibliography.title.at("label", default: none) == lbl-data-metadata
+      ) {
+        bibliography.title.value
+      } else {
+        // Bibliography title wasn't overridden, so we can use it
+        (..default-global-data, first-bib-title: bibliography.title)
+      }
+
+      if mode == auto and ("settings" not in global-data or "prefer-leaky" not in global-data.settings or not global-data.settings.prefer-leaky) {
+        // User didn't want leaky.
+        return none
+      }
+
+      let first-bib-title = global-data.first-bib-title
+      if first-bib-title == () {
+        // Nobody has seen the bibliography title (bug?)
+        first-bib-title = auto
+      }
+
+      if global-data.stateful {
+        if mode == auto {
+          // User chose something else.
+          // Don't even place anything.
+          return none
+        } else {
+          // Use state instead!
+          return {
+            set bibliography(title: first-bib-title)
+            stateful
+          }
+        }
+      }
+
+      if "settings" not in global-data {
+        global-data.settings = default-global-data.settings
+      }
+
+      global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
+
+      set bibliography(title: first-bib-title)
+      show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
+      doc
+    }#lbl-get]
+
     // Normal mode: two nested contexts: one retrieves the current bibliography title,
     // and the other retrieves the title with metadata and restores the current title.
     let normal = context {
@@ -1447,6 +1496,11 @@
           bibliography.title.value
         } else {
           (..default-global-data, first-bib-title: previous-bib-title)
+        }
+
+        if mode == auto and "settings" in global-data and "prefer-leaky" in global-data.settings and global-data.settings.prefer-leaky {
+          // User wants leaky.
+          return none
         }
 
         if global-data.stateful {
@@ -1477,56 +1531,14 @@
 
     let body = if mode == auto {
       // Allow user to pick the mode through show rules.
-      // Note: picking leaky mode has no effect on show rule depth, so we don't allow choosing
-      // it globally. For it to make a difference, it must be explicitly chosen.
       [#metadata((body: stateful))#lbl-stateful-mode]
       [#metadata((body: normal))#lbl-normal-mode]
+      [#leaky]
       [#normal#lbl-auto-mode]
     } else if mode == style-modes.normal {
       normal
     } else if mode == style-modes.leaky {
-      [#context {
-        let global-data = if (
-          type(bibliography.title) == content
-          and bibliography.title.func() == metadata
-          and bibliography.title.at("label", default: none) == lbl-data-metadata
-        ) {
-          bibliography.title.value
-        } else {
-          // Bibliography title wasn't overridden, so we can use it
-          (..default-global-data, first-bib-title: bibliography.title)
-        }
-
-        let first-bib-title = global-data.first-bib-title
-        if first-bib-title == () {
-          // Nobody has seen the bibliography title (bug?)
-          first-bib-title = auto
-        }
-
-        if global-data.stateful {
-          if mode == auto {
-            // User chose something else.
-            // Don't even place anything.
-            return none
-          } else {
-            // Use state instead!
-            return {
-              set bibliography(title: first-bib-title)
-              stateful
-            }
-          }
-        }
-
-        if "settings" not in global-data {
-          global-data.settings = default-global-data.settings
-        }
-
-        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
-
-        set bibliography(title: first-bib-title)
-        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
-        doc
-      }#lbl-get]
+      leaky
     } else if mode == style-modes.stateful {
       stateful
     } else {
