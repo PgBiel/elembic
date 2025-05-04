@@ -13,7 +13,9 @@
 #assert.eq(cast(5pt, types.union(color, float, types.union(content, length))), (true, 5pt))
 #assert.eq(cast(none, types.union(color, float, types.option(length))), (true, none))
 #assert.eq(cast(sym.eq, types.union(color, float, content, length)), (true, [#sym.eq]))
-#assert.eq(cast(none, types.union(color, float, content, length)), (false, "expected color, float, integer, content, string, symbol or length, found none"))
-#assert.eq(cast(5, types.union(color, types.exact(float), content, length)), (false, "expected color, float, content, string, symbol or length, found integer"))
+#assert.eq(cast(none, types.union(color, float, length)), (false, "expected color, float, integer or length, found none"))
+#assert.eq(cast(none, types.union(color, float, types.exact(content), length)), (false, "expected color, float, integer, content or length, found none"))
+#assert.eq(cast(none, types.union(color, float, content, length)), (true, []))
+#assert.eq(cast(5, types.union(color, types.exact(float), content, length)), (false, "expected color, float, none, content, string, symbol or length, found integer"))
 
 #assert.eq(default(types.union(color, 5, float)).first(), false)

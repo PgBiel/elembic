@@ -30,7 +30,7 @@
 #let content_ = (
   ..native-base,
   name: str(content),
-  input: (content, str, symbol),
+  input: (type(none), content, str, symbol),
   output: (content,),
   data: content,
   cast: x => [#x],

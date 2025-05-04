@@ -294,11 +294,11 @@
       and (casting-types.len() == 1 or typeinfos.find(t => t.input.any(i => i == "any" or i in casting-types.at(1).input)) == casting-types.at(1))
     ) {
       if casting-types.len() >= 2 {  // just float and content
-        x => if type(x) == int { float(x) } else if type(x) in (str, symbol) [#x] else { x }
+        x => if type(x) == int { float(x) } else if x == none or type(x) in (str, symbol) [#x] else { x }
       } else if first-casting-type.data == float {  // just float
         x => if type(x) == int { float(x) } else { x }
       } else { // just content
-        x => if type(x) in (str, symbol) { [#x] } else { x }
+        x => if x == none or type(x) in (str, symbol) { [#x] } else { x }
       }
     } else {
       // Generic case
