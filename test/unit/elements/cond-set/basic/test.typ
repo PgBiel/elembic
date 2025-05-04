@@ -13,6 +13,7 @@
   fields: (
     field("number", int, default: 5),
     field("data", str, default: "data"),
+    field("arr", e.types.array(str), default: ()),
     field("run", function, default: panic),
   ),
   prefix: ""
@@ -38,11 +39,32 @@
   wobble(run: it => assert.eq(it.inner, inner))
 }
 
-#show: e.cond-set(wibble.with(number: 10), data: "lol")
+#show: e.cond-set(wibble.with(number: 10), data: "lol", arr: ("new data",))
 
 #wibble(
   number: 10,
-  run: it => assert.eq(it.data, "lol"),
+  run: it => {
+    assert.eq(it.data, "lol")
+    assert.eq(it.arr, ("new data",))
+  }
+)
+
+#wibble(
+  number: 10,
+  data: "arg prioritized",
+  run: it => {
+    assert.eq(it.data, "arg prioritized")
+    assert.eq(it.arr, ("new data",))
+  }
+)
+
+#wibble(
+  number: 10,
+  arr: ("old data",),
+  run: it => {
+    assert.eq(it.data, "lol")
+    assert.eq(it.arr, ("new data", "old data"))
+  }
 )
 
 #wibble(

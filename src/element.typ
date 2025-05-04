@@ -2793,7 +2793,7 @@
         let show-rules = element-data.at("show-rules", default: default-data.show-rules)
         let has-show-rules = show-rules.callbacks != ()
 
-        let (constructed-fields, active-revokes, first-active-index) = if (
+        let (folded-fields, constructed-fields, active-revokes, first-active-index) = if (
           element-data.revoke-chain == default-data.revoke-chain
           and (
             foldable-fields == (:)
@@ -2801,9 +2801,10 @@
             and args.keys().all(f => f not in foldable-fields)
           )
         ) {
+          let folded-fields = default-fields + element-data.chain.sum(default: (:))
           // Sum the chain of dictionaries so that the latest value specified for
           // each property wins.
-          (default-fields + element-data.chain.sum(default: (:)) + args, (:), 0)
+          (folded-fields, folded-fields + args, (:), 0)
         } else {
           // We can't just sum, we need to filter and fold first.
           // Memoize this operation through a function.
@@ -2823,7 +2824,7 @@
             }
           }
 
-          (finalized-chain, active-revokes, first-active-index)
+          (outer-chain, finalized-chain, active-revokes, first-active-index)
         }
 
         let filter-revokes
@@ -2899,6 +2900,8 @@
               // Update synthesized fields BEFORE applying filters!
               if has-cond-sets {
                 let i = 0
+                let new-synthesized-fields = folded-fields // only add args later (args must win)
+                let affected-fields = (:)
                 for filter in cond-sets.filters {
                   let data = cond-sets.data.at(i)
                   if (
@@ -2907,26 +2910,56 @@
                     and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
                     and verify-filter(synthesized-fields, eid, filter)
                   ) {
-                    let args = cond-sets.args.at(i)
+                    let cond-args = cond-sets.args.at(i)
 
-                    let new-synthesized-fields = synthesized-fields + args
+                    affected-fields += cond-args
 
                     // Fold received arguments with existing fields or defaults
-                    for (field-name, fold-data) in cond-set-foldable-fields {
-                      if field-name in args {
-                        let outer = synthesized-fields.at(field-name, default: fold-data.default)
+                    for (field-name, value) in cond-args {
+                      if field-name in cond-set-foldable-fields {
+                        let fold-data = cond-set-foldable-fields.at(field-name)
+                        let outer = new-synthesized-fields.at(field-name, default: fold-data.default)
                         if fold-data.folder == auto {
-                          new-synthesized-fields.at(field-name) = outer + args.at(field-name)
+                          new-synthesized-fields.at(field-name) = outer + value
                         } else {
-                          new-synthesized-fields.at(field-name) = (fold-data.folder)(outer, args.at(field-name))
+                          new-synthesized-fields.at(field-name) = (fold-data.folder)(outer, value)
                         }
+                      } else {
+                        new-synthesized-fields.at(field-name) = value
                       }
                     }
-
-                    synthesized-fields = new-synthesized-fields
                   }
                   i += 1
                 }
+
+                // Fold args again (they must win).
+                for (field-name, value) in synthesized-fields {
+                  if field-name not in args {
+                    // Not an argument, and we already folded it with cond-sets
+                    // before (not a synthesized field), so stop.
+                    continue
+                  }
+
+                  if (
+                    field-name in affected-fields
+                    and field-name in cond-set-foldable-fields
+                    // If field was changed due to synthetization, don't allow
+                    // folding it further
+                    and constructed-fields.at(field-name) == value
+                  ) {
+                    let fold-data = cond-set-foldable-fields.at(field-name)
+                    if fold-data.folder == auto {
+                      new-synthesized-fields.at(field-name) += args.at(field-name)
+                    } else {
+                      new-synthesized-fields.at(field-name) = (fold-data.folder)(new-synthesized-fields.at(field-name), args.at(field-name))
+                    }
+                  } else {
+                    // Undo (give precedence to already folded and synthesized argument)
+                    new-synthesized-fields.at(field-name) = value
+                  }
+                }
+
+                synthesized-fields = new-synthesized-fields
               }
 
               let tag = tag
@@ -3087,6 +3120,8 @@
             // Update synthesized fields BEFORE applying filters!
             if has-cond-sets {
               let i = 0
+              let new-synthesized-fields = folded-fields // only add args later (args must win)
+              let affected-fields = (:)
               for filter in cond-sets.filters {
                 let data = cond-sets.data.at(i)
                 if (
@@ -3095,26 +3130,56 @@
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
                   and verify-filter(synthesized-fields, eid, filter)
                 ) {
-                  let args = cond-sets.args.at(i)
+                  let cond-args = cond-sets.args.at(i)
 
-                  let new-synthesized-fields = synthesized-fields + args
+                  affected-fields += cond-args
 
                   // Fold received arguments with existing fields or defaults
-                  for (field-name, fold-data) in cond-set-foldable-fields {
-                    if field-name in args {
-                      let outer = synthesized-fields.at(field-name, default: fold-data.default)
+                  for (field-name, value) in cond-args {
+                    if field-name in cond-set-foldable-fields {
+                      let fold-data = cond-set-foldable-fields.at(field-name)
+                      let outer = new-synthesized-fields.at(field-name, default: fold-data.default)
                       if fold-data.folder == auto {
-                        new-synthesized-fields.at(field-name) = outer + args.at(field-name)
+                        new-synthesized-fields.at(field-name) = outer + value
                       } else {
-                        new-synthesized-fields.at(field-name) = (fold-data.folder)(outer, args.at(field-name))
+                        new-synthesized-fields.at(field-name) = (fold-data.folder)(outer, value)
                       }
+                    } else {
+                      new-synthesized-fields.at(field-name) = value
                     }
                   }
-
-                  synthesized-fields = new-synthesized-fields
                 }
                 i += 1
               }
+
+              // Fold args again (they must win).
+              for (field-name, value) in synthesized-fields {
+                if field-name not in args {
+                  // Not an argument, and we already folded it with cond-sets
+                  // before (not a synthesized field), so stop.
+                  continue
+                }
+
+                if (
+                  field-name in affected-fields
+                  and field-name in cond-set-foldable-fields
+                  // If field was changed due to synthetization, don't allow
+                  // folding it further
+                  and constructed-fields.at(field-name) == value
+                ) {
+                  let fold-data = cond-set-foldable-fields.at(field-name)
+                  if fold-data.folder == auto {
+                    new-synthesized-fields.at(field-name) += args.at(field-name)
+                  } else {
+                    new-synthesized-fields.at(field-name) = (fold-data.folder)(new-synthesized-fields.at(field-name), args.at(field-name))
+                  }
+                } else {
+                  // Undo (give precedence to already folded and synthesized argument)
+                  new-synthesized-fields.at(field-name) = value
+                }
+              }
+
+              synthesized-fields = new-synthesized-fields
             }
 
             tag.fields = synthesized-fields
