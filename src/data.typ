@@ -390,3 +390,75 @@
     repr(value)
   }
 }
+
+/// Performs deep equality of values.
+///
+/// This is necessary to reliably compare instances of the same element or
+/// custom type, as well as data structures containing them such as arrays
+/// or dictionary, between different versions of the same element or type,
+/// by recursively comparing `eid(a) == eid(b) and fields(a) == fields(b)`.
+/// However, this is notably slower than Typst's built-in equality check.
+///
+/// - a (any): First value to compare.
+/// - b (any): Second value to compare.
+/// -> bool
+#let eq(a, b) = {
+  if a == b {
+    return true
+  }
+  if type(a) != type(b) or type(a) not in (content, dictionary, array) {
+    return false
+  }
+
+  // Recursively compare until we find a 'false'
+  let stack = ((a, b),)
+  while stack != () {
+    let (a, b) = stack.pop()
+    if a == b {
+      // Good!
+      continue
+    }
+    // Of course, the types must match
+    let a-type = type(a)
+    let b-type = type(b)
+    if a-type != b-type {
+      return false
+    }
+
+    if a-type == array {
+      if a.len() != b.len() {
+        return false
+      }
+      stack += array.zip(a, b)
+    } else if a-type != content and a-type != dictionary or eid(a) != eid(b) or tid(a) != tid(b) {
+      // Only have special checks for composed types and custom types and elements
+      // of same type
+      return false
+    } else if (a-type == content or a-type == dictionary) and eid(a) == eid(b) and tid(a) == tid(b) {
+      if eid(a) != none or tid(a) != none or a-type == content and a.func() == b.func() {
+        // Same element id, compare their fields
+        a = fields(a)
+        b = fields(b)
+        a-type = type(a)
+        if a-type != type(b) {
+          return false
+        }
+      }
+      if a-type != dictionary or a.len() != b.len() {
+        // Fields were invalid, or content didn't have the same func
+        return false
+      }
+      for (key, a-val) in a {
+        if key not in b {
+          return false
+        }
+        stack.push((a-val, b.at(key),))
+      }
+    } else {
+      return false
+    }
+  }
+
+  // No checks failed
+  true
+}
