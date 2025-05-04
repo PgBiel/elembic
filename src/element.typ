@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key
+#import "data.typ": data, lbl-show-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key
 #import "fields.typ" as field-internals
 #import "types/base.typ"
 #import "types/types.typ"
@@ -82,6 +82,12 @@
   // to apply a unique label to matching elements, so we increase
   // this 'counter' by one each time.
   where-rule-count: 0,
+
+  // Some global settings changeable through set rules.
+  settings: (
+    // Whether non-stateful rules should default to leaky mode.
+    prefer-leaky: false,
+  ),
 
   // Per-element data (set rules and other style chain info).
   elements: (:)
@@ -796,18 +802,31 @@
 }
 
 // Apply set and revoke rules to the current per-element data.
-#let apply-rules(rules, elements: none) = {
+#let apply-rules(rules, elements: none, settings: (:)) = {
+  let extra-output = (:)
   for rule in rules {
     if "__future" in rule and element-version <= rule.__future.max-version {
-      let output = (rule.__future.call)(rule, elements: elements, __future-version: element-version)
+      let output = (rule.__future.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+      extra-output += output
       if "elements" in output {
         elements = output.elements
+      }
+      if "settings" in output {
+        settings = output.settings
       }
       continue
     }
 
     let kind = rule.kind
-    if kind == "set" {
+    if kind == "settings" {
+      let (write, transform) = rule
+      if write != none {
+        settings += write
+      }
+      if transform != none {
+        settings = transform(settings)
+      }
+    } else if kind == "set" {
       let (element, args) = rule
       let (eid, default-data, fields) = element
 
@@ -817,9 +836,13 @@
         and "set" in default-data.__future-rules
         and element-version <= default-data.__future-rules.set.max-version
       ) {
-        let output = (default-data.__future-rules.set.call)(rule, elements: elements, __future-version: element-version)
+        let output = (default-data.__future-rules.set.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+        extra-output += output
         if "elements" in output {
           elements = output.elements
+        }
+        if "settings" in output {
+          settings = output.settings
         }
         continue
       }
@@ -888,9 +911,13 @@
           and "revoke" in element-data.__future-rules
           and element-version <= element-data.__future-rules.revoke.max-version
         ) {
-          let output = (element-data.__future-rules.revoke.call)(rule, elements: elements, __future-version: element-version)
+          let output = (element-data.__future-rules.revoke.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          extra-output += output
           if "elements" in output {
             elements = output.elements
+          }
+          if "settings" in output {
+            settings = output.settings
           }
           continue
         }
@@ -926,9 +953,13 @@
           and "reset" in element-data.__future-rules
           and element-version <= element-data.__future-rules.reset.max-version
         ) {
-          let output = (element-data.__future-rules.reset.call)(rule, elements: elements, __future-version: element-version)
+          let output = (element-data.__future-rules.reset.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          extra-output += output
           if "elements" in output {
             elements = output.elements
+          }
+          if "settings" in output {
+            settings = output.settings
           }
           continue
         }
@@ -963,9 +994,13 @@
           and "filtered" in all-elem-data.default-data.__future-rules
           and element-version <= all-elem-data.default-data.__future-rules.filtered.max-version
         ) {
-          let output = (all-elem-data.default-data.__future-rules.filtered.call)(rule, elements: elements, __future-version: element-version)
+          let output = (all-elem-data.default-data.__future-rules.filtered.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          extra-output += output
           if "elements" in output {
             elements = output.elements
+          }
+          if "settings" in output {
+            settings = output.settings
           }
           continue
         }
@@ -1021,9 +1056,13 @@
           and "show_" in all-elem-data.default-data.__future-rules
           and element-version <= all-elem-data.default-data.__future-rules.show_.max-version
         ) {
-          let output = (all-elem-data.default-data.__future-rules.show_.call)(rule, elements: elements, __future-version: element-version)
+          let output = (all-elem-data.default-data.__future-rules.show_.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          extra-output += output
           if "elements" in output {
             elements = output.elements
+          }
+          if "settings" in output {
+            settings = output.settings
           }
           continue
         }
@@ -1074,9 +1113,13 @@
         and "cond-set" in default-data.__future-rules
         and element-version <= default-data.__future-rules.cond-set.max-version
       ) {
-        let output = (default-data.__future-rules.cond-set.call)(rule, elements: elements, __future-version: element-version)
+        let output = (default-data.__future-rules.cond-set.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+        extra-output += output
         if "elements" in output {
           elements = output.elements
+        }
+        if "settings" in output {
+          settings = output.settings
         }
         continue
       }
@@ -1117,7 +1160,7 @@
     }
   }
 
-  (elements: elements)
+  (..extra-output, elements: elements, settings: settings)
 }
 
 // Prepare rule(s), returning a function `doc => ...` to be used in
@@ -1375,7 +1418,11 @@
           message: "elembic: element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
         )
 
-        global-data += apply-rules(rules, elements: global-data.elements)
+        if "settings" not in global-data {
+          global-data.settings = default-global-data.settings
+        }
+
+        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
 
         chain.push(global-data)
         chain
@@ -1386,6 +1433,55 @@
         chain
       })
     }
+
+    // Leaky mode: one context resetting bibliography.title.
+    let leaky = [#context {
+      let global-data = if (
+        type(bibliography.title) == content
+        and bibliography.title.func() == metadata
+        and bibliography.title.at("label", default: none) == lbl-data-metadata
+      ) {
+        bibliography.title.value
+      } else {
+        // Bibliography title wasn't overridden, so we can use it
+        (..default-global-data, first-bib-title: bibliography.title)
+      }
+
+      if mode == auto and ("settings" not in global-data or "prefer-leaky" not in global-data.settings or not global-data.settings.prefer-leaky) {
+        // User didn't want leaky.
+        return none
+      }
+
+      let first-bib-title = global-data.first-bib-title
+      if first-bib-title == () {
+        // Nobody has seen the bibliography title (bug?)
+        first-bib-title = auto
+      }
+
+      if global-data.stateful {
+        if mode == auto {
+          // User chose something else.
+          // Don't even place anything.
+          return none
+        } else {
+          // Use state instead!
+          return {
+            set bibliography(title: first-bib-title)
+            stateful
+          }
+        }
+      }
+
+      if "settings" not in global-data {
+        global-data.settings = default-global-data.settings
+      }
+
+      global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
+
+      set bibliography(title: first-bib-title)
+      show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
+      doc
+    }#lbl-get]
 
     // Normal mode: two nested contexts: one retrieves the current bibliography title,
     // and the other retrieves the title with metadata and restores the current title.
@@ -1402,6 +1498,11 @@
           (..default-global-data, first-bib-title: previous-bib-title)
         }
 
+        if mode == auto and "settings" in global-data and "prefer-leaky" in global-data.settings and global-data.settings.prefer-leaky {
+          // User wants leaky.
+          return none
+        }
+
         if global-data.stateful {
           if mode == auto {
             // User chose something else.
@@ -1416,7 +1517,11 @@
           }
         }
 
-        global-data += apply-rules(rules, elements: global-data.elements)
+        if "settings" not in global-data {
+          global-data.settings = default-global-data.settings
+        }
+
+        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
 
         set bibliography(title: previous-bib-title)
         show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
@@ -1426,52 +1531,14 @@
 
     let body = if mode == auto {
       // Allow user to pick the mode through show rules.
-      // Note: picking leaky mode has no effect on show rule depth, so we don't allow choosing
-      // it globally. For it to make a difference, it must be explicitly chosen.
       [#metadata((body: stateful))#lbl-stateful-mode]
       [#metadata((body: normal))#lbl-normal-mode]
+      [#leaky]
       [#normal#lbl-auto-mode]
     } else if mode == style-modes.normal {
       normal
     } else if mode == style-modes.leaky {
-      [#context {
-        let global-data = if (
-          type(bibliography.title) == content
-          and bibliography.title.func() == metadata
-          and bibliography.title.at("label", default: none) == lbl-data-metadata
-        ) {
-          bibliography.title.value
-        } else {
-          // Bibliography title wasn't overridden, so we can use it
-          (..default-global-data, first-bib-title: bibliography.title)
-        }
-
-        let first-bib-title = global-data.first-bib-title
-        if first-bib-title == () {
-          // Nobody has seen the bibliography title (bug?)
-          first-bib-title = auto
-        }
-
-        if global-data.stateful {
-          if mode == auto {
-            // User chose something else.
-            // Don't even place anything.
-            return none
-          } else {
-            // Use state instead!
-            return {
-              set bibliography(title: first-bib-title)
-              stateful
-            }
-          }
-        }
-
-        global-data += apply-rules(rules, elements: global-data.elements)
-
-        set bibliography(title: first-bib-title)
-        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
-        doc
-      }#lbl-get]
+      leaky
     } else if mode == style-modes.stateful {
       stateful
     } else {
@@ -1724,6 +1791,27 @@
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: mode))
 }
 
+#let settings(..args, mode: auto) = {
+  assert(args.pos() == (), message: "elembic: element.settings: unexpected positional args")
+  let args = args.named()
+  assert(args != (:), message: "elembic: element.settings: please specify some setting, e.g. e.settings(prefer-leaky: true)")
+
+  for (key, val) in args {
+    if key not in default-global-data.settings {
+      assert(false, message: "elembic: element.settings: invalid setting '" + key + "', valid keys are " + default-global-data.settings.keys().map(repr).join(", "))
+    }
+
+    // Lazy type-checking for now
+    // Can improve if structured types are needed later
+    let default-setting = default-global-data.settings.at(key)
+    if type(val) != type(default-setting) {
+      assert(false, message: "elembic: element.settings: expected type of '" + str(type(default-setting)) + "' for setting '" + key + "', got '" + str(type(val)) + "'")
+    }
+  }
+
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "settings", write: args, transform: none, mode: mode))
+}
+
 /// Name a certain rule. Use `e.apply` to name a group of rules.
 /// This is used to be able to revoke the rule later with `e.revoke`.
 ///
@@ -1861,6 +1949,7 @@
 #let stateful-cond-set(..args) = {
   apply(cond-set(..args), mode: style-modes.stateful)
 }
+#let stateful-settings = settings.with(mode: style-modes.stateful)
 #let stateful-apply = apply.with(mode: style-modes.stateful)
 #let stateful-show = show_.with(mode: style-modes.stateful)
 #let stateful-revoke = revoke.with(mode: style-modes.stateful)
@@ -1873,6 +1962,7 @@
 #let leaky-cond-set(..args) = {
   apply(cond-set(..args), mode: style-modes.leaky)
 }
+#let leaky-settings = settings.with(mode: style-modes.leaky)
 #let leaky-apply = apply.with(mode: style-modes.leaky)
 #let leaky-show = show_.with(mode: style-modes.leaky)
 #let leaky-revoke = revoke.with(mode: style-modes.leaky)
@@ -2434,6 +2524,7 @@
     fields: fields,
     sel: lbl-show,
     routines: (
+      prepare-rule: prepare-rule,
       apply-rules: apply-rules,
       get-styles: get-styles,
       fold-styles: fold-styles,
@@ -2860,6 +2951,7 @@
                     new-global-data += apply-rules(
                       if rule.kind == "apply" { rule.rules } else { (rule,) },
                       elements: new-global-data.elements,
+                      settings: new-global-data.at("settings", default: default-global-data.settings)
                     )
                   }
                   i += 1
@@ -3046,6 +3138,7 @@
                   new-global-data += apply-rules(
                     if rule.kind == "apply" { rule.rules } else { (rule,) },
                     elements: new-global-data.elements,
+                    settings: new-global-data.at("settings", default: default-global-data.settings)
                   )
                 }
                 i += 1

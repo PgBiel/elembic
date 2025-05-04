@@ -50,6 +50,7 @@
 
 #let lbl-stateful-mode = <__elembic_element_stateful_mode>
 #let lbl-normal-mode = <__elembic_element_normal_mode>
+#let lbl-leaky-mode = <__elembic_element_leaky_mode>
 #let lbl-auto-mode = <__elembic_element_auto_mode>
 
 // Prefix for labels added by 'select' to matched elements.
