@@ -430,10 +430,9 @@
         return false
       }
       stack += array.zip(a, b)
-    } else if a-type != content and a-type != dictionary or eid(a) != eid(b) or tid(a) != tid(b) {
-      // Only have special checks for composed types and custom types and elements
-      // of same type
-      return false
+
+    // Only have special checks for composed types and custom types and elements
+    // of same type
     } else if (a-type == content or a-type == dictionary) and eid(a) == eid(b) and tid(a) == tid(b) {
       if eid(a) != none or tid(a) != none or a-type == content and a.func() == b.func() {
         // Same element id, compare their fields
