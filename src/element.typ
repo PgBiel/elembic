@@ -823,7 +823,7 @@
       if write != none {
         settings += write
       }
-      if transform == none {
+      if transform != none {
         settings = transform(settings)
       }
     } else if kind == "set" {
@@ -1779,7 +1779,7 @@
   prepare-rule(((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: mode))
 }
 
-#let settings(..args) = {
+#let settings(..args, mode: auto) = {
   assert(args.pos() == (), message: "elembic: element.settings: unexpected positional args")
   let args = args.named()
   assert(args != (:), message: "elembic: element.settings: please specify some setting, e.g. e.settings(prefer-leaky: true)")
