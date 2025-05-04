@@ -32,6 +32,14 @@
   }
 }
 
+#let auto-cast(from, fields: (:), constructor: none) = {
+  if from == dictionary {
+    value => constructor(..value)
+  } else {
+    assert(false, message: "elembic: types.auto-cast: invalid auto cast type: 'from' must be dictionary.")
+  }
+}
+
 #let declare(
   name,
   fields: none,
@@ -63,13 +71,12 @@
       d => (
         type(d) == dictionary
         and "from" in d
-        and "with" in d
         and d.keys().all(k => k in ("from", "with", "check"))
-        and type(d.with) == function
+        and ("with" not in d or type(d.with) == function)
         and ("check" not in d or type(d.check) == function)
       )
     ),
-    message: "elembic: types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): casted value => bool, with: constructor => casted value => your type)." + casts-hint
+    message: "elembic: types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): casted value => bool, with (optional when 'from' is dictionary): constructor => casted value => your type)." + casts-hint
   )
   assert(fold == none or fold == auto or type(fold) == function, message: "elembic: types.declare: 'fold' must be 'none' (no folding), 'auto' (fold each field individually) or a function 'default constructor => auto (same as (a, b) => a + b but more efficient) or function (outer, inner) => combined value'.")
 
@@ -163,7 +170,18 @@
           assert(false, message: "elembic: types.declare: invalid cast-from type: " + from)
         }
 
-        let with = (cast.with)(default-constructor)
+        let with = if "with" in cast {
+          (cast.with)(default-constructor)
+        } else if from.type-kind == "native" and from.data == dictionary {
+          assert(fields.required-pos-fields == (), message: "elembic: types.declare: cannot generate automatic cast from dict when there are required positional fields.")
+          auto-cast(dictionary, fields: fields, constructor: default-constructor)
+        } else {
+          assert(
+            false,
+            message: "elembic: types.declare: cast 'with' can only be omitted for 'from: dictionary'. It must receive the default constructor and return a function 'casted value => your type'."
+          )
+        }
+
         if type(with) != function {
           assert(
             false,
