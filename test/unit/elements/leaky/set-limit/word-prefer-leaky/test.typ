@@ -13,7 +13,7 @@
   prefix: ""
 )
 
-#show: e.settings(prefer-leaky: true)
+#show: e.leaky.settings(prefer-leaky: true)
 #let setter = e.set_(wock, color: yellow)
 #show: setter
 abc
@@ -133,7 +133,7 @@ abc
 abc
 #show: setter
 abc
-// #show: setter
+#show: setter
 abc
 // #show: setter // 60
 abc
