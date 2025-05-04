@@ -309,7 +309,7 @@
         continue
       }
 
-      let field = all-fields.at(field-name)
+      let field = all-fields.at(field-name, default: none)
 
       if field == none or field.synthesized or not field.named {
         let expected-pos-hint = if field == none or field.named { "" } else { "\n  hint: this " + field-singular + " must be specified positionally" }
