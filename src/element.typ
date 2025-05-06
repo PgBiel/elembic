@@ -2817,9 +2817,9 @@
             if field-name in args {
               let outer = outer-chain.at(field-name, default: fold-data.default)
               if fold-data.folder == auto {
-                finalized-chain.at(field-name) = outer + args.at(field-name)
+                finalized-chain.insert(field-name, outer + args.at(field-name))
               } else {
-                finalized-chain.at(field-name) = (fold-data.folder)(outer, args.at(field-name))
+                finalized-chain.insert(field-name, (fold-data.folder)(outer, args.at(field-name)))
               }
             }
           }
@@ -2920,12 +2920,12 @@
                         let fold-data = cond-set-foldable-fields.at(field-name)
                         let outer = new-synthesized-fields.at(field-name, default: fold-data.default)
                         if fold-data.folder == auto {
-                          new-synthesized-fields.at(field-name) = outer + value
+                          new-synthesized-fields.insert(field-name, outer + value)
                         } else {
-                          new-synthesized-fields.at(field-name) = (fold-data.folder)(outer, value)
+                          new-synthesized-fields.insert(field-name, (fold-data.folder)(outer, value))
                         }
                       } else {
-                        new-synthesized-fields.at(field-name) = value
+                        new-synthesized-fields.insert(field-name, value)
                       }
                     }
                   }
@@ -2955,7 +2955,7 @@
                     }
                   } else {
                     // Undo (give precedence to already folded and synthesized argument)
-                    new-synthesized-fields.at(field-name) = value
+                    new-synthesized-fields.insert(field-name, value)
                   }
                 }
 
@@ -3146,12 +3146,12 @@
                       let fold-data = cond-set-foldable-fields.at(field-name)
                       let outer = new-synthesized-fields.at(field-name, default: fold-data.default)
                       if fold-data.folder == auto {
-                        new-synthesized-fields.at(field-name) = outer + value
+                        new-synthesized-fields.insert(field-name, outer + value)
                       } else {
-                        new-synthesized-fields.at(field-name) = (fold-data.folder)(outer, value)
+                        new-synthesized-fields.insert(field-name, (fold-data.folder)(outer, value))
                       }
                     } else {
-                      new-synthesized-fields.at(field-name) = value
+                      new-synthesized-fields.insert(field-name, value)
                     }
                   }
                 }
@@ -3181,7 +3181,7 @@
                   }
                 } else {
                   // Undo (give precedence to already folded and synthesized argument)
-                  new-synthesized-fields.at(field-name) = value
+                  new-synthesized-fields.insert(field-name, value)
                 }
               }
 
