@@ -2234,7 +2234,31 @@
   }
 }
 
+#let elem-query(filter) = {
+  if type(filter) == function {
+    filter = filter(__elembic_data: special-data-values.get-where)
+  }
 
+  if type(filter) != dictionary or filter-key not in filter {
+    if type(filter) == selector {
+      assert(false, message: "elembic: element.query: Typst-native selectors cannot be specified here, only those of custom elements")
+    }
+    assert(false, message: "elembic: element.query: expected a valid filter, such as 'custom-element' or 'custom-element.with(field-name: value, ...)', got " + base.typename(filter))
+  }
+
+  assert("elements" in filter, message: "elembic: element.query: this filter is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
+  assert(filter.elements != none, message: "elembic: element.query: this filter appears to apply to any element (e.g. it's a 'not' or 'custom' filter). It must match only within a certain set of elements. Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
+
+  let results = ()
+  for (eid, elem-data) in filter.elements {
+    if "sel" not in elem-data {
+      assert(false, message: "elembic: element.query: filter did not have the element's selector")
+    }
+    results += query(elem-data.sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid, filter))
+  }
+
+  results
+}
 
 /// Applies necessary show rules to the entire document so that custom elements behave
 /// properly. This is usually only needed for elements which have custom references,
