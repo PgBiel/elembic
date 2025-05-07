@@ -327,9 +327,12 @@
 // Check if an element instance satisfies a filter.
 //
 // Assumes this filter already accepts this element, so eid is not checked.
-#let verify-filter(fields, eid, filter) = {
+#let verify-filter(fields, eid: none, filter: none) = {
   if filter == none {
     return false
+  }
+  if eid == none {
+    assert(false, message: "elembic: element.verify-filter: eid must not be none")
   }
 
   if "__future" in filter and element-version <= filter.__future.max-version {
@@ -766,7 +769,7 @@
           let labeled-it = it
           for (i, filter) in filters {
             // Check if all positional and named arguments match
-            if verify-filter(fields, eid, filter) {
+            if verify-filter(fields, eid: eid, filter: filter) {
               // Add corresponding label and preserve tag so 'data(it)' still works
               labeled-it = [#[#labeled-it#tag]#matching-labels.at(i)]
             }
@@ -2254,7 +2257,7 @@
     if "sel" not in elem-data {
       assert(false, message: "elembic: element.query: filter did not have the element's selector")
     }
-    results += query(elem-data.sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid, filter))
+    results += query(elem-data.sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid: eid, filter: filter))
   }
 
   results
@@ -2932,7 +2935,7 @@
                     filter != none
                     and (data.index == none or data.index >= filter-first-active-index)
                     and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                    and verify-filter(synthesized-fields, eid, filter)
+                    and verify-filter(synthesized-fields, eid: eid, filter: filter)
                   ) {
                     let cond-args = cond-sets.args.at(i)
 
@@ -3002,7 +3005,7 @@
                     filter != none
                     and (data.index == none or data.index >= filter-first-active-index)
                     and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                    and verify-filter(synthesized-fields, eid, filter)
+                    and verify-filter(synthesized-fields, eid: eid, filter: filter)
                   ) {
                     let rule = filters.rules.at(i)
                     new-global-data += apply-rules(
@@ -3036,7 +3039,7 @@
                     filter != none
                     and (data.index == none or data.index >= filter-first-active-index)
                     and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                    and verify-filter(synthesized-fields, eid, filter)
+                    and verify-filter(synthesized-fields, eid: eid, filter: filter)
                   ) {
                     final-rules.push(show-rules.callbacks.at(i))
                   }
@@ -3158,7 +3161,7 @@
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid, filter)
+                  and verify-filter(synthesized-fields, eid: eid, filter: filter)
                 ) {
                   let cond-args = cond-sets.args.at(i)
 
@@ -3227,7 +3230,7 @@
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid, filter)
+                  and verify-filter(synthesized-fields, eid: eid, filter: filter)
                 ) {
                   let rule = filters.rules.at(i)
                   new-global-data += apply-rules(
@@ -3261,7 +3264,7 @@
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid, filter)
+                  and verify-filter(synthesized-fields, eid: eid, filter: filter)
                 ) {
                   final-rules.push(show-rules.callbacks.at(i))
                 }
