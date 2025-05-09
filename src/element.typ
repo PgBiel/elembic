@@ -2177,25 +2177,7 @@
   get-styles(element, elements: global-data.elements, use-routine: true)
 }
 
-/// Reads the current values of element fields after applying set rules.
-///
-/// The callback receives a 'get' function which can be used to read the
-/// values for a given element. The content returned by the function, which
-/// depends on those values, is then placed into the document.
-///
-/// USAGE:
-/// ```typ
-/// #show: e.set_(elem, fill: green)
-/// // ...
-/// #e.get(get => {
-///   // OK
-///   assert(get(elem).fill == green)
-/// })
-/// ```
-///
-/// - receiver (function): function ('get' function) -> content
-/// -> content
-#let prepare-get(receiver) = context {
+#let prepare-ctx(include-global, receiver) = context {
   let previous-bib-title = bibliography.title
   [#context {
     let global-data = if (
@@ -2218,9 +2200,36 @@
     }
 
     set bibliography(title: previous-bib-title)
-    receiver(get-styles.with(elements: global-data.elements, use-routine: true))
+
+    let getter = get-styles.with(elements: global-data.elements, use-routine: true)
+    if include-global {
+      receiver((:..global-data, ctx: (get: getter)))
+    } else {
+      receiver(getter)
+    }
   }#lbl-get]
 }
+
+/// Reads the current values of element fields after applying set rules.
+///
+/// The callback receives a 'get' function which can be used to read the
+/// values for a given element. The content returned by the function, which
+/// depends on those values, is then placed into the document.
+///
+/// USAGE:
+/// ```typ
+/// #show: e.set_(elem, fill: green)
+/// // ...
+/// #e.get(get => {
+///   // OK
+///   assert(get(elem).fill == green)
+/// })
+/// ```
+///
+/// - receiver (function): function ('get' function) -> content
+/// -> content
+#let prepare-get = prepare-ctx.with(false)
+#let prepare-debug = prepare-ctx.with(true)
 
 // Obtain a Typst selector to use to match this element in show rules or in the outline.
 #let selector(elem, outline: false, outer: false) = {
