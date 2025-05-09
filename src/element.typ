@@ -47,7 +47,10 @@
   ),
 
   // Per-element data (set rules and other style chain info).
-  elements: (:)
+  elements: (:),
+
+  // Which elements are we currently a child of, from outermost to innermost.
+  within-chain: (),
 )
 
 // Default per-element data.
@@ -2888,6 +2891,8 @@
         let has-cond-sets = cond-sets.args != ()
         let show-rules = element-data.at("show-rules", default: default-data.show-rules)
         let has-show-rules = show-rules.callbacks != ()
+        let has-within = true  // TODO: toggle 'within'
+        let updates-stylechain-inside = has-filters or has-within
 
         let (folded-fields, constructed-fields, active-revokes, first-active-index) = if (
           element-data.revoke-chain == default-data.revoke-chain
@@ -2940,6 +2945,11 @@
           // conditional sets were revoked
           filter-revokes = active-revokes
           filter-first-active-index = first-active-index
+          if updates-stylechain-inside {
+            editable-global-data = global-data
+          }
+        } else if updates-stylechain-inside {
+          editable-global-data = global-data
         }
 
         let cond-set-foldable-fields
@@ -3086,11 +3096,20 @@
                 i += 1
               }
             }
+            if has-within {
+              if not has-filters {
+                new-global-data = editable-global-data
+              }
+
+              if "within-chain" in new-global-data and new-global-data.within-chain != none {
+                new-global-data.within-chain.push((eid: eid, fields: synthesized-fields))
+              }
+            }
 
             // Save updated styles from applied rules
-            show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if has-filters and not is-stateful
+            show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if updates-stylechain-inside and not is-stateful
 
-            if has-filters and is-stateful {
+            if updates-stylechain-inside and is-stateful {
               // Popping after the if below
               style-state.update(chain => {
                 chain.push(new-global-data)
@@ -3200,7 +3219,8 @@
               }
             }
 
-            if has-filters and is-stateful {
+
+          if updates-stylechain-inside and is-stateful {
               // Pushed before the if above
               style-state.update(chain => {
                 _ = chain.pop()
@@ -3216,7 +3236,7 @@
           }
         }
 
-        if data-changed and not has-filters {
+        if data-changed and not updates-stylechain-inside {
           if is-stateful {
             [#style-state.update(chain => {
               chain.push(global-data)
