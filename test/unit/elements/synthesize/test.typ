@@ -37,13 +37,13 @@
 #wock(test: () => count.get().first() == 2)
 
 // We can match on synthesized fields
-#e.select(wock.with(resolved-value: 3), three-wock => {
+#e.select(wock.with(resolved-value: 3), prefix: "sel1", three-wock => {
   show three-wock: none
 
   wock(test: () => context panic())
 })
 
-#e.select(unchecked-wock.with(resolved-value: 3), three-unchecked-wock => {
+#e.select(unchecked-wock.with(resolved-value: 3), prefix: "sel2", three-unchecked-wock => {
   show three-unchecked-wock: none
 
   unchecked-wock(test: () => context panic())

@@ -25,7 +25,7 @@
   prefix: ""
 )
 
-#e.select(dock.with(color: yellow.lighten(40%)), yellow-dock => {
+#e.select(dock.with(color: yellow.lighten(40%)), prefix: "sel1", yellow-dock => {
   show yellow-dock: it => {
     assert.eq(e.data(it).fields.color, yellow.lighten(40%))
 
@@ -35,7 +35,7 @@
   dock(a: yellow, b: 40%)
   dock(a: blue, b: 40%)
 
-  e.select(dock.with(color: blue.lighten(20%)), blue-dock => {
+  e.select(dock.with(color: blue.lighten(20%)), prefix: "sel2", blue-dock => {
     show blue-dock: set rect(stroke: green + 2pt)
     dock(a: blue, b: 20%)
   })

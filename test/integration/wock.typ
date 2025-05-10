@@ -119,7 +119,7 @@
 
 #wock()
 
-#e.select(wock.with(color: green), wock.with(color: blue), (green-wock, blue-wock) => [
+#e.select(wock.with(color: green), wock.with(color: blue), prefix: "sel1", (green-wock, blue-wock) => [
   #show green-wock: set text(6pt)
   #show blue-wock: set text(22pt)
 

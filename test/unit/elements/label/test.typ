@@ -22,7 +22,7 @@
 
 #wock(color: blue, label: <badbad>)
 
-#e.select(wock.with(label: <blorb>), blorb => {
+#e.select(wock.with(label: <blorb>), prefix: "sel1", blorb => {
   show blorb: it => {
     let fields = e.fields(it)
     rect(width: 10pt, height: 5pt, fill: fields.color)

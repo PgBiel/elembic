@@ -32,7 +32,7 @@
 
 #set text(11pt)
 
-#e.select(wibble.with(color: green), wibble.with(color: blue), wobble.with(fill: green), (green-wibble, blue-wibble, green-wobble) => [
+#e.select(wibble.with(color: green), wibble.with(color: blue), wobble.with(fill: green), prefix: "sel1", (green-wibble, blue-wibble, green-wobble) => [
   #show green-wibble: set text(6pt)
   #show blue-wibble: set text(22pt)
   #show green-wobble: set text(32pt)

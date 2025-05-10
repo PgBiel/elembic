@@ -26,7 +26,7 @@
   context assert.eq(bibliography.title, [Custom Title])
 })
 
-#e.select(wock.with(color: blue), _ => {
+#e.select(wock.with(color: blue), prefix: "", _ => {
   context assert.eq(bibliography.title, [Custom Title])
 })
 

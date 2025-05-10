@@ -17,7 +17,7 @@
   prefix: ""
 )
 
-#e.select(wock.with(color: blue), wock.with(size: 20pt), (blue-wock, wide-wock) => [
+#e.select(wock.with(color: blue), wock.with(size: 20pt), prefix: "sel1", (blue-wock, wide-wock) => [
   #show blue-wock: it => {
     let (fields,) = e.data(it)
     assert.eq(fields.color, blue)

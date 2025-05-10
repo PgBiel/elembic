@@ -44,7 +44,7 @@
 #door(red, blue, cool: true, sad: true)
 #e.get(get => assert.eq(get(door).extracolor, yellow))
 
-#e.select(door.with(extracolor: yellow, sad: false), yellow-not-sad-doors => {
+#e.select(door.with(extracolor: yellow, sad: false), prefix: "sel1", yellow-not-sad-doors => {
   show yellow-not-sad-doors: [yep, yellow door, not sad]
 
   door(red, blue, cool: true, sad: false)

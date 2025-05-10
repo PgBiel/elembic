@@ -27,7 +27,7 @@
   prefix: ""
 )
 
-#e.select(e.filters.or_(wibble, wobble.with(data: "match"), wobble.with(data: "also match")), matched => {
+#e.select(e.filters.or_(wibble, wobble.with(data: "match"), wobble.with(data: "also match")), prefix: "sel1", matched => {
   let match-counter = counter("matches")
   show matched: it => match-counter.step() + it
 
