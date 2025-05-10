@@ -38,6 +38,22 @@
   }
 }
 
+#let auto-cast-check(from, fields: (:), parse-args: none) = {
+  if from == dictionary {
+    value => parse-args(arguments(..value)).first()
+  } else {
+    assert(false, message: "elembic: types.auto-cast: invalid auto cast type: 'from' must be dictionary.")
+  }
+}
+
+#let auto-cast-error(from, fields: (:), parse-args: none) = {
+  if from == dictionary {
+    value => parse-args(arguments(..value)).at(1)
+  } else {
+    assert(false, message: "elembic: types.auto-cast: invalid auto cast type: 'from' must be dictionary.")
+  }
+}
+
 #let declare(
   name,
   fields: none,
@@ -71,10 +87,10 @@
         and "from" in d
         and d.keys().all(k => k in ("from", "with", "check"))
         and ("with" not in d or type(d.with) == function)
-        and ("check" not in d or type(d.check) == function)
+        and ("check" not in d or d.check == none or type(d.check) == function)
       )
     ),
-    message: "elembic: types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): casted value => bool, with (optional when 'from' is dictionary): constructor => casted value => your type)." + casts-hint
+    message: "elembic: types.declare: 'casts' must be either 'none' or an array of dictionaries in the form (from: type, check (optional): none or casted value => bool, with (optional when 'from' is dictionary): constructor => casted value => your type)." + casts-hint
   )
   assert(fold == none or fold == auto or type(fold) == function, message: "elembic: types.declare: 'fold' must be 'none' (no folding), 'auto' (fold each field individually) or a function 'default constructor => auto (same as (a, b) => a + b but more efficient) or function (outer, inner) => combined value'.")
 
@@ -168,11 +184,24 @@
           assert(false, message: "elembic: types.declare: invalid cast-from type: " + from)
         }
 
-        let with = if "with" in cast {
-          (cast.with)(default-constructor)
+        let (cast-check, with, cast-error) = if "with" in cast {
+          (cast.at("check", default: none), (cast.with)(default-constructor), none)
         } else if from.type-kind == "native" and from.data == dictionary {
           assert(fields.required-pos-fields == (), message: "elembic: types.declare: cannot generate automatic cast from dict when there are required positional fields.")
-          auto-cast(dictionary, fields: fields, constructor: default-constructor)
+
+          if "check" in cast {
+            (
+              cast.check,
+              auto-cast(dictionary, fields: fields, constructor: default-constructor),
+              none,
+            )
+          } else {
+            (
+              auto-cast-check(dictionary, fields: fields, parse-args: parse-args),
+              auto-cast(dictionary, fields: fields, constructor: default-constructor),
+              auto-cast-error(dictionary, fields: fields, parse-args: parse-args),
+            )
+          }
         } else {
           assert(
             false,
@@ -187,7 +216,6 @@
           )
         }
 
-        let cast-check = cast.at("check", default: none)
         let from-cast = from.cast
 
         types.wrap(
@@ -218,6 +246,13 @@
 
           default: (),
           fold: none,
+          ..if cast-error == none { (:) } else { (
+            error: if "check" not in from or from.check == none {
+              _ => cast-error
+            } else {
+              from-error => value => if from-error == none or from-check(value) { cast-error(value) } else { from-error(value) }
+            },
+          ) }
         )
       })
 
