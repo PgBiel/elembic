@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
+#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "types/base.typ"
 #import "types/types.typ"
@@ -2188,15 +2188,22 @@
 #let prepare-debug = prepare-ctx.with(true)
 
 // Obtain a Typst selector to use to match this element in show rules or in the outline.
-#let selector(elem, outline: false, outer: false) = {
+// Specify 'meta: true' to match this element in a query, as that selector is
+// generated once regardless of show rules.
+#let selector(elem, outline: false, outer: false, meta: false) = {
   if outline {
     assert(not outer, message: "elembic: element.selector: cannot have 'outline: true' and 'outer: true' at the same time, please pick one selector")
+    assert(not meta, message: "elembic: element.selector: cannot have 'outline: true' and 'meta: true' at the same time, please pick one selector")
     let elem-data = data(elem)
     assert("outline-sel" in elem-data, message: "elembic: element.selector: this isn't a valid element")
     assert(elem-data.outline-sel != none, message: "elembic: element.selector: this element isn't outlinable\n  hint: try asking its author to define it as such with 'outline: auto', 'outline: (caption: [...])' or 'outline: (caption: it => ...)'")
     elem-data.outline-sel
   } else if outer {
+    assert(not meta, message: "elembic: element.selector: cannot have 'outer: true' and 'meta: true' at the same time, please pick one selector")
     data(elem).outer-sel
+  } else if meta {
+    let elem-data = data(elem)
+    elem-data.at("meta-sel", default: elem-data.sel)
   } else {
     data(elem).sel
   }
@@ -2219,10 +2226,19 @@
 
   let results = ()
   for (eid, elem-data) in filter.elements {
-    if "sel" not in elem-data {
-      assert(false, message: "elembic: element.query: filter did not have the element's selector")
+    if "meta-sel" in elem-data {
+      results += query(
+        elem-data.meta-sel
+      ).filter(
+        instance => instance.func() == metadata and verify-filter(data(instance.value).at("fields", default: (:)), eid: eid, filter: filter) and "rendered" in instance.value
+      ).map(
+        instance => instance.value.rendered
+      )
+    } else if "sel" in elem-data {
+      results += query(elem-data.sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid: eid, filter: filter))
+    } else {
+      assert(false, message: "elembic: element.query: filter did not have the element's meta selector")
     }
-    results += query(elem-data.sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid: eid, filter: filter))
   }
 
   results
@@ -2449,6 +2465,7 @@
 
   let eid = base.unique-id("e", prefix, name)
   let lbl-show = label(lbl-show-head + eid)
+  let lbl-meta = label(lbl-meta-head + eid)
   let lbl-outer = label(lbl-outer-head + eid)
   let ref-figure-kind = if reference == none and outline == none { none } else { lbl-ref-figure-kind-head + eid }
   // Use same counter as hidden figure for ease of use
@@ -2515,6 +2532,7 @@
     default-global-data: default-global-data,
     fields: fields,
     sel: lbl-show,
+    meta-sel: lbl-meta,
     routines: (
       prepare-rule: prepare-rule,
       apply-rules: apply-rules,
@@ -2562,6 +2580,7 @@
     get: get-rule,
     where: where,
     sel: lbl-show,
+    meta-sel: lbl-meta,
     outer-sel: lbl-outer,
     outline-sel: if outline == none { none } else { figure.where(kind: ref-figure-kind) },
     counter: element-counter,
@@ -3046,14 +3065,19 @@
                   }
 
                   let body = [#[#body#metadata(tag)]#lbl-show]
-                  if show-rules != () {
-                    body = apply-show-rules(body, show-rules.len() - 1, show-rules)
+                  let shown-body = if show-rules == () {
+                    body
+                  } else {
+                    apply-show-rules(body, show-rules.len() - 1, show-rules)
                   }
 
+                  // Include metadata for querying
+                  let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
+
                   if labeling {
-                    [#[#body#metadata(tag)#lbl-tag]#label]
+                    [#[#meta-body#metadata(tag)#lbl-tag]#label]
                   } else {
-                    body
+                    meta-body
                   }
                 }
               } else {
@@ -3078,14 +3102,19 @@
                 }
 
                 let body = [#[#body#metadata(tag)]#lbl-show]
-                if show-rules != () {
-                  body = apply-show-rules(body, show-rules.len() - 1, show-rules)
+                let shown-body = if show-rules == () {
+                  body
+                } else {
+                  apply-show-rules(body, show-rules.len() - 1, show-rules)
                 }
 
+                // Include metadata for querying
+                let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
+
                 if labeling {
-                  [#[#body#metadata(tag)#lbl-tag]#label]
+                  [#[#meta-body#metadata(tag)#lbl-tag]#label]
                 } else {
-                  body
+                  meta-body
                 }
               }
 
@@ -3272,14 +3301,19 @@
                 }
 
                 let body = [#[#body#metadata(tag)]#lbl-show]
-                if show-rules != () {
-                  body = apply-show-rules(body, show-rules.len() - 1, show-rules)
+                let shown-body = if show-rules == () {
+                  body
+                } else {
+                  apply-show-rules(body, show-rules.len() - 1, show-rules)
                 }
 
+                // Include metadata for querying
+                let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
+
                 if labeling {
-                  [#[#body#metadata(tag)#lbl-tag]#label]
+                  [#[#meta-body#metadata(tag)#lbl-tag]#label]
                 } else {
-                  body
+                  meta-body
                 }
               }
             } else {
@@ -3303,14 +3337,19 @@
               }
 
               let body = [#[#body#metadata(tag)]#lbl-show]
-              if show-rules != () {
-                body = apply-show-rules(body, show-rules.len() - 1, show-rules)
+              let shown-body = if show-rules == () {
+                body
+              } else {
+                apply-show-rules(body, show-rules.len() - 1, show-rules)
               }
 
+              // Include metadata for querying
+              let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
+
               if labeling {
-                [#[#body#metadata(tag)#lbl-tag]#label]
+                [#[#meta-body#metadata(tag)#lbl-tag]#label]
               } else {
-                body
+                meta-body
               }
             }
 

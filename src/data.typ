@@ -70,6 +70,10 @@
 // Prefix for the labels added to shown elements.
 #let lbl-show-head = "__elembic_element_shown_"
 
+// Prefix for the labels added to the metadata of each element.
+// Used for querying.
+#let lbl-meta-head = "__elembic_element_meta_"
+
 // Prefix for the labels added outside shown elements.
 // This is used to be able to effectively apply show-set rules to them.
 #let lbl-outer-head = "__elembic_element_outer_"
@@ -118,6 +122,9 @@
 
 // Special dictionary key which stores element context and other data.
 #let stored-data-key = "__elembic_stored_element_data"
+
+// Special dictionary key to indicate this is query metadata for an element.
+#let element-meta-key = "__elembic_element_meta"
 
 #let element-key = "__elembic_element"
 #let element-data-key = "__elembic_element_data"
