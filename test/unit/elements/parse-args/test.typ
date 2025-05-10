@@ -8,22 +8,28 @@
 #let wock-parser-req(run, color: missing, inner: missing, some-extra-thing: missing) = {
   let res = (:)
   if run != missing {
-    assert(type(run) == function, message: "field 'run' of element 'wock': must be a function, got " + e.types.typename(run))
+    if type(run) != function {
+      return (false, "field 'run' of element 'wock': must be a function, got " + e.types.typename(run))
+    }
     res.run = run
   }
   if color != missing {
-    assert(type(color) == std-color, message: "field 'color' of element 'wock': color must be a color, got " + e.types.typename(color))
+    if type(color) != std-color {
+      return (false, "field 'color' of element 'wock': color must be a color, got " + e.types.typename(color))
+    }
     res.color = color
   }
   if inner != missing {
-    assert(type(inner) in (str, content, type(none)), message: "field 'inner' of element 'wock': must be content, got " + e.types.typename(inner))
+    if type(inner) not in (str, content, type(none)) {
+      return (false, "field 'inner' of element 'wock': must be content, got " + e.types.typename(inner))
+    }
     res.inner = [#inner]
   }
   if some-extra-thing != missing {
     res.some-extra-thing = 10
   }
 
-  res
+  (true, res)
 }
 #let wock-parser-not-req(color: missing, inner: missing, some-extra-thing: missing) = {
   wock-parser-req(missing, color: color, inner: inner, some-extra-thing: some-extra-thing)
@@ -100,7 +106,7 @@
     } else if args.pos() == () {
       args
     } else {
-      assert(false, message: "element 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
+      return (false, "element 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
     }
 
     default-parser(args, include-required: include-required)

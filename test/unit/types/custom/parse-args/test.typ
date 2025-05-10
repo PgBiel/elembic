@@ -8,22 +8,28 @@
 #let boxed-parser-req(value, color: missing, inner: missing, some-extra-thing: missing) = {
   let res = (:)
   if value != missing {
-    assert(type(value) == int, message: "field 'value' of type 'boxed': must be int, got " + e.types.typename(value))
+    if type(value) != int {
+      return (false, "field 'value' of type 'boxed': must be int, got " + e.types.typename(value))
+    }
     res.value = value
   }
   if color != missing {
-    assert(type(color) == std-color, message: "field 'color' of type 'boxed': color must be a color, got " + e.types.typename(color))
+    if type(color) != std-color {
+      return (false, "field 'color' of type 'boxed': color must be a color, got " + e.types.typename(color))
+    }
     res.color = color
   }
   if inner != missing {
-    assert(type(inner) in (str, content, type(none)), message: "field 'inner' of type 'boxed': must be content, got " + e.types.typename(inner))
+    if type(inner) not in (str, content, type(none)) {
+      return (false, "field 'inner' of type 'boxed': must be content, got " + e.types.typename(inner))
+    }
     res.inner = [#inner]
   }
   if some-extra-thing != missing {
     res.some-extra-thing = 10
   }
 
-  res
+  (true, res)
 }
 #let boxed-parser-not-req(color: missing, inner: missing, some-extra-thing: missing) = {
   boxed-parser-req(missing, color: color, inner: inner, some-extra-thing: some-extra-thing)
@@ -68,7 +74,7 @@
       // just for completeness
       args
     } else {
-      assert(false, message: "element 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
+      return (false, "element 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
     }
 
     default-parser(args, include-required: include-required)

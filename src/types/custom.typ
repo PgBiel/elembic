@@ -57,7 +57,7 @@
   assert(type(fields) == array, message: "elembic: types.declare: please specify an array of fields, creating each field with the 'field' function." + fields-hint)
   assert(prefix != none, message: "elembic: types.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
   assert(type(prefix) == str, message: "elembic: types.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
-  assert(parse-args == auto or type(parse-args) == function, message: "elembic: types.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function (default arg parser, fields: dictionary, typecheck: bool) => (user arguments, include-required: true) => dictionary with parsed fields.")
+  assert(parse-args == auto or type(parse-args) == function, message: "elembic: types.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function (default arg parser, fields: dictionary, typecheck: bool) => (user arguments, include-required: true) => (bool (true on success, false on error), dictionary with parsed fields (or error message string if the bool is false)).")
   assert(type(typecheck) == bool, message: "elembic: types.declare: the 'typecheck' argument must be a boolean (true to enable typechecking in the constructor, false to disable).")
   assert(type(allow-unknown-fields) == bool, message: "elembic: types.declare: the 'allow-unknown-fields' argument must be a boolean.")
   assert(construct == none or type(construct) == function, message: "elembic: types.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
@@ -273,7 +273,10 @@
       }
     }
 
-    let args = parse-args(args, include-required: true)
+    let (res, args) = parse-args(args, include-required: true)
+    if not res {
+      assert(false, message: args)
+    }
 
     let final-fields = default-fields + args
 
