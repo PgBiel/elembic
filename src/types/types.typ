@@ -1,5 +1,5 @@
 // The type system used by fields.
-#import "../data.typ": data, special-data-values, type-key, custom-type-key, custom-type-data-key
+#import "../data.typ": data, special-data-values, type-key, custom-type-key, custom-type-data-key, eq
 #import "base.typ" as base: ok, err
 #import "native.typ"
 
@@ -136,7 +136,7 @@
     }
 
     if kind == "literal" and typeinfo.cast == none {
-      if value == typeinfo.data.value and (value-type in typeinfo.input or "any" in typeinfo.input) and (typeinfo.data.typeinfo.check == none or (typeinfo.data.typeinfo.check)(value)) {
+      if eq(value, typeinfo.data.value) and (value-type in typeinfo.input or "any" in typeinfo.input) and (typeinfo.data.typeinfo.check == none or (typeinfo.data.typeinfo.check)(value)) {
         (true, value)
       } else {
         (false, generate-cast-error(value, typeinfo))

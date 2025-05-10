@@ -29,7 +29,8 @@
   fields: (
     field("name", str, required: true),
     field("age", int, required: true),
-    field("other", e.types.option(arbitrary))
+    field("other", e.types.option(arbitrary)),
+    field("payload", e.types.any, default: none)
   ),
   prefix: "",
   default: person => person("Joe", 5)
@@ -40,7 +41,8 @@
   fields: (
     field("name", str, required: true),
     field("age", int, required: true),
-    field("other", e.types.option(arbitrary2))
+    field("other", e.types.option(arbitrary2)),
+    field("payload", e.types.any, default: none)
   ),
   prefix: "",
   default: person => person("Joe", 2),
@@ -127,3 +129,7 @@
 #assert(not e.eq((a: elem("a", 10)), (a: elem2("a", 20))))
 #assert(not e.eq((a: elem("a", 10)), (b: elem2("a", 10))))
 #assert(not e.eq((b: elem("a", 10)), (a: elem2("a", 10))))
+
+// Float / int casting
+#assert(e.eq(4, 4.0))
+#assert(e.eq(person("a", 2, payload: 4), person("a", 2, payload: 4.0)))

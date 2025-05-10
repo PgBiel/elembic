@@ -27,10 +27,21 @@
   default: person => person("Joe", 5)
 )
 
+#let person-copy = types.declare(
+  "person",
+  fields: (
+    field("name", str, required: true),
+    field("age", int, required: true)
+  ),
+  prefix: "",
+  default: person => person("Not Joe", 5)
+)
+
 #let all-fields = (
   field("color", color, required: true),
   field("backcolor", color, required: true),
   field("extracolor", types.option(color), named: false),
+  field("specifically-john-pos", types.option(types.literal(person("John", 25))), named: false),
   field("sign", types.smart(content)),
   field("name", types.option(content)),
   field("family", types.union(int, str), default: 5),
@@ -53,6 +64,7 @@
   field("stroke", stroke),
   field("singleton-array", singleton-array),
   field("owner", person),
+  field("specifically-john", types.option(types.literal(person("John", 25)))),
   field("fill", types.paint, default: red),
 )
 
@@ -150,8 +162,25 @@
 ]
 
 // Test folding
-#show: e.set_(udoor, stroke: 4pt, unknown-field-here: 50)
-#show: e.set_(udoor, stroke: black, unknown-field-here: 80)
+#[
+  #show: e.set_(udoor, stroke: 4pt, unknown-field-here: 50)
+  #show: e.set_(udoor, stroke: black, unknown-field-here: 80)
 
-#(e.data(udoor).get)(u => assert.eq(u.stroke, 4pt + black))
-#(e.data(udoor).get)(u => assert.eq(u.unknown-field-here, 80))
+  #(e.data(udoor).get)(u => assert.eq(u.stroke, 4pt + black))
+  #(e.data(udoor).get)(u => assert.eq(u.unknown-field-here, 80))
+]
+
+// Test literal equality (should only consider eid and fields)
+#assert.eq(
+  e.fields(
+    door(red, blue, cool: true, sad: false, specifically-john: person-copy("John", 25))
+  ).specifically-john,
+  person-copy("John", 25)
+)
+
+#assert.eq(
+  e.fields(
+    door(red, blue, cool: true, sad: false, yellow, person-copy("John", 25))
+  ).specifically-john-pos,
+  person-copy("John", 25)
+)

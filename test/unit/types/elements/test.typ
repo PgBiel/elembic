@@ -84,4 +84,19 @@
   assert.eq(e.fields(it), e.fields(stock(color: red, inner: [Hello!])))
 }
 
+#let pretty-much-wock = e.element.declare(
+  "wock",
+  display: it => "this is the only thing that differs",
+  fields: (
+    field("color", color, default: red),
+    field("inner", content, default: [Hello!])
+  ),
+  prefix: ""
+)
+
+#assert.eq(cast(pretty-much-wock(), wock), (true, pretty-much-wock()))
+#assert.eq(cast(pretty-much-wock(), types.literal(wock())), (true, pretty-much-wock()))
+#assert.eq(cast(pretty-much-wock(), types.union(content, e.types.literal(wock()), e.types.literal(wock(color: blue)))), (true, pretty-much-wock()))
+#assert.eq(cast(pretty-much-wock(), types.union(e.types.literal(wock()), e.types.literal(wock(color: blue)))), (true, pretty-much-wock()))
+
 #stock()

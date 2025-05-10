@@ -1,4 +1,4 @@
-#import "data.typ": type-key, custom-type-key, current-field-version
+#import "data.typ": type-key, custom-type-key, current-field-version, eq
 #import "types/types.typ"
 
 #let field-key = "__elembic_field"
@@ -331,7 +331,7 @@
         }
         if kind == "literal" and typeinfo.cast == none {
           if (
-            value != typeinfo.data.value
+            not eq(value, typeinfo.data.value)
             or value-type not in typeinfo.input and "any" not in typeinfo.input
             or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value))
           ) {
@@ -373,7 +373,7 @@
         }
         if kind == "literal" and typeinfo.cast == none {
           if (
-            value != typeinfo.data.value
+            not eq(value, typeinfo.data.value)
             or value-type not in typeinfo.input and "any" not in typeinfo.input
             or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value))
           ) {

@@ -1,5 +1,5 @@
 // The shared fundamentals of the type system.
-#import "../data.typ": data, type-key, custom-type-key, custom-type-data-key, repr_, func-name, type-version
+#import "../data.typ": data, type-key, custom-type-key, custom-type-data-key, repr_, func-name, type-version, eq
 
 // Typeinfo structure:
 // - type-key: kind of type
@@ -139,7 +139,7 @@
   let represented = "'" + if type(value) == str { value } else { repr_(value) } + "'"
   let value-type = typeid(value)
 
-  let check = if typeinfo.check == none { x => x == value } else { x => x == value and (typeinfo.check)(x) }
+  let check = if typeinfo.check == none { x => eq(x, value) } else { x => eq(x, value) and (typeinfo.check)(x) }
 
   (
     ..typeinfo,
@@ -258,7 +258,7 @@
           // Custom type must be checked differently in inputs
           typ = x.at(custom-type-key).id
         }
-        typ in unchecked-inputs or values-inputs-and-checks.any(((v, i, check)) => x == v and (typ in i or "any" in i) and (check == none or check(x)))
+        typ in unchecked-inputs or values-inputs-and-checks.any(((v, i, check)) => eq(x, v) and (typ in i or "any" in i) and (check == none or check(x)))
       }
     } else {
       // If any check succeeds and the value has the correct input type, OK
