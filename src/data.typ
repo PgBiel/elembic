@@ -9,6 +9,62 @@
 // Used by custom types themselves
 #let custom-type-data-key = "__elembic_custom_type_data"
 
+// Versions:
+#let element-version = 1
+#let type-version = 1
+#let custom-type-version = 1
+#let current-field-version = 1
+
+// Potential modes for configuration of styles.
+// This defines how we declare a set rule (or similar)
+// within a certain scope.
+#let style-modes = (
+  // Normal mode: we store metadata in a bibliography.title set rule.
+  //
+  // Before doing so, we retrieve the original value for bibliography.title,
+  // allowing us to restore it later. The effect is that the library is
+  // fully hygienic, that is, the change to bibliography.title is not perceptible.
+  //
+  // The downside is that retrieving the original value for bibliography.title costs
+  // an additional nested context { } call, of which there is a limit of 64. This means
+  // that, in this mode, you can have up to 32 non-consecutive set rules.
+  normal: 0,
+
+  // leaky mode: similar to normal mode, but we don't try to preserve the value of bibliography.title
+  // after applying our changes to the document. This doubles the limit to up to 64 non-consecutive
+  // set rules since we no longer have an extra step to retrieve the old value, but, as a downside,
+  // we lose the original value of bibliography.title. While, in a future change, we might be able to
+  // preserve the FIRST known value, we can't generally preserve its value at later points, so the
+  // value of bibliography.title is effectively frozen before the first custom set rule.
+  //
+  // This mode should be used by package authors which know there won't be a bibliography (or, really,
+  // any custom user input) at some point to avoid consuming the set rule cost. End users can also use
+  // this mode if they hit a "max show rule depth exceeded" error.
+  //
+  // Note that this mode can only be enabled on individual set rules.
+  leaky: 1,
+
+  // Stateful mode: this is entirely different from the other modes and should only be set by the end
+  // user (not by packages). This stores the style chain - and, thus, set rules' updated fields - in
+  // a 'state()'. This is more likely to be slower and lead to trouble as it triggers at least one
+  // document relayout. However, **this mode does not have a set rule limit.** Therefore, it can be
+  // used as a last resort by the end user if they can't fix the "max show rule depth exceeded error".
+  //
+  // Enabling this mode is as simple as using `#show: e.stateful.toggle(true)` at the beginning of the
+  // document. This will trigger a compatibility behavior where existing set rules will push to the
+  // state, even if they're not in the stateful mode. It will also push existing set rule data into
+  // the style 'state()'. Therefore, existing set rules are compatible with stateful mode, but this
+  // only effectively fixes the error if the set rules are individually switched to stateful mode
+  // with `e.stateful.set_` instead of `e.set_`.
+  stateful: 2
+)
+
+
+// When on stateful mode, this state holds the sequence of 'data' for each scope.
+// The last element on the list is the "current" data.
+#let style-state-key = "__elembic_element_state"
+#let style-state = state(style-state-key, ())
+
 // Element constants:
 
 // Prefix for the labels added to shown elements.

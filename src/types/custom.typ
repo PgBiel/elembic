@@ -1,10 +1,8 @@
 // Custom types!
-#import "../data.typ": special-data-values, custom-type-key, custom-type-data-key, type-key
+#import "../data.typ": special-data-values, custom-type-key, custom-type-data-key, type-key, custom-type-version
 #import "base.typ"
 #import "types.typ"
 #import "../fields.typ" as field-internals
-
-#let custom-type-version = 1
 
 // Default folding procedure for custom types.
 // Combines each inner type individually.

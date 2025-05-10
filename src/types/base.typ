@@ -1,7 +1,5 @@
 // The shared fundamentals of the type system.
-#import "../data.typ": data, type-key, custom-type-key, custom-type-data-key, repr_, func-name
-
-#let type-version = 1
+#import "../data.typ": data, type-key, custom-type-key, custom-type-data-key, repr_, func-name, type-version
 
 // Typeinfo structure:
 // - type-key: kind of type

@@ -1,10 +1,8 @@
-#import "data.typ": type-key, custom-type-key
+#import "data.typ": type-key, custom-type-key, current-field-version
 #import "types/types.typ"
 
 #let field-key = "__elembic_field"
 #let fields-key = "__elembic_fields"
-
-#let current-field-version = 1
 
 #let _missing() = {}
 
