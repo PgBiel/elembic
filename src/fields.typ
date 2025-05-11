@@ -344,7 +344,7 @@
         let res
         (res, casted) = types.cast(value, typeinfo)
         if not res {
-          assert(false, field-error-prefix(field-name) + casted)
+          return (false, field-error-prefix(pos-field.name) + casted)
         }
       }
 

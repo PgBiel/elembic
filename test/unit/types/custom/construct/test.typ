@@ -19,3 +19,16 @@
 #assert.eq(person(name: "Mike", surname: "Fictional", age: 60).name, "Mike Fictional")
 #assert.eq(person(name: "Mike", surname: "Fictional", age: 60).age, 60)
 #assert.eq(e.data(person).func, person)
+
+#let person-pos = types.declare(
+  "person-pos",
+  fields: (
+    field("name", str, required: true),
+  ),
+  prefix: "mypkg"
+)
+
+#assert.eq(
+  (e.data(person-pos).parse-args)(arguments(2), include-required: true),
+  (false, "field 'name' of type 'person-pos': expected string, found integer")
+)
