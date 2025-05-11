@@ -2970,246 +2970,8 @@
             valid: true
           )
 
-          if contextual {
+          let synthesize-and-show() = {
             // Use context for synthesize as well
-            context {
-              let synthesized-fields = if synthesize == none {
-                constructed-fields
-              } else {
-                // Pass contextual information to synthesize
-                // Remove it afterwards to ensure the final tag's 'fields' won't
-                // have its own copy of the tag
-                let new-fields = synthesize(constructed-fields + ((stored-data-key): tag))
-                if type(new-fields) != dictionary {
-                  assert(false, message: "elembic: element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
-                }
-                if stored-data-key in new-fields {
-                  _ = new-fields.remove(stored-data-key)
-                }
-                new-fields
-              }
-
-              if labelable and label != none and label != _missing {
-                synthesized-fields.label = label
-              }
-
-              // Update synthesized fields BEFORE applying filters!
-              if has-cond-sets {
-                let i = 0
-                let new-synthesized-fields = folded-fields // only add args later (args must win)
-                let affected-fields = (:)
-                for filter in cond-sets.filters {
-                  let data = cond-sets.data.at(i)
-                  if (
-                    filter != none
-                    and (data.index == none or data.index >= filter-first-active-index)
-                    and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                    and verify-filter(synthesized-fields, eid: eid, filter: filter)
-                  ) {
-                    let cond-args = cond-sets.args.at(i)
-
-                    affected-fields += cond-args
-
-                    // Fold received arguments with existing fields or defaults
-                    for (field-name, value) in cond-args {
-                      if field-name in cond-set-foldable-fields {
-                        let fold-data = cond-set-foldable-fields.at(field-name)
-                        let outer = new-synthesized-fields.at(field-name, default: fold-data.default)
-                        if fold-data.folder == auto {
-                          new-synthesized-fields.insert(field-name, outer + value)
-                        } else {
-                          new-synthesized-fields.insert(field-name, (fold-data.folder)(outer, value))
-                        }
-                      } else {
-                        new-synthesized-fields.insert(field-name, value)
-                      }
-                    }
-                  }
-                  i += 1
-                }
-
-                // Fold args again (they must win).
-                for (field-name, value) in synthesized-fields {
-                  if field-name not in args {
-                    // Not an argument, and we already folded it with cond-sets
-                    // before (not a synthesized field), so stop.
-                    continue
-                  }
-
-                  if (
-                    field-name in affected-fields
-                    and field-name in cond-set-foldable-fields
-                    // If field was changed due to synthetization, don't allow
-                    // folding it further
-                    and constructed-fields.at(field-name) == value
-                  ) {
-                    let fold-data = cond-set-foldable-fields.at(field-name)
-                    if fold-data.folder == auto {
-                      new-synthesized-fields.at(field-name) += args.at(field-name)
-                    } else {
-                      new-synthesized-fields.at(field-name) = (fold-data.folder)(new-synthesized-fields.at(field-name), args.at(field-name))
-                    }
-                  } else {
-                    // Undo (give precedence to already folded and synthesized argument)
-                    new-synthesized-fields.insert(field-name, value)
-                  }
-                }
-
-                synthesized-fields = new-synthesized-fields
-              }
-
-              let tag = tag
-              tag.fields = synthesized-fields
-
-              // Store contextual information in synthesize
-              synthesized-fields.insert(stored-data-key, tag)
-
-              let new-global-data
-              if has-filters {
-                new-global-data = editable-global-data
-                let i = 0
-                for filter in filters.all {
-                  let data = filters.data.at(i)
-                  if (
-                    filter != none
-                    and (data.index == none or data.index >= filter-first-active-index)
-                    and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                    and verify-filter(synthesized-fields, eid: eid, filter: filter)
-                  ) {
-                    let rule = filters.rules.at(i)
-                    new-global-data += apply-rules(
-                      if rule.kind == "apply" { rule.rules } else { (rule,) },
-                      elements: new-global-data.elements,
-                      settings: new-global-data.at("settings", default: default-global-data.settings),
-                      global: new-global-data.at("global", default: default-global-data.global)
-                    )
-                  }
-                  i += 1
-                }
-              }
-
-              // Save updated styles from applied rules
-              show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if has-filters and not is-stateful
-
-              if has-filters and is-stateful {
-                // Popping after the if below
-                style-state.update(chain => {
-                  chain.push(new-global-data)
-                  chain
-                })
-              }
-
-              // Filter show rules
-              let show-rules = if has-show-rules {
-                let i = 0
-                let final-rules = ()
-                for filter in show-rules.filters {
-                  let data = show-rules.data.at(i)
-                  if (
-                    filter != none
-                    and (data.index == none or data.index >= filter-first-active-index)
-                    and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                    and verify-filter(synthesized-fields, eid: eid, filter: filter)
-                  ) {
-                    final-rules.push(show-rules.callbacks.at(i))
-                  }
-                  i += 1
-                }
-                final-rules
-              } else {
-                ()
-              }
-
-              if count-needs-fields {
-                count(synthesized-fields)
-
-                // Wrap in additional context so the counter step is detected
-                context {
-                  let body = display(synthesized-fields)
-                  let tag = tag
-                  tag.body = body
-
-                  if custom-ref != none {
-                    // Update with body
-                    let synthesized-fields = synthesized-fields
-                    synthesized-fields.at(stored-data-key) = tag
-
-                    tag.custom-ref = custom-ref(synthesized-fields)
-                  }
-
-                  let tag-metadata = metadata(tag)
-
-                  if reference != none and ref-label != none or outline != none {
-                    // Update with custom-ref
-                    let synthesized-fields = synthesized-fields
-                    synthesized-fields.at(stored-data-key) = tag
-
-                    ref-figure(tag, synthesized-fields, ref-label)
-                  }
-
-                  let body = [#[#body#metadata(tag)]#lbl-show]
-                  let shown-body = if show-rules == () {
-                    body
-                  } else {
-                    apply-show-rules(body, show-rules.len() - 1, show-rules)
-                  }
-
-                  // Include metadata for querying
-                  let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
-
-                  if labeling {
-                    [#[#meta-body#metadata(tag)#lbl-tag]#label]
-                  } else {
-                    meta-body
-                  }
-                }
-              } else {
-                let body = display(synthesized-fields)
-                let tag = tag
-                tag.body = body
-
-                if custom-ref != none {
-                  // Update with body
-                  synthesized-fields.at(stored-data-key) = tag
-
-                  tag.custom-ref = custom-ref(synthesized-fields)
-                }
-
-                let tag-metadata = metadata(tag)
-
-                if reference != none and ref-label != none or outline != none {
-                  // Update with custom-ref
-                  synthesized-fields.at(stored-data-key) = tag
-
-                  ref-figure(tag, synthesized-fields, ref-label)
-                }
-
-                let body = [#[#body#metadata(tag)]#lbl-show]
-                let shown-body = if show-rules == () {
-                  body
-                } else {
-                  apply-show-rules(body, show-rules.len() - 1, show-rules)
-                }
-
-                // Include metadata for querying
-                let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
-
-                if labeling {
-                  [#[#meta-body#metadata(tag)#lbl-tag]#label]
-                } else {
-                  meta-body
-                }
-              }
-
-              if has-filters and is-stateful {
-                // Pushed before the if above
-                style-state.update(chain => {
-                  _ = chain.pop()
-                  chain
-                })
-              }
-            }
-          } else {
             let synthesized-fields = if synthesize == none {
               constructed-fields
             } else {
@@ -3295,6 +3057,7 @@
               synthesized-fields = new-synthesized-fields
             }
 
+            let tag = tag
             tag.fields = synthesized-fields
 
             // Store contextual information in synthesize
@@ -3356,7 +3119,6 @@
               ()
             }
 
-
             if count-needs-fields {
               count(synthesized-fields)
 
@@ -3402,6 +3164,7 @@
               }
             } else {
               let body = display(synthesized-fields)
+              let tag = tag
               tag.body = body
 
               if custom-ref != none {
@@ -3444,6 +3207,12 @@
                 chain
               })
             }
+          }
+
+          if contextual {
+            context synthesize-and-show()
+          } else {
+            synthesize-and-show()
           }
         }
 
