@@ -23,7 +23,7 @@
   elements: ((e.eid(wock)): e.data(wock)),
   desired-color: purple,
   __future: (
-    call: (fields, eid: none, filter: none, __future-version: 0) => {
+    call: (fields, eid: none, filter: none, ancestry: none, __future-version: 0) => {
       "color" in fields and fields.color == filter.desired-color
     },
     max-version: 999999,
