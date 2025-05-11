@@ -1384,6 +1384,14 @@
           doc = data.join() + doc
         }
       }
+
+      if "__future" in last.value and element-version <= last.value.__future.max-version {
+        let res = (last.value.__future.call)(rule, doc, __future-version: element-version)
+
+        if "doc" in res {
+          return res.doc
+        }
+      }
     }
 
     // Stateful mode: no context, just push in a state at the start of the scope
@@ -1544,7 +1552,7 @@
     // This allows extracting information about the rule before it is applied.
     // It also allows combining the rule with an outer rule before application,
     // as we do earlier.
-    [#body#metadata((doc: doc, rule: rule))#lbl-rule-tag]
+    [#body#metadata((version: element-version, routines: (prepare-rule: prepare-rule, apply-rules: apply-rules), doc: doc, rule: rule))#lbl-rule-tag]
   }
 }
 
