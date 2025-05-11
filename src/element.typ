@@ -2809,16 +2809,21 @@
           }
         }
 
-        if "__futures" in global-data {
-          for future in global-data.__futures {
-            if "__future" in future and element-version <= future.__future.max-version {
-              global-data = (future.__future.call)(
-                global-data,
+        if "global" in global-data and "__futures" in global-data.global and "global-data" in global-data.global.__futures {
+          for future in global-data.global.__futures.global-data {
+            if element-version <= future.max-version {
+              let res = (future.call)(
+                global-data: global-data,
+                element-data: global-data.elements.at(eid, default: default-data),
                 args: args,
                 all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
                 __future-version: element-version
               )
-              data-changed = true
+
+              if "global-data" in res {
+                global-data = res.global-data
+                data-changed = true
+              }
 
               continue
             }

@@ -17,26 +17,33 @@
   prefix: ""
 )
 
-#let prepare-rule = e.data(wock).routines.prepare-rule
-#let modify-element-data(elem, mapper) = prepare-rule((
-    (prepared-rule-key): true,
-    version: e.constants.element-version,
-    kind: "modifier",
-    mapper: mapper,
-    name: none,
-    names: (),
-    mode: auto,
-    __future: (
-      call: (rule, elements: none, settings: none, __future-version: 0, ..) => {
-        elements.insert(e.eid(elem), mapper(elements.at(e.eid(elem), default: e.data(elem).default-data)))
+#let (prepare-rule, apply-rules) = e.data(wock).routines
 
-        assert.ne(__future-version, 0)
+#let modify-data(mapper) = prepare-rule((
+  (prepared-rule-key): true,
+  version: e.constants.element-version,
+  kind: "modifier",
+  mapper: mapper,
+  name: none,
+  names: (),
+  mode: auto,
+  __future: (
+    call: (rule, elements: none, settings: none, global: none, __future-version: 0, ..) => {
+      assert.ne(__future-version, 0)
 
-        (elements: elements)
-      },
-      max-version: 999999,
-    )
-  ))
+      mapper(elements: elements, settings: settings, global: global)
+    },
+    max-version: 999999,
+  )
+))
+
+#let modify-element-data(elem, mapper) = modify-data(
+  (elements: none, settings: none, global: none) => {
+    elements.insert(e.eid(elem), mapper(elements.at(e.eid(elem), default: e.data(elem).default-data)))
+
+    (elements: elements)
+  },
+)
 
 #{
   show: modify-element-data(wock, w => {
@@ -107,4 +114,50 @@
 
   // Should not panic (max version < current version)
   wock(run: it => it)
+}
+
+#{
+  let test-state = state("test2", none)
+
+  // Apply a set rule through a future rule
+  show: modify-data((global: none, ..) => {
+    global.__futures = (
+      (global-data: ((max-version: 99999, call: (global-data: none, element-data: none, args: none, all-element-data: none, __future-version: 0, ..) => {
+        assert.ne(__future-version, 0)
+        assert.eq(all-element-data.eid, e.eid(wock))
+
+        let rule = e.set_(wock, color: purple)([]).children.last().value.rule
+        global-data += apply-rules((rule,), elements: global-data.elements, settings: global-data.settings, global: global-data.global)
+
+        (global-data: global-data)
+      }), ))
+    )
+    (global: global)
+  })
+
+  wock(run: it => {
+    test-state.update(it.color)
+    e.get(get => assert.eq(get(wock).color, purple))
+  })
+  context assert.eq(test-state.get(), purple)
+}
+
+#{
+  let test-state = state("test2", none)
+
+  // Future rule shouldn't match here (max version not satisfied)
+  show: modify-data((global: none, ..) => {
+    global.__futures = (
+      (global-data: ((max-version: 0, call: (global-data: none, element-data: none, args: none, __future-version: 0, ..) => {
+        panic()
+      }), ))
+    )
+    (global: global)
+  })
+
+  wock(run: it => {
+    test-state.update(it.color)
+    e.get(get => assert.eq(get(wock).color, red))
+  })
+  context assert.eq(test-state.get(), red)
 }
