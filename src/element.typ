@@ -2788,16 +2788,43 @@
         let element-data = global-data.elements.at(eid, default: default-data)
 
         if "__futures" in element-data {
-          for future in element-data.__futures {
-            if "__future" in future and element-version <= future.__future.max-version {
-              element-data = (future.__future.call)(
-                element-data,
-                args: args,
-                all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
-                __future-version: element-version
-              )
+          if "construct" in element-data.__futures {
+            for future in element-data.__futures.construct {
+              if element-version <= future.max-version {
+                let res = (future.call)(
+                  global-data: global-data,
+                  element-data: element-data,
+                  args: args,
+                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
+                  __future-version: element-version
+                )
 
-              continue
+                if "construct" in res {
+                  return res.construct
+                }
+              }
+            }
+          }
+
+          if "element-data" in element-data.__futures {
+            for future in element-data.__futures.element-data {
+              if element-version <= future.max-version {
+                let res = (future.call)(
+                  global-data: global-data,
+                  element-data: element-data,
+                  args: args,
+                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
+                  __future-version: element-version
+                )
+
+                if "construct" in res {
+                  return res.construct
+                }
+
+                if "element-data" in res {
+                  element-data = res.element-data
+                }
+              }
             }
           }
         }
