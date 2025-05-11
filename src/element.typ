@@ -1008,10 +1008,10 @@
         // Forward-compatibility with newer elements
         if (
           "__future-rules" in all-elem-data.default-data
-          and "show_" in all-elem-data.default-data.__future-rules
-          and element-version <= all-elem-data.default-data.__future-rules.show_.max-version
+          and "show" in all-elem-data.default-data.__future-rules
+          and element-version <= all-elem-data.default-data.__future-rules.show.max-version
         ) {
-          let output = (all-elem-data.default-data.__future-rules.show_.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          let output = (all-elem-data.default-data.__future-rules.show.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
           extra-output += output
           if "elements" in output {
             elements = output.elements
@@ -1064,11 +1064,11 @@
 
       // Forward-compatibility with newer elements
       if (
-        "__future-rules" in default-data
-        and "cond-set" in default-data.__future-rules
-        and element-version <= default-data.__future-rules.cond-set.max-version
+        "__future-rules" in element.default-data
+        and "cond-set" in element.default-data.__future-rules
+        and element-version <= element.default-data.__future-rules.cond-set.max-version
       ) {
-        let output = (default-data.__future-rules.cond-set.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+        let output = (element.default-data.__future-rules.cond-set.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
         extra-output += output
         if "elements" in output {
           elements = output.elements
