@@ -100,7 +100,7 @@
 #let lbl-tag = <__elembic_element_tag>
 
 // Label for metadata indicating a rule's parameters.
-#let lbl-rule-tag = <__elembic_element_rule>
+#let lbl-rule-tag = <__elembic_element_rule_v2>
 
 // Label for metadata which stores the global data.
 // In practice, this label is never present in the document
