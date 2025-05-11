@@ -23,7 +23,7 @@
 
 #let prepare-rule = e.data(wock).routines.prepare-rule
 #let test-value = 321
-#let call(expected-kind) = (rule, elements: none, settings: none, __future-version: 0, ..) => {
+#let call(expected-kind) = (rule, elements: none, settings: none, global: none, __future-version: 0, ..) => {
   assert.eq(rule.kind, expected-kind)
 
   if e.eid(wock) not in elements {
@@ -31,10 +31,11 @@
   }
   elements.at(e.eid(wock)).goofy = test-value
   settings.goofy = test-value
+  global.goofy = test-value
 
   assert.ne(__future-version, 0)
 
-  (elements: elements, settings: settings)
+  (elements: elements, settings: settings, global: global)
 }
 
 #let modify-rule(name, callback, rule-func) = {
@@ -52,7 +53,7 @@
     names: (),
     mode: auto,
     __future: (
-      call: (rule, elements: none, settings: none, __future-version: 0, ..) => {
+      call: (rule, elements: none, settings: none, global: none, __future-version: 0, ..) => {
         if e.eid(wock) not in elements {
           elements.insert(e.eid(wock), e.data(wock).default-data)
         }
@@ -60,7 +61,7 @@
 
         assert.ne(__future-version, 0)
 
-        (elements: elements, settings: settings)
+        (elements: elements, settings: settings, global: global)
       },
       max-version: 999999,
     )
@@ -70,6 +71,7 @@
 #let check-if-it-worked() = e.debug-get(styles => {
   assert.eq(styles.elements.at(e.eid(wock)).goofy, test-value)
   assert.eq(styles.settings.goofy, test-value)
+  assert.eq(styles.global.goofy, test-value)
 })
 
 #{

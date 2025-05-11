@@ -39,6 +39,13 @@
     prefer-leaky: false,
   ),
 
+  // Shared state between elements.
+  // Differently from settings, this is not meant to be configurable by users.
+  global: (
+    // Version that created the default global data.
+    version: element-version,
+  ),
+
   // Per-element data (set rules and other style chain info).
   elements: (:)
 )
@@ -757,17 +764,20 @@
 }
 
 // Apply set and revoke rules to the current per-element data.
-#let apply-rules(rules, elements: none, settings: (:)) = {
+#let apply-rules(rules, elements: none, settings: (:), global: (:)) = {
   let extra-output = (:)
   for rule in rules {
     if "__future" in rule and element-version <= rule.__future.max-version {
-      let output = (rule.__future.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+      let output = (rule.__future.call)(rule, elements: elements, settings: settings, global: global, extra-output: extra-output, __future-version: element-version)
       extra-output += output
       if "elements" in output {
         elements = output.elements
       }
       if "settings" in output {
         settings = output.settings
+      }
+      if "global" in output {
+        global = output.global
       }
       continue
     }
@@ -791,13 +801,16 @@
         and "set" in default-data.__future-rules
         and element-version <= default-data.__future-rules.set.max-version
       ) {
-        let output = (default-data.__future-rules.set.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+        let output = (default-data.__future-rules.set.call)(rule, elements: elements, settings: settings, global: global, extra-output: extra-output, __future-version: element-version)
         extra-output += output
         if "elements" in output {
           elements = output.elements
         }
         if "settings" in output {
           settings = output.settings
+        }
+        if "global" in output {
+          global = output.global
         }
         continue
       }
@@ -866,13 +879,16 @@
           and "revoke" in element-data.__future-rules
           and element-version <= element-data.__future-rules.revoke.max-version
         ) {
-          let output = (element-data.__future-rules.revoke.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          let output = (element-data.__future-rules.revoke.call)(rule, elements: elements, settings: settings, global: global, extra-output: extra-output, __future-version: element-version)
           extra-output += output
           if "elements" in output {
             elements = output.elements
           }
           if "settings" in output {
             settings = output.settings
+          }
+          if "global" in output {
+            global = output.global
           }
           continue
         }
@@ -908,13 +924,16 @@
           and "reset" in element-data.__future-rules
           and element-version <= element-data.__future-rules.reset.max-version
         ) {
-          let output = (element-data.__future-rules.reset.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          let output = (element-data.__future-rules.reset.call)(rule, elements: elements, settings: settings, global: global, extra-output: extra-output, __future-version: element-version)
           extra-output += output
           if "elements" in output {
             elements = output.elements
           }
           if "settings" in output {
             settings = output.settings
+          }
+          if "global" in output {
+            global = output.global
           }
           continue
         }
@@ -949,13 +968,16 @@
           and "filtered" in all-elem-data.default-data.__future-rules
           and element-version <= all-elem-data.default-data.__future-rules.filtered.max-version
         ) {
-          let output = (all-elem-data.default-data.__future-rules.filtered.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          let output = (all-elem-data.default-data.__future-rules.filtered.call)(rule, elements: elements, settings: settings, global: global, extra-output: extra-output, __future-version: element-version)
           extra-output += output
           if "elements" in output {
             elements = output.elements
           }
           if "settings" in output {
             settings = output.settings
+          }
+          if "global" in output {
+            global = output.global
           }
           continue
         }
@@ -1011,13 +1033,16 @@
           and "show" in all-elem-data.default-data.__future-rules
           and element-version <= all-elem-data.default-data.__future-rules.show.max-version
         ) {
-          let output = (all-elem-data.default-data.__future-rules.show.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+          let output = (all-elem-data.default-data.__future-rules.show.call)(rule, elements: elements, settings: settings, global: global, extra-output: extra-output, __future-version: element-version)
           extra-output += output
           if "elements" in output {
             elements = output.elements
           }
           if "settings" in output {
             settings = output.settings
+          }
+          if "global" in output {
+            global = output.global
           }
           continue
         }
@@ -1068,13 +1093,16 @@
         and "cond-set" in element.default-data.__future-rules
         and element-version <= element.default-data.__future-rules.cond-set.max-version
       ) {
-        let output = (element.default-data.__future-rules.cond-set.call)(rule, elements: elements, settings: settings, extra-output: extra-output, __future-version: element-version)
+        let output = (element.default-data.__future-rules.cond-set.call)(rule, elements: elements, settings: settings, global: global, extra-output: extra-output, __future-version: element-version)
         extra-output += output
         if "elements" in output {
           elements = output.elements
         }
         if "settings" in output {
           settings = output.settings
+        }
+        if "global" in output {
+          global = output.global
         }
         continue
       }
@@ -1377,7 +1405,11 @@
           global-data.settings = default-global-data.settings
         }
 
-        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
+        if "global" not in global-data {
+          global-data.global = default-global-data.global
+        }
+
+        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings, global: global-data.global)
 
         chain.push(global-data)
         chain
@@ -1431,7 +1463,11 @@
         global-data.settings = default-global-data.settings
       }
 
-      global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
+      if "global" not in global-data {
+        global-data.global = default-global-data.global
+      }
+
+      global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings, global: global-data.global)
 
       set bibliography(title: first-bib-title)
       show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
@@ -1476,7 +1512,11 @@
           global-data.settings = default-global-data.settings
         }
 
-        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings)
+        if "global" not in global-data {
+          global-data.global = default-global-data.global
+        }
+
+        global-data += apply-rules(rules, elements: global-data.elements, settings: global-data.settings, global: global-data.global)
 
         set bibliography(title: previous-bib-title)
         show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
@@ -3027,7 +3067,8 @@
                     new-global-data += apply-rules(
                       if rule.kind == "apply" { rule.rules } else { (rule,) },
                       elements: new-global-data.elements,
-                      settings: new-global-data.at("settings", default: default-global-data.settings)
+                      settings: new-global-data.at("settings", default: default-global-data.settings),
+                      global: new-global-data.at("global", default: default-global-data.global)
                     )
                   }
                   i += 1
@@ -3262,7 +3303,8 @@
                   new-global-data += apply-rules(
                     if rule.kind == "apply" { rule.rules } else { (rule,) },
                     elements: new-global-data.elements,
-                    settings: new-global-data.at("settings", default: default-global-data.settings)
+                    settings: new-global-data.at("settings", default: default-global-data.settings),
+                    global: new-global-data.at("global", default: default-global-data.global)
                   )
                 }
                 i += 1

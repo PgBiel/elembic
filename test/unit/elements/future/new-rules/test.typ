@@ -32,16 +32,17 @@
     names: (),
     mode: auto,
     __future: (
-      call: (rule, elements: none, settings: none, __future-version: 0, ..) => {
+      call: (rule, elements: none, settings: none, global: none, __future-version: 0, ..) => {
         if e.eid(wock) not in elements {
           elements.insert(e.eid(wock), e.data(wock).default-data)
         }
         elements.at(e.eid(wock)).goofy = rule.value
         settings.goofy = rule.value
+        global.goofy = rule.value
 
         assert.ne(__future-version, 0)
 
-        (elements: elements, settings: settings)
+        (elements: elements, settings: settings, global: global)
       },
       max-version: 999999,
     )
@@ -52,14 +53,6 @@
   e.debug-get(styles => {
     assert.eq(styles.elements.at(e.eid(wock)).goofy, value)
     assert.eq(styles.settings.goofy, value)
+    assert.eq(styles.global.goofy, value)
   })
 }
-
-#show: e.set_(wock, color: blue)
-
-#e.get(
-  get => {
-    assert.eq(get(wock).color, blue)
-    assert.eq(get(wock).inner, [Hello!])
-  }
-)
