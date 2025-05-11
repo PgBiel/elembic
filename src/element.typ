@@ -44,6 +44,9 @@
   global: (
     // Version that created the default global data.
     version: element-version,
+
+    // Current element ancestors.
+    ancestry-chain: (),
   ),
 
   // Per-element data (set rules and other style chain info).
@@ -3101,8 +3104,13 @@
                 new-global-data = editable-global-data
               }
 
-              if "within-chain" in new-global-data and new-global-data.within-chain != none {
-                new-global-data.within-chain.push((eid: eid, fields: synthesized-fields))
+              if "global" not in new-global-data {
+                new-global-data.global = default-global-data
+              }
+              if "ancestry-chain" in new-global-data.global {
+                new-global-data.global.ancestry-chain.push((eid: eid, fields: synthesized-fields))
+              } else {
+                new-global-data.global.ancestry-chain = ((eid: eid, fields: synthesized-fields),)
               }
             }
 

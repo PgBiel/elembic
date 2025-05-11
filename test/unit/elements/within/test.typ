@@ -17,7 +17,7 @@
 
 #wock(inner: [
   #e.debug-get(styles => {
-    let wock-within = styles.within-chain.first()
+    let wock-within = styles.global.ancestry-chain.first()
     assert.eq(wock-within.eid, e.eid(wock))
     assert.eq(wock-within.fields.color, blue)
   })
@@ -25,8 +25,8 @@
   #wock(
     color: red,
     inner: e.debug-get(styles => {
-      let wock-within = styles.within-chain.at(1)
-      assert.eq(wock-within .eid, e.eid(wock))
+      let wock-within = styles.global.ancestry-chain.at(1)
+      assert.eq(wock-within.eid, e.eid(wock))
       assert.eq(wock-within.fields.color, red)
     })
   )
