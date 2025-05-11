@@ -1,3 +1,4 @@
+
 #import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "types/base.typ"
@@ -290,7 +291,7 @@
 // Check if an element instance satisfies a filter.
 //
 // Assumes this filter already accepts this element, so eid is not checked.
-#let verify-filter(fields, eid: none, filter: none) = {
+#let verify-filter(fields, eid: none, filter: none, ancestry: ()) = {
   if filter == none {
     return false
   }
@@ -299,7 +300,7 @@
   }
 
   if "__future" in filter and element-version <= filter.__future.max-version {
-      return (filter.__future.call)(fields, eid: eid, filter: filter, __future-version: element-version)
+    return (filter.__future.call)(fields, eid: eid, filter: filter, ancestry: ancestry, __future-version: element-version)
   } else if filter.kind == "where" {
     return eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
   } else if filter.kind == "where-any" {
@@ -348,32 +349,71 @@
   let operands = ()
   while filter-stack != () {
     let last = filter-stack.last()
+
+    // Expand the latest filter's children into the evaluation stack.
     while (
       last.at(filter-key) != "visited"
+      and ("__future" not in last or element-version > last.__future.max-version)
       and "operands" in last
       and last.operands != ()
-      and ("__future" not in last or element-version > last.__future.max-version)
     ) {
       // Ensure we don't reach the parent operation until we have evaluated
       // each child operation.
       op-stack.push((last.kind, filter-stack.len() - 1))
       filter-stack.last().at(filter-key) = "visited"
-      // In reverse order to pop the first operand first.
-      filter-stack += last.operands.rev()
+      if "__subject" in filter {
+        // Ensure children filters apply to the same subject.
+        filter-stack += last.operands.map(op => if "__subject" in op { op } else { (..op, __subject: filter.__subject) }).rev()
+      } else {
+        // In reverse order to pop the first operand first.
+        filter-stack += last.operands.rev()
+      }
       last = filter-stack.last()
     }
 
     let filter = filter-stack.pop()
     let (kind,) = filter
+    let fields = fields
+    let eid = eid
+    let ancestry = ancestry
+    if "__subject" in filter {
+      (fields, eid, ancestry) = filter.__subject
+    }
 
     let value = if "__future" in filter and element-version <= filter.__future.max-version {
-      (filter.__future.call)(fields, eid: eid, filter: filter, __future-version: element-version)
+      (filter.__future.call)(fields, eid: eid, filter: filter, ancestry: ancestry, __future-version: element-version)
     } else if kind == "where" {
       eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
     } else if kind == "where-any" {
       eid in filter.fields-any and filter.fields-any.at(eid).any(f => f.pairs().all(((k, v)) => k in fields and fields.at(k) == v))
     } else if kind == "custom" {
       (filter.elements == none or eid in filter.elements) and (filter.call)(fields, eid: eid, __please-use-var-args: true)
+    } else if kind == "within" {
+      // Expand 'within' filter into
+      // (ancestor 1 matches OR ancestor 2 matches OR ...)
+      if filter.elements == none or eid in filter.elements {
+        let (ancestor-filter,) = filter
+        filter-stack.push(
+          (
+            (filter-key): true,
+            element-version: element-version,
+            kind: "or",
+            operands: ancestry.enumerate().map(((i, ancestor)) => (
+              ..ancestor-filter,
+
+              // TODO: maybe don't clone the ancestry for each ancestor...
+              __subject: (eid: ancestor.eid, fields: ancestor.fields, ancestry: ancestry.slice(0, i))
+            )),
+            elements: ancestor-filter.elements,
+          )
+        )
+
+        // This filter won't be evaluated, but rather the pushed OR.
+        continue
+      }
+
+      // Invalid
+      false
     } else if kind == "and" {
       // Due to short-circuiting, a false would have failed earlier.
       true
@@ -599,6 +639,44 @@
   )
 }
 
+/// Filter that only matches when this element is inside another elembic element.
+///
+/// For example:
+///
+/// ```typ
+/// #show: e.show_(e.filters.and(elem, e.filters.within(other-elem)), none)
+///
+/// #other-elem(elem[This element will be matched and removed])
+/// #elem[This element stays, as it is not inside `other-elem`]
+/// ```
+///
+/// - ancestor-filter (filter): a filter to match potential ancestors.
+/// - depth (int): only match at this exact KNOWN depth.
+/// - max-depth (int): only match up to this exact KNOWN depth.
+/// -> filter
+#let within-filter(ancestor-filter, depth: none, max-depth: none) = {
+  if type(ancestor-filter) == function {
+    ancestor-filter = ancestor-filter(__elembic_data: special-data-values.get-where)
+  }
+  assert(type(ancestor-filter) == dictionary and filter-key in ancestor-filter, message: "elembic: filters.within: invalid filter, please use 'custom-element.with(...)' to generate a filter.")
+  assert("elements" in ancestor-filter, message: "elembic: filters.within: the ancestor filter is missing the 'elements' field; this indicates it comes from an element generated with an outdated elembic version. Please use an element made with an up-to-date elembic version.")
+  assert(ancestor-filter.elements != (:), message: "elembic: filters.within: the ancestor filter appears to not be restricted to any elements and is thus impossible to match. It must apply to at least one element (potential ancestor). Consider using a different filter.")
+  assert(ancestor-filter.elements != none, message: "elembic: filters.within: the ancestor filter appears to apply to any element. It must apply to exactly one element (the one receiving the set rule). Consider using an 'and' filter, e.g. 'e.filters.within(e.filters.and(wibble, e.not(wibble.with(a: 10))))' instead of just 'e.filters.within(e.not(wibble.with(a: 10)))', to restrict it.")
+  assert(depth == none or max-depth == none, message: "elembic: filters.within: cannot specify both depth and max-depth (please pick one).")
+  assert(depth == none or type(depth) == int, message: "elembic: filters.within: 'depth' parameter must be an integer or 'none'.")
+  assert(max-depth == none or type(max-depth) == int, message: "elembic: filters.within: 'max-depth' parameter must be an integer or 'none'.")
+
+  (
+    (filter-key): true,
+    element-version: element-version,
+    kind: "within",
+    ancestor-filter: ancestor-filter,
+    depth: depth,
+    max-depth: max-depth,
+    elements: none
+  )
+}
+
 /// Prepare a selector similar to 'element.where(..args)'
 /// which can be used in "show sel: set". Receives a filter
 /// generated by'element.with(fields)' or '(element-data.where)(fields)'.
@@ -733,8 +811,9 @@
 
           let labeled-it = it
           for (i, filter) in filters {
+            // TODO: ancestry?
             // Check if all positional and named arguments match
-            if verify-filter(fields, eid: eid, filter: filter) {
+            if verify-filter(fields, eid: eid, filter: filter, ancestry: ()) {
               // Add corresponding label and preserve tag so 'data(it)' still works
               labeled-it = [#[#labeled-it#tag]#matching-labels.at(i)]
             }
@@ -2286,12 +2365,14 @@
       results += query(
         elem-data.meta-sel
       ).filter(
-        instance => instance.func() == metadata and verify-filter(data(instance.value).at("fields", default: (:)), eid: eid, filter: filter) and "rendered" in instance.value
+        // TODO: ancestry
+        instance => instance.func() == metadata and verify-filter(data(instance.value).at("fields", default: (:)), eid: eid, filter: filter, ancestry: ()) and "rendered" in instance.value
       ).map(
         instance => instance.value.rendered
       )
     } else if "sel" in elem-data {
-      results += query(elem-data.sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid: eid, filter: filter))
+      // TODO: ancestry
+      results += query(elem-data.sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid: eid, filter: filter, ancestry: ()))
     } else {
       assert(false, message: "elembic: element.query: filter did not have the element's meta selector")
     }
@@ -2823,23 +2904,29 @@
           }
         }
 
-        if "global" in global-data and "__futures" in global-data.global and "global-data" in global-data.global.__futures {
-          for future in global-data.global.__futures.global-data {
-            if element-version <= future.max-version {
-              let res = (future.call)(
-                global-data: global-data,
-                element-data: global-data.elements.at(eid, default: default-data),
-                args: args,
-                all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
-                __future-version: element-version
-              )
+        let ancestry = ()
+        if "global" in global-data {
+          if "ancestry-chain" in global-data.global {
+            ancestry = global-data.global.ancestry-chain
+          }
+          if "__futures" in global-data.global and "global-data" in global-data.global.__futures {
+            for future in global-data.global.__futures.global-data {
+              if element-version <= future.max-version {
+                let res = (future.call)(
+                  global-data: global-data,
+                  element-data: global-data.elements.at(eid, default: default-data),
+                  args: args,
+                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
+                  __future-version: element-version
+                )
 
-              if "global-data" in res {
-                global-data = res.global-data
-                data-changed = true
+                if "global-data" in res {
+                  global-data = res.global-data
+                  data-changed = true
+                }
+
+                continue
               }
-
-              continue
             }
           }
         }
@@ -3016,7 +3103,7 @@
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter)
+                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: ancestry)
                 ) {
                   let cond-args = cond-sets.args.at(i)
 
@@ -3086,7 +3173,7 @@
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter)
+                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: ancestry)
                 ) {
                   let rule = filters.rules.at(i)
                   new-global-data += apply-rules(
@@ -3135,7 +3222,7 @@
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter)
+                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: ancestry)
                 ) {
                   final-rules.push(show-rules.callbacks.at(i))
                 }

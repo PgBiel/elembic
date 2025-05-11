@@ -31,3 +31,26 @@
     })
   )
 ])
+
+#[
+  #let blue-counter = counter("under-blue")
+  #let other-counter = counter("under-other")
+  #show: e.show_(e.filters.and_(wock, e.within(wock.with(color: blue))), it => blue-counter.step() + it)
+  #show: e.show_(
+    e.filters.and_(wock, e.within(e.filters.or_(wock.with(color: yellow), wock.with(color: purple)))),
+    it => other-counter.step() + it
+  )
+
+  #wock()
+
+  #wock(
+    inner: {
+      wock(color: yellow, inner: wock())
+      wock(color: red, inner: wock())
+      wock(color: purple, inner: wock())
+    }
+  )
+
+  #context assert.eq(blue-counter.get().first(), 6)
+  #context assert.eq(other-counter.get().first(), 2)
+]
