@@ -1,4 +1,3 @@
-
 #import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "types/base.typ"
@@ -46,15 +45,12 @@
     // Version that created the default global data.
     version: element-version,
 
-    // Current element ancestors.
+    // Current element ancestors, from outermost to innermost.
     ancestry-chain: (),
   ),
 
   // Per-element data (set rules and other style chain info).
   elements: (:),
-
-  // Which elements are we currently a child of, from outermost to innermost.
-  within-chain: (),
 )
 
 // Default per-element data.
