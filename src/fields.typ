@@ -323,37 +323,12 @@
       let typeinfo = field.typeinfo
       let kind = typeinfo.type-kind
 
-      // Inlined version of 'types.cast'
       if kind != "any" {
-        let value-type = type(value)
-        if value-type == dictionary and custom-type-key in value {
-          value-type = value.at(custom-type-key).id
+        let (res, casted) = types.cast(value, typeinfo)
+        if not res {
+          return (false, field-error-prefix(field-name) + casted)
         }
-        if kind == "literal" and typeinfo.cast == none {
-          if (
-            not eq(value, typeinfo.data.value)
-            or value-type not in typeinfo.input and "any" not in typeinfo.input
-            or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value))
-          ) {
-            return (false, field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
-          }
-        } else {
-          if (
-            value-type not in typeinfo.input and "any" not in typeinfo.input
-            or typeinfo.check != none and not (typeinfo.check)(value)
-          ) {
-            return (false, field-error-prefix(field-name) + types.generate-cast-error(value, typeinfo))
-          }
-
-          // Only then do we need to replace the given value
-          if typeinfo.cast != none {
-            named-args.insert(field-name, if kind == "native" and typeinfo.data == content {
-              [#value]
-            } else {
-              (typeinfo.cast)(value)
-            })
-          }
-        }
+        named-args.insert(field-name, casted)
       }
     }
 
@@ -365,35 +340,11 @@
       let kind = typeinfo.type-kind
       let casted = value
 
-      // Inlined version of 'types.cast'
       if kind != "any" {
-        let value-type = type(value)
-        if value-type == dictionary and custom-type-key in value {
-          value-type = value.at(custom-type-key).id
-        }
-        if kind == "literal" and typeinfo.cast == none {
-          if (
-            not eq(value, typeinfo.data.value)
-            or value-type not in typeinfo.input and "any" not in typeinfo.input
-            or (typeinfo.data.typeinfo.check != none and not (typeinfo.data.typeinfo.check)(value))
-          ) {
-            return (false, field-error-prefix(pos-field.name) + types.generate-cast-error(value, typeinfo))
-          }
-        } else {
-          if (
-            value-type not in typeinfo.input and "any" not in typeinfo.input
-            or typeinfo.check != none and not (typeinfo.check)(value)
-          ) {
-            return (false, field-error-prefix(pos-field.name) + types.generate-cast-error(value, typeinfo))
-          }
-
-          if typeinfo.cast != none {
-            casted = if kind == "native" and typeinfo.data == content {
-              [#value]
-            } else {
-              (typeinfo.cast)(value)
-            }
-          }
+        let res
+        (res, casted) = types.cast(value, typeinfo)
+        if not res {
+          assert(false, field-error-prefix(field-name) + casted)
         }
       }
 
