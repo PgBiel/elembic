@@ -293,7 +293,7 @@
   }
 
   if "__future" in filter and element-version <= filter.__future.max-version {
-      return (filter.__future.call)(fields, eid, filter, __future-version: element-version)
+      return (filter.__future.call)(fields, eid: eid, filter: filter, __future-version: element-version)
   } else if filter.kind == "where" {
     return eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
   } else if filter.kind == "where-any" {
