@@ -104,6 +104,9 @@
   // (index: last-chain-index, revoking: name-revoked, name: none / name of the revoke itself)
   revoke-chain: (),
 
+  // This is set to true when a rule with '.within(eid)' is used.
+  track-ancestry: false,
+
   // Data for filtering.
   filters: (
     // Filters applying to this element. Each filter is associated with a rule below.
@@ -401,6 +404,9 @@
               __subject: (eid: ancestor.eid, fields: ancestor.fields, ancestry: ancestry.slice(0, i))
             )),
             elements: ancestor-filter.elements,
+
+            // Since this is an internal filter, doesn't matter
+            ancestry-elements: (:),
           )
         )
 
@@ -550,7 +556,8 @@
         kind: "where",
         eid: where-eid,
         fields: where-fields,
-        elements: ((where-eid): elements.at(where-eid))
+        elements: ((where-eid): elements.at(where-eid)),
+        ancestry-elements: (:),
       )
     }
 
@@ -597,7 +604,8 @@
         element-version: element-version,
         kind: "where-any",
         fields-any: wheres,
-        elements: elements
+        elements: elements,
+        ancestry-elements: (:),
       )
     }
 
@@ -616,6 +624,7 @@
     kind: kind,
     operands: filters,
     elements: elements,
+    ancestry-elements: (:) + filters.map(f => f.at("ancestry-elements", default: none)).join(),
   )
 }
 
@@ -631,7 +640,8 @@
     element-version: element-version,
     kind: "custom",
     call: callback,
-    elements: none
+    elements: none,
+    ancestry-elements: (:),
   )
 }
 
@@ -669,7 +679,8 @@
     ancestor-filter: ancestor-filter,
     depth: depth,
     max-depth: max-depth,
-    elements: none
+    elements: none,
+    ancestry-elements: ancestor-filter.elements + ancestor-filter.at("ancestry-elements", default: (:)),
   )
 }
 
@@ -842,6 +853,17 @@
       }
     }#lbl-get]
   }
+}
+
+#let request-ancestry-tracking(elements, requests) = {
+  for (eid, elem-data) in requests {
+    if eid not in elements {
+      elements.insert(eid, elem-data.default-data)
+    }
+    elements.at(eid).track-ancestry = true
+  }
+
+  elements
 }
 
 // Apply set and revoke rules to the current per-element data.
@@ -1042,6 +1064,10 @@
       }
       let base-data = (names: names)
 
+      if "ancestry-elements" in filter and filter.ancestry-elements not in (none, (:)) {
+        elements = request-ancestry-tracking(elements, filter.ancestry-elements)
+      }
+
       for (eid, all-elem-data) in target-elements {
         // Forward-compatibility with newer elements
         if (
@@ -1107,6 +1133,10 @@
       }
       let base-data = (names: names)
 
+      if "ancestry-elements" in filter and filter.ancestry-elements not in (none, (:)) {
+        elements = request-ancestry-tracking(elements, filter.ancestry-elements)
+      }
+
       for (eid, all-elem-data) in target-elements {
         // Forward-compatibility with newer elements
         if (
@@ -1166,6 +1196,11 @@
       if type(filter) != dictionary or "elements" not in filter or "kind" not in filter {
         assert(false, message: "elembic: element.cond-set: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
       }
+
+      if "ancestry-elements" in filter and filter.ancestry-elements not in (none, (:)) {
+        elements = request-ancestry-tracking(elements, filter.ancestry-elements)
+      }
+
       let (eid,) = element
 
       // Forward-compatibility with newer elements
@@ -2700,6 +2735,7 @@
       fields: args,
       sel: lbl-show,
       elements: ((eid): partial-element-data),
+      ancestry-elements: (:),
     )
   }
 
@@ -2977,8 +3013,8 @@
         let has-cond-sets = cond-sets.args != ()
         let show-rules = element-data.at("show-rules", default: default-data.show-rules)
         let has-show-rules = show-rules.callbacks != ()
-        let has-within = true  // TODO: toggle 'within'
-        let updates-stylechain-inside = has-filters or has-within
+        let has-ancestry-tracking = element-data.at("track-ancestry", default: default-data.track-ancestry)
+        let updates-stylechain-inside = has-filters or has-ancestry-tracking
 
         let (folded-fields, constructed-fields, active-revokes, first-active-index) = if (
           element-data.revoke-chain == default-data.revoke-chain
@@ -3182,7 +3218,7 @@
                 i += 1
               }
             }
-            if has-within {
+            if has-ancestry-tracking {
               if not has-filters {
                 new-global-data = editable-global-data
               }

@@ -15,6 +15,16 @@
 
 #show: e.set_(wock, color: blue)
 
+// Lazy tracking
+#wock(inner: [
+  #e.debug-get(styles => {
+    assert.eq(styles.global.ancestry-chain, ())
+  })
+])
+
+// Bogus rule with 'within' just to trigger ancestry tracking
+#show: e.cond-set(e.filters.and_(wock, e.within(wock)))
+
 #wock(inner: [
   #e.debug-get(styles => {
     let wock-within = styles.global.ancestry-chain.first()
