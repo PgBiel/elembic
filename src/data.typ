@@ -105,6 +105,13 @@
 // 'lbl-rule-tag' from older Elembic versions.
 #let lbl-old-rule-tag = <__elembic_element_rule>
 
+// Label for other functions which access or modify the style chain, namely
+// 'get', 'select', 'debug-get', 'stateful.toggle'.
+//
+// This is attached to metadata and the 'special-rule-key' property
+// indicates which kind of rule this is.
+#let lbl-special-rule-tag = <__elembic_element_special_rule>
+
 // Label for metadata which stores the global data.
 // In practice, this label is never present in the document
 // unless one accidentally leaks the 'bibliography.title'
@@ -122,6 +129,10 @@
 
 // Special dictionary key to indicate this is a prepared rule.
 #let prepared-rule-key = "__elembic-prepared-rule"
+
+// Special dictionary key to indicate this is a "special rule"
+// ('get', 'select', 'debug-get', 'stateful.toggle').
+#let special-rule-key = "__elembic-special-rule"
 
 // Special dictionary key which stores element context and other data.
 #let stored-data-key = "__elembic_stored_element_data"

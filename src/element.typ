@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
+#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "types/base.typ"
 #import "types/types.typ"
@@ -294,6 +294,8 @@
       }
     }#lbl-get]
   }
+
+  [#metadata(((special-rule-key): "toggle-stateful-mode", version: element-version, enable: enable, force: force))#lbl-special-rule-tag]
 }
 
 // Check if an element instance satisfies a filter.
@@ -888,6 +890,8 @@
       }
     }#lbl-get]
   }
+
+  [#metadata(((special-rule-key): "select", version: element-version, filters: filters, receiver: receiver, prefix: prefix))#lbl-special-rule-tag]
 }
 
 #let request-ancestry-tracking(elements, requests) = {
@@ -2384,7 +2388,7 @@
   get-styles(element, elements: global-data.elements, use-routine: true)
 }
 
-#let prepare-ctx(include-global, receiver) = context {
+#let prepare-ctx(receiver, include-global: false) = context {
   let previous-bib-title = bibliography.title
   [#context {
     let global-data = if (
@@ -2435,8 +2439,15 @@
 ///
 /// - receiver (function): function ('get' function) -> content
 /// -> content
-#let prepare-get = prepare-ctx.with(false)
-#let prepare-debug = prepare-ctx.with(true)
+#let prepare-get(receiver) = {
+  let output = prepare-ctx(include-global: false, receiver)
+  [#output#metadata(((special-rule-key): "get", version: element-version, receiver: receiver))#lbl-special-rule-tag]
+}
+
+#let prepare-debug(receiver) = {
+  let output = prepare-ctx(include-global: true, receiver)
+  [#output#metadata(((special-rule-key): "debug-get", version: element-version, receiver: receiver))#lbl-special-rule-tag]
+}
 
 // Obtain a Typst selector to use to match this element in show rules or in the outline.
 // Specify 'meta: true' to match this element in a query, as that selector is
