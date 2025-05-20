@@ -42,6 +42,10 @@
     // Setting this to 'any' will enable ancestry tracking for all elements
     // (POTENTIALLY SLOW!).
     track-ancestry: (:),
+
+    // Additional elements which should support ancestry-related filters when
+    // queried.
+    store-ancestry: (:),
   ),
 
   // Shared state between elements.
@@ -1960,7 +1964,7 @@
     }
 
     let default-setting = default-global-data.settings.at(key)
-    if key == "track-ancestry" and val != "any" {
+    if key in ("track-ancestry", "store-ancestry") and val != "any" {
       if type(val) == array {
         let new-elements = (:)
         for elem in val {
@@ -3092,6 +3096,7 @@
           }
         }
 
+        let settings = if "settings" in global-data { global-data.settings } else { default-global-data.settings }
         let filters = element-data.at("filters", default: default-data.filters)
         let has-filters = filters.all != ()
         let cond-sets = element-data.at("cond-sets", default: default-data.cond-sets)
@@ -3102,11 +3107,20 @@
           // Either a rule with a 'within(this element)' filter was used, or
           // the user specifically requested ancestry tracking.
           element-data.at("track-ancestry", default: default-data.track-ancestry)
-          or "settings" in global-data and "track-ancestry" in global-data.settings and (
-            global-data.settings.track-ancestry == "any"
-            or eid in global-data.settings.track-ancestry
+          or "track-ancestry" in settings and (
+            settings.track-ancestry == "any"
+            or eid in settings.track-ancestry
           )
         )
+
+        // Whether ancestry should be made available in a query() for this
+        // element, allowing usage of 'within()' rules for that element in a
+        // query.
+        let store-ancestry = has-ancestry-tracking or "store-ancestry" in settings and (
+          settings.store-ancestry == "any"
+          or eid in settings.store-ancestry
+        )
+
         let updates-stylechain-inside = has-filters or has-ancestry-tracking
 
         let (folded-fields, constructed-fields, active-revokes, first-active-index) = if (
@@ -3386,7 +3400,7 @@
                   ref-figure(tag, synthesized-fields, ref-label)
                 }
 
-                if not contextual and has-ancestry-tracking {
+                if not contextual and store-ancestry {
                   tag.ctx = (ancestry: ancestry)
                 }
 
@@ -3427,7 +3441,7 @@
                 ref-figure(tag, synthesized-fields, ref-label)
               }
 
-              if not contextual and has-ancestry-tracking {
+              if not contextual and store-ancestry {
                 tag.ctx = (ancestry: ancestry)
               }
 
