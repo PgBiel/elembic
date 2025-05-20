@@ -2439,8 +2439,19 @@
       results += query(
         elem-data.meta-sel
       ).filter(
-        // TODO: ancestry
-        instance => instance.func() == metadata and verify-filter(data(instance.value).at("fields", default: (:)), eid: eid, filter: filter, ancestry: ()) and "rendered" in instance.value
+        instance => (
+          instance.func() == metadata
+            and {
+              let meta = data(instance.value)
+
+              verify-filter(
+                meta.at("fields", default: (:)),
+                eid: eid,
+                filter: filter,
+                ancestry: if meta.at("ctx", default: none) != none and "ancestry" in meta.ctx { meta.ctx.ancestry } else { () }
+              ) and "rendered" in instance.value
+            }
+        )
       ).map(
         instance => instance.value.rendered
       )
@@ -3130,9 +3141,6 @@
           cond-set-foldable-fields = foldable-fields
         }
 
-        // Code below is duplicated.
-        // This is to avoid an additional function call, as we need to be generic
-        // over the necessity of 'context {}'.
         let shown = {
           let tag = (
             data-kind: "element-instance",
@@ -3145,7 +3153,9 @@
             eid: eid,
             ctx: if contextual {
               (get: get-styles.with(elements: global-data.elements))
-            } else { none },
+            } + if contextual or has-ancestry-tracking {
+              (ancestry: ancestry)
+            },
             counter: element-counter,
             reference: reference,
             custom-ref: none,
