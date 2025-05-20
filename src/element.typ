@@ -2713,6 +2713,27 @@
   assert(outline != auto or reference != none, message: "elembic: element.declare: if 'outline' is set to 'auto', 'reference' must be specified and not be 'none'.")
   assert(labelable or reference == none, message: "elembic: element.declare: 'labelable' must be true for 'reference' to not be 'none'")
 
+  // All element args as originally provided.
+  let elem-args = arguments(
+    name,
+    display: display,
+    fields: fields,
+    prefix: prefix,
+    parse-args: parse-args,
+    typecheck: typecheck,
+    allow-unknown-fields: allow-unknown-fields,
+    template: template,
+    prepare: prepare,
+    construct: construct,
+    scope: scope,
+    count: count,
+    labelable: labelable,
+    reference: reference,
+    outline: outline,
+    synthesize: synthesize,
+    contextual: contextual,
+  )
+
   if contextual == auto {
     // Provide separate context for synthesize.
     // By default, assume it isn't needed.
@@ -2856,6 +2877,7 @@
     prepare: prepare,
     default-constructor: none,
     func: none,
+    elem-args: elem-args,
   )
 
   // Figure placed for referencing to work.
