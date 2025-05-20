@@ -3462,8 +3462,7 @@
               }
             }
 
-
-          if updates-stylechain-inside and is-stateful {
+            if updates-stylechain-inside and is-stateful {
               // Pushed before the if above
               style-state.update(chain => {
                 _ = chain.pop()
