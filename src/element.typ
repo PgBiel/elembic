@@ -401,14 +401,14 @@
       // (ancestor 1 matches OR ancestor 2 matches OR ...)
       if filter.elements == none or eid in filter.elements {
         let (ancestor-filter,) = filter
-        let matching-ancestors = if "depth" in filter and filter.depth != none {
+        let matching-ancestors = if "depth" in filter and filter.depth != none and filter.depth > 0 {
           let total-depth = ancestry.len()
           if total-depth >= filter.depth {
             ((total-depth - filter.depth, ancestry.at(total-depth - filter.depth)),)
           } else {
             ()
           }
-        } else if "max-depth" in filter and filter.max-depth != none {
+        } else if "max-depth" in filter and filter.max-depth != none and filter.max-depth > 0 {
           let total-depth = ancestry.len()
           if total-depth <= filter.max-depth {
             ancestry.enumerate()
@@ -703,8 +703,8 @@
   assert(ancestor-filter.elements != (:), message: "elembic: filters.within: the ancestor filter appears to not be restricted to any elements and is thus impossible to match. It must apply to at least one element (potential ancestor). Consider using a different filter.")
   assert(ancestor-filter.elements != none, message: "elembic: filters.within: the ancestor filter appears to apply to any element. It must apply to exactly one element (the one receiving the set rule). Consider using an 'and' filter, e.g. 'e.filters.within(e.filters.and(wibble, e.not(wibble.with(a: 10))))' instead of just 'e.filters.within(e.not(wibble.with(a: 10)))', to restrict it.")
   assert(depth == none or max-depth == none, message: "elembic: filters.within: cannot specify both depth and max-depth (please pick one).")
-  assert(depth == none or type(depth) == int, message: "elembic: filters.within: 'depth' parameter must be an integer or 'none'.")
-  assert(max-depth == none or type(max-depth) == int, message: "elembic: filters.within: 'max-depth' parameter must be an integer or 'none'.")
+  assert(depth == none or type(depth) == int and depth > 0, message: "elembic: filters.within: 'depth' parameter must be a positive integer or 'none'.")
+  assert(max-depth == none or type(max-depth) == int and max-depth > 0, message: "elembic: filters.within: 'max-depth' parameter must be a positive integer or 'none'.")
 
   (
     (filter-key): true,
