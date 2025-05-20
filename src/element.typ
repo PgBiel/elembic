@@ -2954,7 +2954,7 @@
   let _missing() = {}
   let std-label = label
 
-  let default-constructor(..args, __elembic_data: none, __elembic_func: auto, label: _missing) = {
+  let default-constructor(..args, __elembic_data: none, __elembic_func: auto, __elembic_mode: auto, __elembic_settings: (:), label: _missing) = {
     if __elembic_func == auto {
       __elembic_func = default-constructor
     }
@@ -3527,7 +3527,7 @@
       assert(type(test-construct) == function, message: "elembic: element.declare: the 'construct' function must receive original constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
     }
 
-    let final-constructor(..args, __elembic_data: none) = {
+    let final-constructor(..args, __elembic_data: none, __elembic_mode: auto, __elembic_settings: (:)) = {
       if __elembic_data != none {
         return if __elembic_data == special-data-values.get-data {
           (data-kind: "element", ..elem-data, func: final-constructor, default-constructor: default-constructor.with(__elembic_func: final-constructor))
@@ -3538,7 +3538,7 @@
         }
       }
 
-      construct(default-constructor.with(__elembic_func: final-constructor))(..args)
+      construct(default-constructor.with(__elembic_func: final-constructor, __elembic_mode: __elembic_mode, __elembic_settings: __elembic_settings))(..args)
     }
 
     final-constructor
