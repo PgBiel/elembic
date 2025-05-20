@@ -3152,9 +3152,11 @@
             name: name,
             eid: eid,
             ctx: if contextual {
-              (get: get-styles.with(elements: global-data.elements))
-            } + if contextual or has-ancestry-tracking {
-              (ancestry: ancestry)
+              // Note: we add ancestry later if there is ancestry tracking
+              // to avoid interfering with memoization of other things
+              (get: get-styles.with(elements: global-data.elements), ancestry: ancestry)
+            } else {
+              (:)
             },
             counter: element-counter,
             reference: reference,
@@ -3353,6 +3355,10 @@
                   ref-figure(tag, synthesized-fields, ref-label)
                 }
 
+                if not contextual and has-ancestry-tracking {
+                  tag.ctx = (ancestry: ancestry)
+                }
+
                 let body = [#[#body#metadata(tag)]#lbl-show]
                 let shown-body = if show-rules == () {
                   body
@@ -3388,6 +3394,10 @@
                 synthesized-fields.at(stored-data-key) = tag
 
                 ref-figure(tag, synthesized-fields, ref-label)
+              }
+
+              if not contextual and has-ancestry-tracking {
+                tag.ctx = (ancestry: ancestry)
               }
 
               let body = [#[#body#metadata(tag)]#lbl-show]
