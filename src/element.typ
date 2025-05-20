@@ -3305,9 +3305,8 @@
             // Store contextual information in synthesize
             synthesized-fields.insert(stored-data-key, tag)
 
-            let new-global-data
+            let new-global-data = if data-changed { editable-global-data } else { none }
             if has-filters {
-              new-global-data = editable-global-data
               let i = 0
               for filter in filters.all {
                 let data = filters.data.at(i)
@@ -3318,6 +3317,10 @@
                   and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
                 ) {
                   let rule = filters.rules.at(i)
+                  if new-global-data == none {
+                    // Only update style chain if at least one filter matches
+                    new-global-data = editable-global-data
+                  }
                   new-global-data += apply-rules(
                     if rule.kind == "apply" { rule.rules } else { (rule,) },
                     elements: new-global-data.elements,
@@ -3329,7 +3332,7 @@
               }
             }
             if has-ancestry-tracking {
-              if not has-filters {
+              if new-global-data == none {
                 new-global-data = editable-global-data
               }
 
@@ -3344,9 +3347,9 @@
             }
 
             // Save updated styles from applied rules
-            show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if updates-stylechain-inside and not is-stateful
+            show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if new-global-data != none and not is-stateful
 
-            if updates-stylechain-inside and is-stateful {
+            if new-global-data != none and is-stateful {
               // Popping after the if below
               style-state.update(chain => {
                 chain.push(new-global-data)
@@ -3464,7 +3467,7 @@
               }
             }
 
-            if updates-stylechain-inside and is-stateful {
+            if new-global-data != none and is-stateful {
               // Pushed before the if above
               style-state.update(chain => {
                 _ = chain.pop()
