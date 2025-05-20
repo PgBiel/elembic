@@ -430,6 +430,7 @@
 
             // Since this is an internal filter, doesn't matter
             ancestry-elements: (:),
+            may-need-ancestry: true,
           )
         )
 
@@ -581,6 +582,9 @@
         fields: where-fields,
         elements: ((where-eid): elements.at(where-eid)),
         ancestry-elements: (:),
+
+        // For optimizations
+        may-need-ancestry: false,
       )
     }
 
@@ -629,6 +633,7 @@
         fields-any: wheres,
         elements: elements,
         ancestry-elements: (:),
+        may-need-ancestry: false,
       )
     }
 
@@ -648,6 +653,7 @@
     operands: filters,
     elements: elements,
     ancestry-elements: (:) + filters.map(f => f.at("ancestry-elements", default: none)).join(),
+    may-need-ancestry: filters.any(f => "may-need-ancestry" in f and f.may-need-ancestry),
   )
 }
 
@@ -665,6 +671,7 @@
     call: callback,
     elements: none,
     ancestry-elements: (:),
+    may-need-ancestry: true,
   )
 }
 
@@ -704,6 +711,7 @@
     max-depth: max-depth,
     elements: none,
     ancestry-elements: (:) + ancestor-filter.elements + ancestor-filter.at("ancestry-elements", default: (:)),
+    may-need-ancestry: true,
   )
 }
 
@@ -2466,7 +2474,11 @@
                 meta.at("fields", default: (:)),
                 eid: eid,
                 filter: filter,
-                ancestry: if meta.at("ctx", default: none) != none and "ancestry" in meta.ctx { meta.ctx.ancestry } else { () }
+                ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry and meta.at("ctx", default: none) != none and "ancestry" in meta.ctx {
+                  meta.ctx.ancestry
+                } else {
+                  ()
+                }
               ) and "rendered" in instance.value
             }
         )
@@ -2808,6 +2820,7 @@
       sel: lbl-show,
       elements: ((eid): partial-element-data),
       ancestry-elements: (:),
+      may-need-ancestry: false,
     )
   }
 
@@ -3216,7 +3229,7 @@
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: ancestry)
+                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
                 ) {
                   let cond-args = cond-sets.args.at(i)
 
@@ -3286,7 +3299,7 @@
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: ancestry)
+                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
                 ) {
                   let rule = filters.rules.at(i)
                   new-global-data += apply-rules(
@@ -3335,7 +3348,7 @@
                   filter != none
                   and (data.index == none or data.index >= filter-first-active-index)
                   and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: ancestry)
+                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
                 ) {
                   final-rules.push(show-rules.callbacks.at(i))
                 }
