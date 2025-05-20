@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
+#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "types/base.typ"
 #import "types/types.typ"
@@ -1488,10 +1488,14 @@
 
     // Merge with the closest rule application below us, "moving" it upwards
     // and reducing the rule count by 1
-    if (
+    let last-label = none
+    while (
       potential-doc.func() == sequence
       and potential-doc.children.len() == 2
-      and potential-doc.children.last().at("label", default: none) == lbl-rule-tag
+      and {
+        last-label = potential-doc.children.last().at("label", default: none)
+        last-label == lbl-rule-tag or last-label == lbl-old-rule-tag
+      }
     ) {
       let last = potential-doc.children.last()
       let inner-rule = last.value.rule
@@ -1519,7 +1523,7 @@
       }
 
       // Convert this into an 'apply' rule
-      rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: mode)
+      rule = ((prepared-rule-key): true, version: element-version, kind: "apply", rules: rules, mode: mode, name: none, names: ())
 
       // Place what's inside, don't place the context block that would run our code again
       doc = last.value.doc
@@ -1542,6 +1546,14 @@
         if "doc" in res {
           return res.doc
         }
+      }
+
+      if last-label == lbl-old-rule-tag {
+        // If we're merging with an older rule version, we may have to merge a
+        // newer version again
+        potential-doc = last.value.doc
+      } else {
+        break
       }
     }
 

@@ -102,6 +102,9 @@
 // Label for metadata indicating a rule's parameters.
 #let lbl-rule-tag = <__elembic_element_rule_v2>
 
+// 'lbl-rule-tag' from older Elembic versions.
+#let lbl-old-rule-tag = <__elembic_element_rule>
+
 // Label for metadata which stores the global data.
 // In practice, this label is never present in the document
 // unless one accidentally leaks the 'bibliography.title'
