@@ -13,6 +13,16 @@
   prefix: ""
 )
 
+#let dock = e.element.declare(
+  "dock",
+  display: it => { it.inner },
+  fields: (
+    field("color", color, default: red),
+    field("inner", content, default: [Hello!])
+  ),
+  prefix: ""
+)
+
 #show: e.set_(wock, color: blue)
 
 // Lazy tracking
@@ -21,6 +31,30 @@
     assert.eq(styles.global.ancestry-chain, ())
   })
 ])
+
+#{
+  show: e.settings(track-ancestry: (dock, wock))
+
+  wock(inner: [
+    #e.debug-get(styles => {
+      let wock-within = styles.global.ancestry-chain.first()
+      assert.eq(wock-within.eid, e.eid(wock))
+      assert.eq(wock-within.fields.color, blue)
+    })
+  ])
+}
+
+#{
+  show: e.settings(track-ancestry: "any")
+
+  wock(inner: [
+    #e.debug-get(styles => {
+      let wock-within = styles.global.ancestry-chain.first()
+      assert.eq(wock-within.eid, e.eid(wock))
+      assert.eq(wock-within.fields.color, blue)
+    })
+  ])
+}
 
 // Bogus rule with 'within' just to trigger ancestry tracking
 #show: e.cond-set(e.filters.and_(wock, e.within(wock)))

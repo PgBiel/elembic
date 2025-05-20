@@ -37,6 +37,11 @@
   settings: (
     // Whether non-stateful rules should default to leaky mode.
     prefer-leaky: false,
+
+    // Additional elements for which ancestry should be tracked.
+    // Setting this to 'any' will enable ancestry tracking for all elements
+    // (POTENTIALLY SLOW!).
+    track-ancestry: (:),
   ),
 
   // Shared state between elements.
@@ -1921,20 +1926,58 @@
   let args = args.named()
   assert(args != (:), message: "elembic: element.settings: please specify some setting, e.g. e.settings(prefer-leaky: true)")
 
+  let write = (:)
+  let transform = ()
   for (key, val) in args {
     if key not in default-global-data.settings {
       assert(false, message: "elembic: element.settings: invalid setting '" + key + "', valid keys are " + default-global-data.settings.keys().map(repr).join(", "))
     }
 
-    // Lazy type-checking for now
-    // Can improve if structured types are needed later
     let default-setting = default-global-data.settings.at(key)
-    if type(val) != type(default-setting) {
+    if key == "track-ancestry" and val != "any" {
+      if type(val) == array {
+        let new-elements = (:)
+        for elem in val {
+          if type(elem) == function {
+            elem = data(elem)
+          }
+          if type(elem) != dictionary or "eid" not in elem {
+            assert(false, message: "elembic: element.settings: expected array of elements or literal \"any\" (apply to any element) for setting '" + key + "', got array of '" + str(type(elem)) + "'")
+          }
+
+          new-elements.insert(elem.eid, elem)
+        }
+
+        if new-elements != (:) {
+          transform.push(s => {
+            let existing = if s != none and key in s { s.at(key) } else { (:) }
+            if existing == "any" {
+              // Nothing to change, already applies to all elements
+              s
+            } else {
+              (:..s, (key): (:) + existing + new-elements)
+            }
+          })
+        }
+      } else {
+        assert(false, message: "elembic: element.settings: expected array of elements or literal \"any\" (apply to any element) for setting '" + key + "', got '" + str(type(val)) + "'")
+      }
+    } else if key == "prefer-leaky" and type(val) != type(default-setting) {
       assert(false, message: "elembic: element.settings: expected type of '" + str(type(default-setting)) + "' for setting '" + key + "', got '" + str(type(val)) + "'")
+    } else {
+      write.insert(key, val)
     }
   }
 
-  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "settings", write: args, transform: none, mode: mode))
+  let transform = if transform == () {
+    none
+  } else if transform.len() == 1 {
+    transform.first()
+  } else {
+    s => transform.fold(s, (acc, fun) => fun(acc))
+  }
+
+  prepare-rule(((prepared-rule-key): true, version: element-version, kind: "settings", write: write, transform: transform, mode: mode))
 }
 
 /// Name a certain rule. Use `e.apply` to name a group of rules.
@@ -3013,7 +3056,15 @@
         let has-cond-sets = cond-sets.args != ()
         let show-rules = element-data.at("show-rules", default: default-data.show-rules)
         let has-show-rules = show-rules.callbacks != ()
-        let has-ancestry-tracking = element-data.at("track-ancestry", default: default-data.track-ancestry)
+        let has-ancestry-tracking = (
+          // Either a rule with a 'within(this element)' filter was used, or
+          // the user specifically requested ancestry tracking.
+          element-data.at("track-ancestry", default: default-data.track-ancestry)
+          or "settings" in global-data and "track-ancestry" in global-data.settings and (
+            global-data.settings.track-ancestry == "any"
+            or eid in global-data.settings.track-ancestry
+          )
+        )
         let updates-stylechain-inside = has-filters or has-ancestry-tracking
 
         let (folded-fields, constructed-fields, active-revokes, first-active-index) = if (
