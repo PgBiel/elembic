@@ -3005,14 +3005,16 @@
       [#context {
         set bibliography(title: previous-bib-title)
 
-        let (global-data, data-changed) = if (
+        // Only update style chain if needed, e.g. filtered rules
+        let data-changed = false
+        let global-data = if (
           type(bibliography.title) == content
           and bibliography.title.func() == metadata
           and bibliography.title.at("label", default: none) == lbl-data-metadata
         ) {
-          (bibliography.title.value, false)
+          bibliography.title.value
         } else {
-          ((..default-global-data, first-bib-title: previous-bib-title), true)
+          (..default-global-data, first-bib-title: previous-bib-title)
         }
 
         let is-stateful = global-data.stateful
