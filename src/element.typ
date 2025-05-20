@@ -397,12 +397,30 @@
       // (ancestor 1 matches OR ancestor 2 matches OR ...)
       if filter.elements == none or eid in filter.elements {
         let (ancestor-filter,) = filter
+        let matching-ancestors = if "depth" in filter and filter.depth != none {
+          let total-depth = ancestry.len()
+          if total-depth >= filter.depth {
+            ((total-depth - filter.depth, ancestry.at(total-depth - filter.depth)),)
+          } else {
+            ()
+          }
+        } else if "max-depth" in filter and filter.max-depth != none {
+          let total-depth = ancestry.len()
+          if total-depth <= filter.max-depth {
+            ancestry.enumerate()
+          } else {
+            ancestry.enumerate().slice(total-depth - filter.max-depth)
+          }
+        } else {
+          ancestry.enumerate()
+        }
+
         filter-stack.push(
           (
             (filter-key): true,
             element-version: element-version,
             kind: "or",
-            operands: ancestry.enumerate().map(((i, ancestor)) => (
+            operands: matching-ancestors.map(((i, ancestor)) => (
               ..ancestor-filter,
 
               // TODO: maybe don't clone the ancestry for each ancestor...
@@ -685,7 +703,7 @@
     depth: depth,
     max-depth: max-depth,
     elements: none,
-    ancestry-elements: ancestor-filter.elements + ancestor-filter.at("ancestry-elements", default: (:)),
+    ancestry-elements: (:) + ancestor-filter.elements + ancestor-filter.at("ancestry-elements", default: (:)),
   )
 }
 
@@ -2456,7 +2474,7 @@
         instance => instance.value.rendered
       )
     } else if "sel" in elem-data {
-      // TODO: ancestry
+      // This element is probably too outdated to have ancestry checks anyway, so we don't bother
       results += query(elem-data.sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid: eid, filter: filter, ancestry: ()))
     } else {
       assert(false, message: "elembic: element.query: filter did not have the element's meta selector")
