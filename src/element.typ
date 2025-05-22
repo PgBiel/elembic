@@ -3257,7 +3257,7 @@
             valid: true
           )
 
-          let synthesize-and-show() = {
+          {
             // Use context for synthesize as well
             let synthesized-fields = if synthesize == none {
               constructed-fields
@@ -3423,8 +3423,10 @@
               ()
             }
 
-            if count-needs-fields {
-              count(synthesized-fields)
+            if count-needs-fields or contextual {
+              if count-needs-fields {
+                count(synthesized-fields)
+              }
 
               // Wrap in additional context so the counter step is detected
               context {
@@ -3519,12 +3521,6 @@
                 chain
               })
             }
-          }
-
-          if contextual {
-            context synthesize-and-show()
-          } else {
-            synthesize-and-show()
           }
         }
 
