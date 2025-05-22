@@ -3353,6 +3353,7 @@
             let new-global-data = if data-changed { editable-global-data } else { none }
             if has-filters {
               let i = 0
+              let rules = ()
               for filter in filters.all {
                 let data = filters.data.at(i)
                 if (
@@ -3362,18 +3363,25 @@
                   and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
                 ) {
                   let rule = filters.rules.at(i)
-                  if new-global-data == none {
-                    // Only update style chain if at least one filter matches
-                    new-global-data = editable-global-data
+                  if rule.kind == apply {
+                    rules += rule.rules
+                  } else {
+                    rules.push(rule)
                   }
-                  new-global-data += apply-rules(
-                    if rule.kind == "apply" { rule.rules } else { (rule,) },
-                    elements: new-global-data.elements,
-                    settings: new-global-data.at("settings", default: default-global-data.settings),
-                    global: new-global-data.at("global", default: default-global-data.global)
-                  )
                 }
                 i += 1
+              }
+
+              if rules != () {
+                // Only update style chain if at least one filter matches
+                new-global-data = editable-global-data
+
+                new-global-data += apply-rules(
+                  rules,
+                  elements: new-global-data.elements,
+                  settings: new-global-data.at("settings", default: default-global-data.settings),
+                  global: new-global-data.at("global", default: default-global-data.global)
+                )
               }
             }
             if has-ancestry-tracking {
