@@ -1826,14 +1826,18 @@
         }
       }
 
+      if "global" not in global-data {
+        global-data.global = default-global-data.global
+      }
+
       // Amount of 'select rules' so far, so we can
       // assign a unique number to each query
-      let rule-counter = global-data.global.select-count
+      let rule-counter = global-data.global.at("select-count", default: 0)
 
       // Generate labels by counting up, and update counter
       let matching-labels = range(0, filters.len()).map(i => label(lbl-global-select-head + prefix + str(rule-counter + i)))
       rule-counter += matching-labels.len()
-      global-data.select-count = rule-counter
+      global-data.global.select-count = rule-counter
 
       // Provide labels to the body, one per filter
       // These labels only match the shown bodies of
