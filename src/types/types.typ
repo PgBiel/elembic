@@ -388,7 +388,7 @@
       } else if base-kind == "native" and type_.data.base.data == dictionary {
         dict_(..type_.data.parameters.map(exact))
       } else {
-        assert(false, message: "elembic: types.exact: unknown collecton with type kind '" + base-kind + "'" + if base-kind == "native" { ", base native type '" + type_.data.base.name + "'" } else { "" })
+        assert(false, message: "elembic: types.exact: unknown collection with type kind '" + base-kind + "'" + if base-kind == "native" { ", base native type '" + type_.data.base.name + "'" } else { "" })
       }
     } else {
       assert(false, message: "elembic: types.exact: invalid collection given")
