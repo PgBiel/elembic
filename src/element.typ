@@ -3134,6 +3134,10 @@
 
       kind: ref-figure-kind,
 
+      ..if sys.version >= version(0, 12, 0) {
+        (placement: none, scope: "column")
+      },
+
       ..caption
     )[#[]#metadata(tag)#lbl-tag]#ref-label]
 
