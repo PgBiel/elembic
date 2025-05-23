@@ -2346,6 +2346,8 @@
 #let leaky-revoke = revoke.with(mode: style-modes.leaky)
 #let leaky-reset = reset.with(mode: style-modes.leaky)
 
+#let leaky-toggle(enable) = leaky-settings(prefer-leaky: enable)
+
 // Apply revokes and other modifications to the chain and generate a final set
 // of fields.
 #let fold-styles(chain, data-chain, revoke-chain, fold-chain) = {
