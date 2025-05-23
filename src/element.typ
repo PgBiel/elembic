@@ -3012,7 +3012,7 @@
   // Prepare a filter which should be passed to 'select()'.
   // This function will specify which field values for this
   // element should be matched.
-  let where(..args) = {
+  let where(func) = (..args) => {
     assert(args.pos().len() == 0, message: "elembic: unexpected positional arguments\nhint: here, specify positional fields as named arguments, using their names")
     let args = args.named()
 
@@ -3033,7 +3033,7 @@
       eid: eid,
       fields: args,
       sel: lbl-show,
-      elements: ((eid): partial-element-data),
+      elements: ((eid): (:..partial-element-data, func: func)),
       ancestry-elements: (:),
       may-need-ancestry: false,
     )
@@ -3047,7 +3047,7 @@
     scope: scope,
     set_: set-rule,
     get: get-rule,
-    where: where,
+    where: none, // Filled later when func is known
     sel: lbl-show,
     meta-sel: lbl-meta,
     outer-sel: lbl-outer,
@@ -3174,12 +3174,12 @@
     let default-constructor = default-constructor.with(__elembic_func: __elembic_func)
     if __elembic_data != none {
       return if __elembic_data == special-data-values.get-data {
-        (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor)
+        (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func))
       } else if __elembic_data == special-data-values.get-where {
         if label == _missing {
-          where(..args)
+          where(__elembic_func)(..args)
         } else {
-          where(..args, label: label)
+          where(__elembic_func)(..args, label: label)
         }
       } else {
         assert(false, message: "elembic: element: invalid data key to constructor: " + repr(__elembic_data))
@@ -3254,7 +3254,7 @@
                   global-data: global-data,
                   element-data: global-data.elements.at(eid, default: default-data),
                   args: args,
-                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
+                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func)),
                   __future-version: element-version
                 )
 
@@ -3286,7 +3286,7 @@
                   global-data: global-data,
                   element-data: element-data,
                   args: args,
-                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
+                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func)),
                   __future-version: element-version
                 )
 
@@ -3304,7 +3304,7 @@
                   global-data: global-data,
                   element-data: element-data,
                   args: args,
-                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor),
+                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func)),
                   __future-version: element-version
                 )
 
@@ -3420,7 +3420,7 @@
         let all-elem-data-for-futures
         let element-data-for-futures
         if has-synthesized-futures {
-          all-elem-data-for-futures = (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor)
+          all-elem-data-for-futures = (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func))
           element-data-for-futures = element-data
         }
 
@@ -3836,9 +3836,9 @@
     let final-constructor(..args, __elembic_data: none, __elembic_mode: auto, __elembic_settings: (:)) = {
       if __elembic_data != none {
         return if __elembic_data == special-data-values.get-data {
-          (data-kind: "element", ..elem-data, func: final-constructor, default-constructor: default-constructor.with(__elembic_func: final-constructor))
+          (data-kind: "element", ..elem-data, func: final-constructor, default-constructor: default-constructor.with(__elembic_func: final-constructor), where: where(final-constructor))
         } else if __elembic_data == special-data-values.get-where {
-          where(..args)
+          where(final-constructor)(..args)
         } else {
           assert(false, message: "elembic: element: invalid data key to constructor: " + repr(__elembic_data))
         }
