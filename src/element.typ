@@ -1128,22 +1128,15 @@
         elements.at(eid).names.insert(name, true)
       }
     } else if kind == "select" {
-      let (element-data: target-elements, names) = rule.element-data
-      if type(filter) != dictionary or "elements" not in filter or "kind" not in filter {
-        assert(false, message: "elembic: element.select: invalid filter found while applying rule: " + repr(filter) + "\nPlease use 'elem.with(field: value, ...)' to create a filter.\n\nhint: it might come from a package's element made with an outdated elembic version. Please update your packages.")
-      }
-      let target-elements = filter.elements
-      if target-elements == none {
-        assert(false, message: "elembic: element.select: this filter appears to apply to any element (e.g. it's a 'not' or 'custom' filter). It must match only within a certain set of elements. Consider using an 'and' filter, e.g. 'e.filters.and(wibble, e.not(wibble.with(a: 10)))' instead of just 'e.not(wibble.with(a: 10))', to restrict it.")
-      }
+      let (element-data: target-elements, names) = rule
       let base-data = (names: names)
 
       for (eid, elem-data) in target-elements {
         if "filters" not in elem-data or "labels" not in elem-data {
           assert(false, message: "elembic: element.select: missing filters or labels for element " + repr(eid))
         }
-        assert(filters.len() == labels.len(), message: "elembic: element.select: differing lengths for filters and labels found (this is an internal error)")
         let (filters, labels) = elem-data
+        assert(filters.len() == labels.len(), message: "elembic: element.select: differing lengths for filters and labels found (this is an internal error)")
         if filters == () {
           continue
         }
@@ -1783,7 +1776,7 @@
         ordered-eids.push(elem-data.eid)
       }
 
-      if ("version" not in elem-data or elem-data.version <= 1) and ("default-data" not in elem-data or "selects" not in elem-data) {
+      if ("version" not in elem-data or elem-data.version <= 1) and ("default-data" not in elem-data or "selects" not in elem-data.default-data) {
         old-elements.insert(elem-data.eid, true)
       }
     }
@@ -1874,10 +1867,10 @@
           )
         )
         global-data += apply-rules(
-          select-rule,
-          elements: new-global-data.elements,
-          settings: new-global-data.at("settings", default: default-global-data.settings),
-          global: new-global-data.at("global", default: default-global-data.global)
+          (select-rule,),
+          elements: global-data.elements,
+          settings: global-data.at("settings", default: default-global-data.settings),
+          global: global-data.at("global", default: default-global-data.global)
         )
       }
 
@@ -3627,7 +3620,7 @@
                 let body = [#[#body#metadata(tag)#lbl-tag]#lbl-show]
 
                 if select-labels != () {
-                  body = select-labels.fold(body, (acc, lbl) => [#[#body#metadata(tag)#lbl-tag]#lbl])
+                  body = select-labels.fold(body, (acc, lbl) => [#[#acc#metadata(tag)#lbl-tag]#lbl])
                 }
 
                 let shown-body = if show-rules == () {
@@ -3673,7 +3666,7 @@
               let body = [#[#body#metadata(tag)#lbl-tag]#lbl-show]
 
               if select-labels != () {
-                body = select-labels.fold(body, (acc, lbl) => [#[#body#metadata(tag)#lbl-tag]#lbl])
+                body = select-labels.fold(body, (acc, lbl) => [#[#acc#metadata(tag)#lbl-tag]#lbl])
               }
 
               let shown-body = if show-rules == () {
