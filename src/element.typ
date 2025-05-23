@@ -1808,7 +1808,7 @@
         }
       }
 
-      // Amount of 'where rules' so far, so we can
+      // Amount of 'select rules' so far, so we can
       // assign a unique number to each query
       let rule-counter = global-data.global.select-count
 
@@ -1832,8 +1832,9 @@
 
           let labeled-it = it
           for (i, filter) in filters {
-            // TODO: ancestry?
             // Check if all positional and named arguments match
+            // Note: no ancestry support since newer elements don't run this
+            // code, they use 'select' rules instead
             if verify-filter(fields, eid: eid, filter: filter, ancestry: ()) {
               // Add corresponding label and preserve tag so 'data(it)' still works
               labeled-it = [#[#labeled-it#tag]#matching-labels.at(i)]
@@ -1877,7 +1878,7 @@
         )
       }
 
-      // Increase where rule counter for further where rules
+      // Increase select rule counter for further select rules
       if global-data.stateful {
         style-state.update(chain => {
           chain.push(global-data)
