@@ -742,8 +742,7 @@
 }
 
 // Apply set and revoke rules to the current per-element data.
-#let apply-rules(rules, elements: none, settings: (:), global: (:)) = {
-  let extra-output = (:)
+#let apply-rules(rules, elements: none, settings: (:), global: (:), extra-output: (:)) = {
   for rule in rules {
     if "__future" in rule and element-version <= rule.__future.max-version {
       let output = (rule.__future.call)(rule, elements: elements, settings: settings, global: global, extra-output: extra-output, __future-version: element-version)
@@ -1219,6 +1218,19 @@
           // treated as valid.
           elements.at(eid).names.insert(name, true)
         }
+      }
+    } else if kind == "apply" {
+      // Mostly a fallback in case the rule is accidentally passed here...
+      let output = apply-rules(rule.rules, elements: elements, settings: settings, global: global, extra-output: extra-output)
+      extra-output += output
+      if "elements" in output {
+        elements = output.elements
+      }
+      if "settings" in output {
+        settings = output.settings
+      }
+      if "global" in output {
+        global = output.global
       }
     } else {
       assert(false, message: "elembic: element: invalid rule kind '" + rule.kind + "'\n\nhint: this might mean you're using packages depending on conflicting elembic versions. Please ensure your dependencies are up-to-date.")
