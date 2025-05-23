@@ -324,6 +324,10 @@
     return eid == filter.eid and filter.fields.pairs().all(((k, v)) => k in fields and fields.at(k) == v)
   } else if filter.kind == "where-any" {
     return eid in filter.fields-any and filter.fields-any.at(eid).any(f => f.pairs().all(((k, v)) => k in fields and fields.at(k) == v))
+  } else if filter.kind == "custom" {
+    return (filter.elements == none or eid in filter.elements) and (filter.call)(
+      fields, eid: eid, ancestry: if filter.may-need-ancestry { ancestry } else { () }, __please-use-var-args: true
+    )
   }
 
   // Manually simulate a recursive algorithm.
@@ -406,7 +410,9 @@
     } else if kind == "where-any" {
       eid in filter.fields-any and filter.fields-any.at(eid).any(f => f.pairs().all(((k, v)) => k in fields and fields.at(k) == v))
     } else if kind == "custom" {
-      (filter.elements == none or eid in filter.elements) and (filter.call)(fields, eid: eid, __please-use-var-args: true)
+      (filter.elements == none or eid in filter.elements) and (filter.call)(
+        fields, eid: eid, ancestry: if filter.may-need-ancestry { ancestry } else { () }, __please-use-var-args: true
+      )
     } else if kind == "within" {
       // Expand 'within' filter into
       // (ancestor 1 matches OR ancestor 2 matches OR ...)

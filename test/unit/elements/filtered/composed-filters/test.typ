@@ -173,3 +173,10 @@
 // Test NOT
 #wibble(number: 10, run: it => assert-wobble-has-inner([Hello!]))
 #wibble(number: 20, run: it => assert-wobble-has-inner([yay!]))
+
+#[
+  #let custom = (:..e.filters.custom((it, ..) => it.number > 20), elements: e.filters.not_(wibble).operands.first().elements)
+  #show: e.filtered(custom, e.set_(wobble, inner: [yyy]))
+  #wibble(number: 20, run: it => assert-wobble-has-inner([yay!]))
+  #wibble(number: 30, run: it => assert-wobble-has-inner([yyy]))
+]
