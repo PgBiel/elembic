@@ -17,15 +17,19 @@
   prefix: ""
 )
 
+#let blue-counter = counter("blue")
+#let wide-counter = counter("wide")
 #e.select(wock.with(color: blue), wock.with(size: 20pt), prefix: "sel1", (blue-wock, wide-wock) => [
   #show blue-wock: it => {
     let (fields,) = e.data(it)
+    blue-counter.step()
     assert.eq(fields.color, blue)
     set rect(stroke: orange)
     it
   }
   #show wide-wock: it => {
     let (fields,) = e.data(it)
+    wide-counter.step()
     assert.eq(fields.size, 20pt)
     set rect(stroke: 2pt)
     it
@@ -36,3 +40,6 @@
   #wock(color: red, size: 20pt)
   #wock(color: blue, size: 20pt)
 ])
+
+#context assert.eq(blue-counter.get().first(), 2)
+#context assert.eq(wide-counter.get().first(), 2)

@@ -125,7 +125,7 @@
 
 // Prefix for labels added by 'select' to matched elements.
 // These labels are not specific to eids.
-#let lbl-global-where-head = "__elembic_element_global_where_"
+#let lbl-global-select-head = "__elembic_element_global_where_"
 
 // Special dictionary key to indicate this is a prepared rule.
 #let prepared-rule-key = "__elembic-prepared-rule"
