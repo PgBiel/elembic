@@ -143,7 +143,35 @@
 }
 
 #{
-  let test-state = state("test2", none)
+  let test-state = state("test3", none)
+
+  // Apply a set rule through a future rule
+  // but return data-changed: false so it is
+  // not propagated
+  show: modify-data((global: none, ..) => {
+    global.__futures = (
+      (global-data: ((max-version: 99999, call: (global-data: none, element-data: none, args: none, all-element-data: none, __future-version: 0, ..) => {
+        assert.ne(__future-version, 0)
+        assert.eq(all-element-data.eid, e.eid(wock))
+
+        let rule = e.set_(wock, color: purple)([]).children.last().value.rule
+        global-data += apply-rules((rule,), elements: global-data.elements, settings: global-data.settings, global: global-data.global)
+
+        (global-data: global-data, data-changed: false)
+      }), ))
+    )
+    (global: global)
+  })
+
+  wock(run: it => {
+    test-state.update(it.color)
+    e.get(get => assert.eq(get(wock).color, red))
+  })
+  context assert.eq(test-state.get(), purple)
+}
+
+#{
+  let test-state = state("test4", none)
 
   // Future rule shouldn't match here (max version not satisfied)
   show: modify-data((global: none, ..) => {

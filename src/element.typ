@@ -3238,6 +3238,8 @@
           if "ancestry-chain" in global-data.global {
             ancestry = global-data.global.ancestry-chain
           }
+
+          // For set rules from the future...
           if "__futures" in global-data.global and "global-data" in global-data.global.__futures {
             for future in global-data.global.__futures.global-data {
               if element-version <= future.max-version {
@@ -3251,7 +3253,14 @@
 
                 if "global-data" in res {
                   global-data = res.global-data
-                  data-changed = true
+                  if "data-changed" in res {
+                    // Maybe we don't want to forward changes to children
+                    // More efficient etc.
+                    data-changed = data-changed or res.data-changed
+                  } else {
+                    // Assume we want to forward these changes to children
+                    data-changed = true
+                  }
                 }
 
                 continue
