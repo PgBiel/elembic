@@ -489,11 +489,16 @@
 
   // Recursively compare until we find a 'false'
   let stack = ((a, b),)
+  let fuel = 3000
   while stack != () {
     let (a, b) = stack.pop()
     if a == b {
       // Good!
       continue
+    }
+    fuel -= 1
+    if fuel == 0 {
+      return false
     }
     // Of course, the types must match
     let a-type = type(a)
