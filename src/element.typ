@@ -2985,6 +2985,9 @@
       get-styles: get-styles,
       fold-styles: fold-styles,
       verify-filter: verify-filter,
+      select: select,
+      toggle-stateful: toggle-stateful-mode,
+      settings: settings
     )
   )
 
