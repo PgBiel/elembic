@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-where-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
+#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-select-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "types/base.typ"
 #import "types/types.typ"
@@ -27,10 +27,8 @@
   // property. Evidently, it's not perfect, and leaky mode should be avoided.
   first-bib-title: (),
 
-  // How many 'where rules' have been applied so far to all
-  // elements. This is needed as, for each 'where rule', we have
-  // to apply a unique label to matching elements, so we increase
-  // this 'counter' by one each time.
+  // Identical to 'global.select-count', this is only here for compatibility
+  // with older elements.
   where-rule-count: 0,
 
   // Some global settings changeable through set rules.
@@ -53,6 +51,10 @@
   global: (
     // Version that created the default global data.
     version: element-version,
+
+    // Amount of select rules in the style chain so far.
+    // Used to apply a unique label.
+    select-count: 0,
 
     // Current element ancestors, from outermost to innermost.
     ancestry-chain: (),
@@ -1807,12 +1809,12 @@
 
       // Amount of 'where rules' so far, so we can
       // assign a unique number to each query
-      let rule-counter = global-data.where-rule-count
+      let rule-counter = global-data.global.select-count
 
       // Generate labels by counting up, and update counter
-      let matching-labels = range(0, filters.len()).map(i => label(lbl-global-where-head + prefix + str(rule-counter + i)))
+      let matching-labels = range(0, filters.len()).map(i => label(lbl-global-select-head + prefix + str(rule-counter + i)))
       rule-counter += matching-labels.len()
-      global-data.where-rule-count = rule-counter
+      global-data.select-count = rule-counter
 
       // Provide labels to the body, one per filter
       // These labels only match the shown bodies of
