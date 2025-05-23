@@ -141,3 +141,14 @@
 
   check-if-it-worked()
 }
+
+#{
+  show: doc => {
+    let res = e.select(wock, it => [], prefix: "")
+    let filter = res.children.last().value.computed.filters-by-eid.at(e.eid(wock)).first().at(1)
+    filter.elements.at(e.eid(wock)).default-data.__future-rules = (select: (call: call("select"), max-version: 999999))
+    e.select(filter, _ => doc, prefix: "")
+  }
+
+  check-if-it-worked()
+}

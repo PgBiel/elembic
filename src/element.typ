@@ -1896,7 +1896,16 @@
     }#lbl-get]
   }
 
-  [#metadata(((special-rule-key): "select", version: element-version, filters: filters, receiver: receiver, prefix: prefix))#lbl-special-rule-tag]
+  [#metadata(
+    (
+      (special-rule-key): "select",
+      version: element-version,
+      filters: filters,
+      computed: (filters-by-eid: filters-by-eid, labels-by-eid: labels-by-eid, ordered-eids: ordered-eids),
+      receiver: receiver,
+      prefix: prefix
+    )
+  )#lbl-special-rule-tag]
 }
 
 /// Apply filtered rules to a custom element's descendants
