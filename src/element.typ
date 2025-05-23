@@ -3240,6 +3240,7 @@
         }
 
         let ancestry = ()
+        let synthesized-futures = ()  // forward-compat callbacks which need synthesized fields
         if "global" in global-data {
           if "ancestry-chain" in global-data.global {
             ancestry = global-data.global.ancestry-chain
@@ -3317,8 +3318,13 @@
               }
             }
           }
+
+          if "synthesized-fields" in element-data.__futures {
+            synthesized-futures += element-data.__futures.synthesized-fields.filter(f => element-version <= f.max-version)
+          }
         }
 
+        let has-synthesized-futures = synthesized-futures != ()
         let settings = if "settings" in global-data { global-data.settings } else { default-global-data.settings }
         let filters = element-data.at("filters", default: default-data.filters)
         let has-filters = filters.all != ()
@@ -3385,7 +3391,7 @@
         let filter-revokes
         let filter-first-active-index
         let editable-global-data
-        if has-filters {
+        if has-filters or has-synthesized-futures {
           // The closures inside context {} below will capture global-data,
           // reducing potential for memoization of their output, so, for
           // performance reasons, we only pass the real global data if
@@ -3409,6 +3415,13 @@
         let cond-set-foldable-fields
         if has-cond-sets {
           cond-set-foldable-fields = foldable-fields
+        }
+
+        let all-elem-data-for-futures
+        let element-data-for-futures
+        if has-synthesized-futures {
+          all-elem-data-for-futures = (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor)
+          element-data-for-futures = element-data
         }
 
         let shown = {
@@ -3522,6 +3535,39 @@
               synthesized-fields = new-synthesized-fields
             }
 
+            let new-global-data = if data-changed { editable-global-data } else { none }
+            if has-synthesized-futures {
+              if new-global-data == none {
+                new-global-data = editable-global-data
+              }
+              let element-data-for-futures = element-data-for-futures
+              for future in synthesized-futures {
+                let res = (future.call)(
+                  synthesized-fields: synthesized-fields,
+                  global-data: new-global-data,
+                  element-data: element-data-for-futures,
+                  args: args,
+                  all-element-data: all-elem-data-for-futures,
+                  __future-version: element-version
+                )
+
+                if "construct" in res {
+                  return res.construct
+                }
+
+                if "global-data" in res {
+                  new-global-data = res.global-data
+                }
+
+                if "element-data" in res {
+                  element-data-for-futures = res.element-data
+                }
+
+                if "synthesized-fields" in res {
+                  synthesized-fields = res.synthesized-fields
+                }
+              }
+            }
 
             let select-labels = ()
             if has-selects {
@@ -3546,7 +3592,6 @@
             // Store contextual information in synthesize
             synthesized-fields.insert(stored-data-key, tag)
 
-            let new-global-data = if data-changed { editable-global-data } else { none }
             if has-filters {
               let i = 0
               let rules = ()
@@ -3580,6 +3625,7 @@
                 )
               }
             }
+
             if has-ancestry-tracking {
               if new-global-data == none {
                 new-global-data = editable-global-data

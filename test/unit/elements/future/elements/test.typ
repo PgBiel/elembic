@@ -102,7 +102,6 @@
 }
 
 #{
-  let test-state = state("test2", none)
   show: modify-element-data(wock, w => {
     w.__futures = (
       (construct: ((max-version: 0, call: (element-data: none, args: none, __future-version: 0, ..) => {
@@ -114,6 +113,50 @@
 
   // Should not panic (max version < current version)
   wock(run: it => it)
+}
+
+// Synthesized field futures
+#{
+  show: modify-element-data(wock, w => {
+    w.__futures = (
+      (synthesized-fields: ((max-version: 0, call: (synthesized-fields: none, element-data: none, args: none, __future-version: 0, ..) => {
+        panic()
+      }), ))
+    )
+    w
+  })
+
+  // Should not panic (max version < current version)
+  wock(run: it => it)
+}
+#{
+  let test-state1 = state("st-test1", false)
+  let test-state2 = state("st-test2", false)
+  let test-state3 = state("st-test3", none)
+  show: modify-element-data(wock, w => {
+    w.__futures = (
+      (synthesized-fields: ((max-version: 9999, call: (synthesized-fields: none, element-data: none, args: none, global-data: none, __future-version: 0, ..) => {
+        if synthesized-fields.color == red {
+          return (synthesized-fields: (:..synthesized-fields, run: it => test-state1.update(true)))
+        } else if synthesized-fields.color == blue {
+          return (construct: test-state2.update(true))
+        } else if synthesized-fields.color == green {
+          let rule = e.set_(wock, color: purple)([]).children.last().value.rule
+          global-data += apply-rules((rule,), elements: global-data.elements, settings: global-data.settings, global: global-data.global)
+          return (global-data: global-data)
+        }
+        (:)
+      }), ))
+    )
+    w
+  })
+
+  wock(run: it => it)
+  wock(color: blue, run: it => it)
+  wock(color: green, run: it => e.get(get => test-state3.update(get(wock).color)))
+  context assert(test-state1.get())
+  context assert(test-state2.get())
+  context assert.eq(test-state3.get(), purple)
 }
 
 #{
