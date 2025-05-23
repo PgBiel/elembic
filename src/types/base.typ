@@ -199,7 +199,7 @@
       // Note that this check also works for input reduced to just "any". If "any" is an
       // unchecked input, then checks will never fail.
       none
-    } else if checked-types.all(t => t.type-kind == "native-element") {
+    } else if checked-types.all(t => t.type-kind == "native-element" and ("__future_cast" not in t or t.__future_cast.max-version < type-version)) {
       // From here onwards, we can assume unchecked-inputs doesn't contain "any",
       // since it is a subset of input, therefore input would be just ("any",) and
       // the check above would have had to pass in that case.
@@ -239,7 +239,7 @@
           typ in unchecked-inputs or typ == content and x.func() in non-seq-funcs
         }
       }
-    } else if checked-types.all(t => t.type-kind == "element") {
+    } else if checked-types.all(t => t.type-kind == "element" and ("__future_cast" not in t or t.__future_cast.max-version < type-version)) {
       let all-eids = checked-types.map(t => t.data.eid)
 
       x => {
@@ -250,7 +250,7 @@
         }
         typ in unchecked-inputs or typ == content and x.func() == _sequence and data(x).eid in all-eids
       }
-    } else if checked-types.all(t => t.type-kind == "literal") {
+    } else if checked-types.all(t => t.type-kind == "literal" and ("__future_cast" not in t or t.__future_cast.max-version < type-version)) {
       let values-inputs-and-checks = checked-types.map(t => (t.data.value, t.input, t.data.typeinfo.check))
       x => {
         let typ = type(x)
@@ -287,7 +287,7 @@
       // accept their "cast-from" types, then we can fast track to a simple check:
       // if within the 'cast-from' types, then cast, otherwise don't.
       casting-types != ()
-      and casting-types.all(t => t.type-kind == "native" and t.data in (float, content))
+      and casting-types.all(t => t.type-kind == "native" and t.data in (float, content) and ("__future_cast" not in t or t.__future_cast.max-version < type-version))
       and typeinfos.find(t => t.input.any(i => i == "any" or i in first-casting-type.input)) == first-casting-type
       and (casting-types.len() == 1 or typeinfos.find(t => t.input.any(i => i == "any" or i in casting-types.at(1).input)) == casting-types.at(1))
     ) {
@@ -318,17 +318,17 @@
 
   let error = if typeinfos.all(t => t.error == none) {
     none
-  } else if typeinfos.all(t => t.type-kind == "literal") {
+  } else if typeinfos.all(t => t.type-kind == "literal" and ("__future_cast" not in t or t.__future_cast.max-version < type-version)) {
     let literals = typeinfos.map(t => str(t.data.represented)).join(", ", last: " or ")
     let message = "given value wasn't equal to literals " + literals
     x => message
-  } else if typeinfos.all(t => t.type-kind == "native-element") {
+  } else if typeinfos.all(t => t.type-kind == "native-element" and ("__future_cast" not in t or t.__future_cast.max-version < type-version)) {
     let funcs = typeinfos.map(t => repr(t.data.func)).join(", ", last: " or ")
     let head = "expected native elements " + funcs + ", found "
     x => head + {
       if type(x) == content { func-name(x) } else { "a(n) " + typename(x) }
     }
-  } else if typeinfos.all(t => t.type-kind == "element" or t.type-kind == "native-element") {
+  } else if typeinfos.all(t => (t.type-kind == "element" or t.type-kind == "native-element") and ("__future_cast" not in t or t.__future_cast.max-version < type-version)) {
     let funcs = typeinfos.map(t => if t.type-kind == "element" { t.data.name } else { repr(t.data.func) + " (native)" }).join(", ", last: " or ")
     let head = "expected elements " + funcs + ", found "
     x => head + {
@@ -491,7 +491,7 @@
       // The proper code is at the bottom
       let input = param.input
       let check = param.check
-      if kind == "native" and param.data == dictionary {
+      if kind == "native" and param.data == dictionary and ("__future_cast" not in param or param.__future_cast.max-version < type-version) {
         a => a.all(x => type(x) == dictionary and custom-type-key not in x)
       } else if param.input.all(i => type(i) == type) and dictionary not in param.input {
         // No custom types accepted (the check above excludes '(tid: ..., name: ...)' as well as "any")
@@ -527,7 +527,7 @@
 
     cast: if param.cast == none {
       none
-    } else if kind == "native" and param.data == content {
+    } else if kind == "native" and param.data == content and ("__future_cast" not in param or param.__future_cast.max-version < type-version) {
       a => a.map(x => [#x])
     } else {
       a => a.map(param.cast)
@@ -560,7 +560,7 @@
 
     cast: if param.cast == none {
       none
-    } else if kind == "native" and param.data == content {
+    } else if kind == "native" and param.data == content and ("__future_cast" not in param or param.__future_cast.max-version < type-version) {
       d => {
         for (k, v) in d {
           d.at(k) = [#v]

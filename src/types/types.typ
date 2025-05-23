@@ -1,5 +1,5 @@
 // The type system used by fields.
-#import "../data.typ": data, special-data-values, type-key, custom-type-key, custom-type-data-key, eq
+#import "../data.typ": data, special-data-values, type-key, custom-type-key, custom-type-data-key, eq, type-version
 #import "base.typ" as base: ok, err
 #import "native.typ"
 
@@ -135,7 +135,7 @@
       value-type = value.at(custom-type-key).id
     }
 
-    if kind == "literal" and typeinfo.cast == none {
+    if kind == "literal" and typeinfo.cast == none and ("__future_cast" not in typeinfo or typeinfo.__future_cast.max-version < type-version) {
       if eq(value, typeinfo.data.value) and (value-type in typeinfo.input or "any" in typeinfo.input) and (typeinfo.data.typeinfo.check == none or (typeinfo.data.typeinfo.check)(value)) {
         (true, value)
       } else {
@@ -148,7 +148,7 @@
       (false, generate-cast-error(value, typeinfo))
     } else if typeinfo.cast == none {
       (true, value)
-    } else if kind == "native" and typeinfo.data == content {
+    } else if kind == "native" and typeinfo.data == content and ("__future_cast" not in typeinfo or typeinfo.__future_cast.max-version < type-version) {
       (true, [#value])
     } else {
       (true, (typeinfo.cast)(value))
