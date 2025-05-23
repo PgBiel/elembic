@@ -2616,7 +2616,7 @@
 // Obtain a Typst selector to use to match this element in show rules or in the outline.
 // Specify 'meta: true' to match this element in a query, as that selector is
 // generated once regardless of show rules.
-#let selector(elem, outline: false, outer: false, meta: false) = {
+#let elem-selector(elem, outline: false, outer: false, meta: false) = {
   if outline {
     assert(not outer, message: "elembic: element.selector: cannot have 'outline: true' and 'outer: true' at the same time, please pick one selector")
     assert(not meta, message: "elembic: element.selector: cannot have 'outline: true' and 'meta: true' at the same time, please pick one selector")
@@ -2635,7 +2635,7 @@
   }
 }
 
-#let elem-query(filter) = {
+#let elem-query(filter, before: none, after: none) = {
   if type(filter) == function {
     filter = filter(__elembic_data: special-data-values.get-where)
   }
@@ -2653,9 +2653,15 @@
   let results = ()
   for (eid, elem-data) in filter.elements {
     if "meta-sel" in elem-data {
-      results += query(
-        elem-data.meta-sel
-      ).filter(
+      let sel = elem-data.meta-sel
+      if before != none {
+        sel = selector(sel).before(before)
+      }
+      if after != none {
+        sel = selector(sel).after(after)
+      }
+
+      results += query(sel).filter(
         instance => (
           instance.func() == metadata
             and {
@@ -2677,8 +2683,15 @@
         instance => instance.value.rendered
       )
     } else if "sel" in elem-data {
+      let sel = elem-data.sel
+      if before != none {
+        sel = selector(sel).before(before)
+      }
+      if after != none {
+        sel = selector(sel).after(after)
+      }
       // This element is probably too outdated to have ancestry checks anyway, so we don't bother
-      results += query(elem-data.sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid: eid, filter: filter, ancestry: ()))
+      results += query(sel).filter(instance => verify-filter(data(instance).at("fields", default: (:)), eid: eid, filter: filter, ancestry: ()))
     } else {
       assert(false, message: "elembic: element.query: filter did not have the element's meta selector")
     }
