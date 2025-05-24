@@ -19,7 +19,7 @@
   version: element-version,
 
   // If the style state should be read by set rules as the user has
-  // enabled stateful mode with `#shoW: e.stateful.enable()`.
+  // enabled stateful mode with `#show: e.stateful.enable()`.
   stateful: false,
 
   // First known bib title.
