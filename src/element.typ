@@ -2558,6 +2558,24 @@
   get-styles(element, elements: global-data.elements, use-routine: true)
 }
 
+/// Used for debugging elembic. Stateful version of `debug-get`.
+#let stateful-debug-get() = {
+  let chain = style-state.get()
+  let global-data = if chain == () {
+    default-global-data
+  } else {
+    chain.last()
+  }
+
+  assert(
+    global-data.stateful,
+    message: "elembic: stateful.debug-get: cannot use this function without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.toggle(true)' somewhere above the 'context {}' in which this call happens, or at the top of the document to apply to all rules as well"
+  )
+
+  let getter = get-styles.with(elements: global-data.elements, use-routine: true)
+  (:..global-data, ctx: (get: getter))
+}
+
 #let prepare-ctx(receiver, include-global: false) = context {
   let previous-bib-title = bibliography.title
   [#context {
@@ -2614,6 +2632,7 @@
   [#output#metadata(((special-rule-key): "get", version: element-version, receiver: receiver))#lbl-special-rule-tag]
 }
 
+/// Used for debugging elembic. Passes the internal style chain information.
 #let prepare-debug(receiver) = {
   let output = prepare-ctx(include-global: true, receiver)
   [#output#metadata(((special-rule-key): "debug-get", version: element-version, receiver: receiver))#lbl-special-rule-tag]
