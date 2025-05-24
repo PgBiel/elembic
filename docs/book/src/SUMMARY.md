@@ -22,6 +22,14 @@
   - [References and outline]()
   - [Scripting with elements](./elements/using/scripting.md)
 
+- [Styling elements](./elements/styling/README.md)
+  - [Constructing elements](./elements/styling/constructing.md)
+  - [Set rules](./elements/styling/set-rules.md)
+  - [Show rules](./elements/styling/show-rules.md)
+  - [Filtered rules]()
+  - [Conditional set rules]()
+  - [Selectors and show-set]()
+
 # Types
 
 - [Type system](./types/type-system/README.md)
