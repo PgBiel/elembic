@@ -19,7 +19,7 @@
   version: element-version,
 
   // If the style state should be read by set rules as the user has
-  // enabled stateful mode with `#shoW: e.stateful.toggle(true)`.
+  // enabled stateful mode with `#shoW: e.stateful.enable()`.
   stateful: false,
 
   // First known bib title.
@@ -1518,7 +1518,7 @@
 
         assert(
           global-data.stateful,
-          message: "elembic: element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.toggle(true)' somewhere above this rule, or at the top of the document to apply to all"
+          message: "elembic: element rule: cannot use a stateful rule without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.enable()' somewhere above this rule, or at the top of the document to apply to all"
         )
 
         if "settings" not in global-data {
@@ -1655,6 +1655,44 @@
     } else if mode == style-modes.leaky {
       leaky
     } else if mode == style-modes.stateful {
+      [#context {
+        let global-data = if (
+          type(bibliography.title) == content
+          and bibliography.title.func() == metadata
+          and bibliography.title.at("label", default: none) == lbl-data-metadata
+        ) {
+          bibliography.title.value
+        } else {
+          default-global-data
+        }
+
+        if not global-data.stateful {
+          let only-rule = if rules.len() == 1 { rules.first() } else { (kind: "apply", rules: rules, name: none, names: (), mode: auto) }
+          let named = if "names" in only-rule and only-rule.names != () {
+            " named " + only-rule.names.map(repr).join(", ")
+          } else if "name" in only-rule and only-rule.name != none {
+            " named " + repr(only-rule.name)
+          } else {
+            ""
+          }
+
+          let extra = if only-rule.kind == "revoke" {
+            " revoking " + repr(only-rule.revoking)
+          } else {
+            ""
+          }
+
+          assert(
+            false,
+            message: (
+              "elembic: element rule: cannot use a stateful rule without enabling the global stateful toggle" +
+              "\n  hint: if you don't mind the performance hit, write '#show: e.stateful.enable()' somewhere above this rule, or at the top of the document to apply to all" +
+              if only-rule.kind != "apply" { "\n  help: this was triggered by a " + repr(only-rule.kind) + " rule" + named + extra }
+            )
+          )
+        }
+      }#lbl-get]
+
       stateful
     } else {
       panic("element rule: unknown mode: " + repr(mode))
@@ -2552,7 +2590,7 @@
 
   assert(
     global-data.stateful,
-    message: "elembic: stateful.get: cannot use this function without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.toggle(true)' somewhere above the 'context {}' in which this call happens, or at the top of the document to apply to all rules as well"
+    message: "elembic: stateful.get: cannot use this function without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.enable()' somewhere above the 'context {}' in which this call happens, or at the top of the document to apply to all rules as well"
   )
 
   get-styles(element, elements: global-data.elements, use-routine: true)
@@ -2569,7 +2607,7 @@
 
   assert(
     global-data.stateful,
-    message: "elembic: stateful.debug-get: cannot use this function without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.toggle(true)' somewhere above the 'context {}' in which this call happens, or at the top of the document to apply to all rules as well"
+    message: "elembic: stateful.debug-get: cannot use this function without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.enable()' somewhere above the 'context {}' in which this call happens, or at the top of the document to apply to all rules as well"
   )
 
   let getter = get-styles.with(elements: global-data.elements, use-routine: true)

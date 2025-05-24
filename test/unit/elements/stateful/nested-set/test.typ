@@ -3,6 +3,21 @@
 
 #import "/src/lib.typ" as e: field, types
 
+#let wock = e.element.declare(
+  "wock",
+  display: it => {
+    (it.run)(it)
+  },
+  fields: (
+    field("color", color, default: red),
+    field("inner", content, default: [Hello!]),
+    field("run", function, default: panic),
+  ),
+  prefix: ""
+)
+
+#show: e.named("abc", "$ef", e.stateful.revoke("abc"))
+
 #show: e.stateful.enable()
 
 #let wock = e.element.declare(
