@@ -196,6 +196,10 @@
 
     let info = data(it.element)
     if type(info) == dictionary and "data-kind" in info and info.data-kind == "element-instance" {
+      if "__future-ref" in info and element-version <= info.__future-ref.max-version {
+        return (info.__future-ref.call)(target: it.target, supplement: it.at("supplement", default: none), ref-instance: it, __future-version: element-version)
+      }
+
       let supplement = if it.has("supplement") and it.supplement != none {
         (supplement: it.supplement)
       } else {
