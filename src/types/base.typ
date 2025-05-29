@@ -358,8 +358,10 @@
     ()
   }
 
-  // Match built-in behavior by only folding option(T) or smart(T) if T can fold and the inner isn't explicitly none/auto
-  let fold = if typeinfos.len() == 2 and typeinfos.at(1).fold != none and (is-option or is-smart) {
+  let fold = if typeinfos.all(t => t.fold == none) {
+    none
+  } else if (is-option or is-smart) and typeinfos.len() == 2 and typeinfos.last().fold != none {
+    // Match built-in behavior by only folding option(T) or smart(T) if T can fold and the inner isn't explicitly none/auto
     let other-typeinfo = typeinfos.at(1)
     let other-fold = other-typeinfo.fold
     if is-option {
@@ -375,7 +377,7 @@
         (outer, inner) => if inner != auto and outer != auto { other-fold(outer, inner) } else { inner }
       }
     }
-  } else if typeinfos.len() == 3 and typeinfos.last().fold != none and is-option and is-smart {
+  } else if is-option and is-smart and typeinfos.len() == 3 and typeinfos.last().fold != none {
     // smart(option(T))
     // and option(smart(T))
     let other-typeinfo = typeinfos.last()
@@ -386,12 +388,38 @@
       (outer, inner) => if inner != none and inner != auto and outer != none and outer != auto { other-fold(outer, inner) } else { inner }
     }
   } else {
-    // TODO: We could consider folding an arbitrary union iff the outputs are all disjoint,
-    // so we can easily distinguish the typeinfo for an output based on the type.
+    // Arbitrary union folding is allowed if the different casted values would
+    // belong to the same union type.
     // Otherwise, can't do much if e.g. an int could be typeinfo A (say, positive integer)
     // or typeinfo B (say, negative integer) because checks apply to inputs and not outputs
     // (unless, of course, there is no casting).
-    none
+    // However, if there is only one typeinfo with a given output type, it is
+    // not ambiguous and may fold.
+    let fold-outputs = typeinfos.enumerate().map(((i, t)) => (i, t.fold, t.output))
+
+    (outer, inner) => {
+      let outer-id = typeid(outer)
+      let inner-id = typeid(inner)
+      let outer-output = fold-outputs.position(((_, output)) => outer-id in output or "any" in output)
+      let inner-output = fold-outputs.position(((_, output)) => inner-id in output or "any" in output)
+      if outer-output != inner-output or outer-output == none {
+        // They belong to different types in the union, so no folding can be
+        // performed, even if they have the same fold function, since it still
+        // expects them to have the appropriate type.
+        return inner
+      }
+
+      let (folder, _) = fold-outputs.at(outer-output)
+      if folder == none {
+        inner
+      } else if folder == auto {
+        // Caution: addition order matters!
+        // Could be arrays, for example.
+        outer + inner
+      } else {
+        folder(outer, inner)
+      }
+    }
   }
 
   (

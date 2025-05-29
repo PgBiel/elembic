@@ -19,3 +19,10 @@
 #assert.eq(cast(5, types.union(color, types.exact(float), content, length)), (false, "expected color, float, none, content, string, symbol or length, found integer"))
 
 #assert.eq(default(types.union(color, 5, float)).first(), false)
+
+// Folding
+// Option
+#assert.eq((types.union(array, stroke).fold)((1,), (2,)), (1, 2))
+#assert.eq((types.union(array, stroke).fold)(3pt + yellow, stroke(blue)), 3pt + blue)
+#assert.eq((types.union(array, stroke).fold)(3pt + yellow, (1, 2)), (1, 2))
+#assert.eq((types.union(array, stroke).fold)((1, 2), 3pt + yellow), 3pt + yellow)
