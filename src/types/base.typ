@@ -344,6 +344,12 @@
   let is-option = typeinfos.first().type-kind == "native" and typeinfos.first().data == type(none)
   let is-smart = typeinfos.first().type-kind == "native" and typeinfos.first().data == type(auto)
 
+  if is-smart != is-option and typeinfos.len() == 3 and typeinfos.at(1).type-kind == "native" and typeinfos.at(1).data in (type(none), type(auto)) {
+    // Both first types are (none, auto)
+    is-smart = true;
+    is-option = true;
+  }
+
   let default = if is-option or is-smart {
     // Default of 'none' for option(...)
     // Default of 'auto' for smart(...)
@@ -353,7 +359,7 @@
   }
 
   // Match built-in behavior by only folding option(T) or smart(T) if T can fold and the inner isn't explicitly none/auto
-  let fold = if typeinfos.len() == 2 and typeinfos.at(1).fold != none {
+  let fold = if typeinfos.len() == 2 and typeinfos.at(1).fold != none and (is-option or is-smart) {
     let other-typeinfo = typeinfos.at(1)
     let other-fold = other-typeinfo.fold
     if is-option {
@@ -362,14 +368,22 @@
       } else {
         (outer, inner) => if inner != none and outer != none { other-fold(outer, inner) } else { inner }
       }
-    } else if is-smart {
+    } else {
       if other-fold == auto {
         (outer, inner) => if inner != auto and outer != auto { outer + inner } else { inner }
       } else {
         (outer, inner) => if inner != auto and outer != auto { other-fold(outer, inner) } else { inner }
       }
+    }
+  } else if typeinfos.len() == 3 and typeinfos.last().fold != none and is-option and is-smart {
+    // smart(option(T))
+    // and option(smart(T))
+    let other-typeinfo = typeinfos.last()
+    let other-fold = other-typeinfo.fold
+    if other-fold == auto {
+      (outer, inner) => if inner != none and inner != auto and outer != none and outer != auto { outer + inner } else { inner }
     } else {
-      none
+      (outer, inner) => if inner != none and inner != auto and outer != none and outer != auto { other-fold(outer, inner) } else { inner }
     }
   } else {
     // TODO: We could consider folding an arbitrary union iff the outputs are all disjoint,

@@ -13,3 +13,12 @@
 
 #assert.eq(default(types.option(color)), (true, none))
 #assert.eq(default(types.union(none, color)), (true, none))
+
+// Folding
+#assert.eq((types.option(stroke).fold)(none, 4pt + red), 4pt + red)
+#assert.eq((types.option(stroke).fold)(4pt + red, none), none)
+#assert.eq((types.option(stroke).fold)(3pt + yellow, stroke(blue)), 3pt + blue)
+
+#assert.eq((types.union(none, stroke).fold)(none, 4pt + red), 4pt + red)
+#assert.eq((types.union(none, stroke).fold)(4pt + red, none), none)
+#assert.eq((types.union(none, stroke).fold)(3pt + yellow, stroke(blue)), 3pt + blue)
