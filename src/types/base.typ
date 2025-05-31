@@ -395,7 +395,6 @@
     // (unless, of course, there is no casting).
     // However, if there is only one typeinfo with a given output type, it is
     // not ambiguous and may fold.
-    let fold-outputs = typeinfos.enumerate().map(((i, t)) => (i, t.fold, t.output))
     let unsure-outputs = () // array of (output type)
     let unsure-output-data = () // array of ((i, fold, output))
     let ambiguous-outputs = () // array of (output type)
