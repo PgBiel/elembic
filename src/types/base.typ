@@ -424,9 +424,9 @@
           // Invariant: there are no duplicate output types in 'unsure-outputs'.
           // The only time we push to unsure-outputs is after this check fails,
           // so that is always true.
-          let output-index = unsure-outputs.position(output)
-          unsure-outputs.remove(output-index)
-          unsure-output-data.remove(output-index)
+          let output-index = unsure-outputs.position(t => t == output)
+          _ = unsure-outputs.remove(output-index)
+          _ = unsure-output-data.remove(output-index)
         } else if output != "never" and output not in ambiguous-outputs {
           if typeinfo.input == "any" and typeinfo.check == none or i + 1 == typeinfo.len() {
             // Any output types which didn't match earlier will always match
@@ -451,7 +451,7 @@
     // No conflicts found for those types
     let unambiguous-outputs = unsure-output-data
 
-    (outer, inner) => {
+    let func(outer, inner) = {
       let outer-id = typeid(outer)
       let inner-id = typeid(inner)
       let outer-output = unambiguous-outputs.find(((_, _, output)) => outer-id == output)
@@ -479,6 +479,12 @@
       } else {
         folder(outer, inner)
       }
+    }
+
+    if unambiguous-outputs == () {
+      none
+    } else {
+      func
     }
   }
 

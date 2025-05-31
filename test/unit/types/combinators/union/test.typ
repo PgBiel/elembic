@@ -42,3 +42,9 @@
 #assert.eq((types.union(array, stroke, length).fold)(stroke(3pt), stroke(yellow)), 3pt + yellow)
 #assert.eq((types.union(array, stroke, length).fold)(3pt, 8em), 8em)
 #assert.eq((types.union(array, stroke, length).fold)((1, 2), 3pt + yellow), 3pt + yellow)
+
+#let non-empty-array = types.wrap(array, check: _ => x => x != ())
+#let non-empty-array-with-fold = types.wrap(array, check: _ => x => x != (), fold: _ => (a, b) => b + a)
+// TODO: maybe fine if the fold function is the same?...
+#assert.eq(types.union(array, non-empty-array).fold, none)
+#assert.eq(types.union(array, non-empty-array-with-fold).fold, none)
