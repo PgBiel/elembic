@@ -21,8 +21,24 @@
 #assert.eq(default(types.union(color, 5, float)).first(), false)
 
 // Folding
-// Option
+#assert.eq((types.union(array, stroke).fold)((1,), (2,)), (1, 2))
+#assert.eq((types.union(array, stroke).fold)(3pt + yellow, stroke(blue)), 3pt + blue)
+#assert.eq((types.union(array, stroke).fold)(3pt + yellow, (1, 2)), (1, 2))
+#assert.eq((types.union(array, stroke).fold)(stroke(3pt), stroke(yellow)), 3pt + yellow)
+#assert.eq((types.union(array, stroke).fold)((1, 2), 3pt + yellow), 3pt + yellow)
+
 #assert.eq((types.union(array, stroke).fold)((1,), (2,)), (1, 2))
 #assert.eq((types.union(array, stroke).fold)(3pt + yellow, stroke(blue)), 3pt + blue)
 #assert.eq((types.union(array, stroke).fold)(3pt + yellow, (1, 2)), (1, 2))
 #assert.eq((types.union(array, stroke).fold)((1, 2), 3pt + yellow), 3pt + yellow)
+
+#assert.eq((types.union(array, dictionary).fold)((1, 2), (1, 2)), (1, 2, 1, 2))
+#assert.eq((types.union(array, dictionary).fold)((a: 1, b: 2), (c: 1, b: 4)), (c: 1, b: 4))
+#assert.eq((types.union(dictionary, array).fold)((1, 2), (1, 2)), (1, 2, 1, 2))
+
+#assert.eq((types.union(array, stroke, length).fold)((1,), (2,)), (1, 2))
+#assert.eq((types.union(array, stroke, length).fold)(3pt + yellow, stroke(blue)), 3pt + blue)
+#assert.eq((types.union(array, stroke, length).fold)(3pt + yellow, (1, 2)), (1, 2))
+#assert.eq((types.union(array, stroke, length).fold)(stroke(3pt), stroke(yellow)), 3pt + yellow)
+#assert.eq((types.union(array, stroke, length).fold)(3pt, 8em), 8em)
+#assert.eq((types.union(array, stroke, length).fold)((1, 2), 3pt + yellow), 3pt + yellow)
