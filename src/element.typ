@@ -183,10 +183,16 @@
   let first-arg = args.pos().first()
 
   set ref(..args.named())
+
   show ref: it => {
+    let element = if it.has("element") {
+      it.element
+    } else {
+      query(it.target).at(0, default: none)
+    }
     if (
-      it.element == none
-      or it.element.has("label") and str(it.element.label).starts-with(lbl-ref-figure-label-head)
+      element == none
+      or element.has("label") and str(element.label).starts-with(lbl-ref-figure-label-head)
       or type(it.target) != label
     ) {
       // This is known to be a reference to a custom element
@@ -194,7 +200,7 @@
       return it
     }
 
-    let info = data(it.element)
+    let info = data(element)
     if type(info) == dictionary and "data-kind" in info and info.data-kind == "element-instance" {
       if "__future-ref" in info and element-version <= info.__future-ref.max-version {
         return (info.__future-ref.call)(target: it.target, supplement: it.at("supplement", default: none), ref-instance: it, __future-version: element-version)
