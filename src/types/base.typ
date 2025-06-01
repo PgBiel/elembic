@@ -358,7 +358,8 @@
     ()
   }
 
-  let fold = if typeinfos.all(t => t.fold == none) {
+  let fold = if typeinfos.all(t => t.fold == none) or typeinfos.any(t => "any" in t.output) {
+    // We'd like to handle folding with "any" output in the future, but for now, let's not
     none
   } else if (is-option or is-smart) and typeinfos.len() == 2 and typeinfos.last().fold != none {
     // Match built-in behavior by only folding option(T) or smart(T) if T can fold and the inner isn't explicitly none/auto
@@ -398,26 +399,12 @@
     let unsure-outputs = () // array of (output type)
     let unsure-output-data = () // array of ((i, fold, output))
     let ambiguous-outputs = () // array of (output type)
-    // The fold used when an output isn't listed above.
-    let any-fold = none
+
     for (i, typeinfo) in typeinfos.enumerate() {
-      let found-any = false
       for output in typeinfo.output.dedup() {
-        if output == "any" {
-          found-any = true
-          // Any previously potentially ambiguous output types are now
-          // certainly ambiguous, as they can match here too
-          ambiguous-outputs += unsure-outputs
-          unsure-outputs = ()
-          unsure-output-data = ()
-          if typeinfo.input == "any" and typeinfo.check == none or i + 1 == typeinfo.len() {
-            // Any output types which didn't match earlier will always match
-            // this type, either because it is any and has no checks, or it is
-            // the last type in the union.
-            any-fold = typeinfo.fold
-          }
-          break
-        } else if output in unsure-outputs {
+        // NOTE: we assume 'output != "any"' as we filter that out in a
+        // previous conditional.
+        if output in unsure-outputs {
           ambiguous-outputs.push(output)
 
           // Invariant: there are no duplicate output types in 'unsure-outputs'.
@@ -427,23 +414,9 @@
           _ = unsure-outputs.remove(output-index)
           _ = unsure-output-data.remove(output-index)
         } else if output != "never" and output not in ambiguous-outputs {
-          if typeinfo.input == "any" and typeinfo.check == none or i + 1 == typeinfo.len() {
-            // Any output types which didn't match earlier will always match
-            // this type, either because it is any and has no checks, or it is
-            // the last type in the union.
-            any-fold = typeinfo.fold
-            found-any = true
-            break
-          } else {
-            unsure-outputs.push(output)
-            unsure-output-data.push((i, typeinfo.fold, output))
-          }
+          unsure-outputs.push(output)
+          unsure-output-data.push((i, typeinfo.fold, output))
         }
-      }
-
-      if found-any {
-        // No point in analyzing more types
-        break
       }
     }
 
@@ -455,14 +428,14 @@
       let inner-id = typeid(inner)
       let outer-output = unambiguous-outputs.find(((_, _, output)) => outer-id == output)
       let inner-output = unambiguous-outputs.find(((_, _, output)) => inner-id == output)
-      let folder = if inner-output == none and outer-output == none {
-        // Neither type found, probably belong to the last type or to the first
-        // unconditional "any" type.
-        folder = any-fold
-      } else if inner-output == none or outer-output == none or outer-output.first() != inner-output.first() {
+      let folder = if inner-output == none or outer-output == none or outer-output.first() != inner-output.first() {
         // They belong to different types in the union, so no folding can be
         // performed, even if they have the same fold function, since it still
         // expects them to have the appropriate type.
+        //
+        // This branch is also reached when neither type is found. This
+        // suggests both belong to ambiguous output types and must not
+        // be folded.
         return inner
       } else {
         // They belong to the same type with the same fold

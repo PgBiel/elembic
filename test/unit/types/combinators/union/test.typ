@@ -66,8 +66,20 @@
 #assert.eq((types.union(array, stroke, length).fold)(3pt, 8em), 8em)
 #assert.eq((types.union(array, stroke, length).fold)((1, 2), 3pt + yellow), 3pt + yellow)
 
+#assert.eq(types.union(array, types.any).fold, none)
+
 #let non-empty-array = types.wrap(array, check: _ => x => x != ())
 #let non-empty-array-with-fold = types.wrap(array, check: _ => x => x != (), fold: _ => (a, b) => b + a)
-// TODO: maybe fine if the fold function is the same?...
 #assert.eq(types.union(array, non-empty-array).fold, none)
 #assert.eq(types.union(array, non-empty-array-with-fold).fold, none)
+
+#let any-wrap = types.wrap(
+  int,
+  // check: _ => i => i > 0 and i < 4,
+  cast: _ => i => (1, "a", (), (:)).at(calc.rem(i, 4)),
+  output: ("any",),
+  fold: _ => (a, b) => panic("dont fold"),
+)
+
+// This should be ambiguous
+#assert.eq((types.union(any-wrap, array).fold), none)
