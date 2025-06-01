@@ -185,24 +185,35 @@
 
     if type(value) == function {
       value = value(typeinfo.at(key, default: base.base-typeinfo.at(key)))
+      overrides.at(key) = value
     }
 
-    if type(value) != function and not validate-value(value) {
-      assert(false, message: "elembic: types.wrap: invalid value for key '" + key + "', expected " + key-error)
+    if not validate-value(value) {
+      let array-hint = if key in ("input", "output", "default") and type(value) != array {
+        "\n  hint: did you forget a comma at (value,) and wrote (value) instead? Make sure an array was given."
+      } else {
+        ""
+      }
+
+      assert(false, message: "elembic: types.wrap: invalid value for key '" + key + "', expected " + key-error + array-hint)
     }
   }
 
-  if "any" not in typeinfo.output and "cast" in overrides and "output" not in overrides or "output" in overrides and "any" in overrides.output {
-    // - Collapse "any" + other types into just "any";
-    // - If there is a cast and output is unknown, then set it to any for safety (should we error?)
-    overrides.output = ("any",)
+  if "any" not in typeinfo.output and "cast" in overrides and "output" not in overrides {
+    // - If there is a cast and output is unchanged, then complain: please update the output
+    assert(false, message: "elembic: types.wrap: please override 'output' whenever overriding 'cast', specifying which types the cast function may return, or '(\"any\",)' (note the comma!) to indicate the cast function may return any type (discouraged, disables some optimizations).\n\nYou can also tell elembic you are sure the new cast function may produce strictly the same output types as before with 'output: prev => prev'.")
   }
 
   if typeinfo.cast != none and "output" in overrides and "cast" not in overrides and "any" not in overrides.output and typeinfo.output.any(o => o not in overrides.output) {
     // If output was changed to a list which isn't 'any' and isn't a superset of the previous output,
-    // then remove casting as it is no longer safe (might produce something that is invalid)
-    // (TODO: Should we error?)
-    overrides.cast = none
+    // then ensure casting is also changed, as it is no longer safe (might produce something that is
+    // an invalid output)
+    assert(false, message: "elembic: types.wrap: a type output was removed, but its cast was not changed, meaning the cast function might produce a now invalid output. Fix this by either providing a new cast function, setting 'cast: none' to disable casting entirely, or setting 'cast: prev => prev' if you're sure the previous cast function cannot produce one of the removed output types.")
+  }
+
+  if "output" in overrides and "any" in overrides.output {
+    // - Collapse "any" + other types into just "any"
+    overrides.output = ("any",)
   }
 
   if "input" in overrides and "any" in overrides.input {
@@ -231,6 +242,9 @@
 
   let new-default = overrides.at("default", default: typeinfo.default)
   let new-output = overrides.at("output", default: typeinfo.output)
+  let new-input = overrides.at("input", default: typeinfo.input)
+  let new-cast = overrides.at("cast", default: typeinfo.cast)
+  let new-check = overrides.at("check", default: typeinfo.check)
   assert(
     new-default == ()
     or "any" in new-output
@@ -238,6 +252,16 @@
 
     message: "elembic: types.wrap: new default (currently " + repr(if new-default == () { none } else { new-default.first() }) + ") must have a type within possible 'output' types of the new type (currently " + if new-output == () { "empty" } else { new-output.map(t => if type(t) == dictionary { t.name } else { str(t) }).join(", ", last: " or ") } + "), since it is itself an output\n  hint: you can either change the default, or update possible output types with 'output: (new, list)' to indicate which native or custom types your wrapped type might end up as after casts (if there are casts)."
   )
+
+  if new-check == none and new-cast == none and "any" not in new-output and (
+    "any" in new-input or new-input.any(inp => inp not in new-output)
+  ) {
+    assert(false, message: "elembic: types.wrap: new type has no casting or checking, but not all of its input types are valid output types. Ensure 'output: (...)' and 'input: (...)' are identical to fix this.")
+  }
+
+  if new-cast == none and "any" not in new-input and new-output.any(out => out == "any" or out not in new-input) {
+    assert(false, message: "elembic: types.wrap: new type has no casting, but list of valid output types includes invalid input types. Please ensure 'output' is a subset of 'input' in this case, or add a cast.")
+  }
 
   base.wrap(typeinfo, overrides)
 }

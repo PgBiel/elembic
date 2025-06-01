@@ -5,7 +5,10 @@
 #import types: exact, literal, ok, err, native, wrap
 #import "/src/types/types.typ": cast, validate, default
 
-#let larger-len = wrap(types.option(length), name: "larger length", cast: _ => x => if x != none and x > 5pt { x * 55 } else { x }, default: (0pt,))
+#let larger-len = wrap(
+  types.option(length), name: "larger length", cast: _ => x => if x != none and x > 5pt { x * 55 } else { x }, default: (0pt,),
+  output: prev => prev
+)
 #let pos-int = wrap(int, name: "positive integer", check: _ => i => i > 0, error: _ => i => "integer must be positive")
 #let neg-int = wrap(int, name: "negative integer", check: _ => i => i < 0, error: _ => i => "integer must be negative", default: (-1,))
 #let singleton-array = wrap(

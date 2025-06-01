@@ -502,9 +502,6 @@
 
       if key in overrides {
         let override = overrides.at(key)
-        if type(override) == function {
-          override = override(typeinfo.at(key, default: default))
-        }
 
         if key == "data" {
           (data: (base: typeinfo, extra: override))
