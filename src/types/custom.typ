@@ -94,6 +94,20 @@
   )
   assert(fold == none or fold == auto or type(fold) == function, message: "elembic: types.declare: 'fold' must be 'none' (no folding), 'auto' (fold each field individually) or a function 'default constructor => auto (same as (a, b) => a + b but more efficient) or function (outer, inner) => combined value'.")
 
+  let type-args = (
+    name: name,
+    fields: fields,
+    prefix: prefix,
+    default: default,
+    parse-args: parse-args,
+    typecheck: typecheck,
+    allow-unknown-fields: allow-unknown-fields,
+    construct: construct,
+    scope: scope,
+    casts: casts,
+    fold: fold,
+  )
+
   let tid = base.unique-id("t", prefix, name)
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
   let (all-fields, user-fields, foldable-fields) = fields
@@ -170,6 +184,7 @@
     allow-unknown-fields: allow-unknown-fields,
     default-constructor: none,
     func: none,
+    type-args: type-args,
   )
 
   let process-casts = if casts == none {
