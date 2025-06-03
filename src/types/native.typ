@@ -95,7 +95,23 @@
   data: array,
   default: ((),),
 
-  // Array fields are added together by default.
+  // Array fields are joined together by default:
+  // set(field: (1, 2)), set(field: (3, 4))
+  // => set(field: (1, 2, 3, 4))
+  fold: auto,
+)
+
+#let dict_ = (
+  ..native-base,
+  name: str(dictionary),
+  input: (dictionary,),
+  output: (dictionary,),
+  data: dictionary,
+  default: ((:),),
+
+  // Dictionary fields are joined together by default:
+  // set(field: (a: 12)), set(field: (b: 13))
+  // => set(field: (a: 12, b: 13))
   fold: auto,
 )
 
@@ -143,14 +159,6 @@
   output: (bool,),
   data: bool,
   default: (false,)
-)
-#let dict_ = (
-  ..native-base,
-  name: str(dictionary),
-  input: (dictionary,),
-  output: (dictionary,),
-  data: dictionary,
-  default: ((:),),
 )
 #let int_ = (
   ..native-base,

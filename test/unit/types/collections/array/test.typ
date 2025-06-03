@@ -23,3 +23,7 @@
 #assert.eq(cast(("abc", 50, 0), types.array(pos-if-int-or-any)), err("an element in an array of positive integer or any did not typecheck\n  hint: at position 2: expected positive integer, got 0"))
 
 #assert.eq(default(types.array(types.union(float, int, color))), (true, ()))
+
+// Folding:
+// (1, 2), (3, 4) => (1, 2, 3, 4)
+#assert.eq(types.array(int).fold, auto)

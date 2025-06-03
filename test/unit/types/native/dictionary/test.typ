@@ -14,3 +14,5 @@
 
 #assert.eq(validate((a: 5)).first(), false)
 #assert.eq(default(native.dict_), (true, (:)))
+
+#assert.eq(native.dict_.fold, auto)

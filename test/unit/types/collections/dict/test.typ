@@ -23,3 +23,18 @@
 #assert.eq(cast((v0: "abc", v1: 50, v2: 0), types.dict(pos-if-int-or-any)), err("a value in a dictionary of positive integer or any did not typecheck\n  hint: at key \"v2\": expected positive integer, got 0"))
 
 #assert.eq(default(types.dict(types.union(float, int, color))), (true, (:)))
+
+// Folding:
+#import types: dict
+#assert.eq(dict(int).fold, auto)
+#assert.eq(
+  (dict(array).fold)((a: (1, 2), b: (), c: (5,)), (a: (3, 4), b: (45,), d: (8, 8, 8))),
+  (a: (1, 2, 3, 4), b: (45,), c: (5,), d: (8, 8, 8))
+)
+#assert.eq(
+  (dict(stroke).fold)(
+    (a: stroke(red), b: 4pt + blue, c: 5pt + purple, e: 6pt + green),
+    (a: stroke(8em), b: stroke(10pt), d: stroke(orange), e: 10pt + blue)
+  ),
+  (a: 8em + red, b: 10pt + blue, c: 5pt + purple, d: stroke(orange), e: 10pt + blue)
+)
