@@ -56,7 +56,8 @@
 #assert.eq((types.smart(types.union(stroke, array)).fold)(auto, (1, 2)), (1, 2))
 
 #assert.eq((types.union(array, dictionary).fold)((1, 2), (1, 2)), (1, 2, 1, 2))
-#assert.eq((types.union(array, dictionary).fold)((a: 1, b: 2), (c: 1, b: 4)), (c: 1, b: 4))
+#assert.eq((types.union(array, dictionary).fold)((a: 1, b: 2), (c: 1, b: 4)), (a: 1, b: 4, c: 1))
+#assert.eq((types.union(array, dictionary).fold)((a: 1, b: 2), (1, 2)), (1, 2))
 #assert.eq((types.union(dictionary, array).fold)((1, 2), (1, 2)), (1, 2, 1, 2))
 
 #assert.eq((types.union(array, stroke, length).fold)((1,), (2,)), (1, 2))

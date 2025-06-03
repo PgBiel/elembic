@@ -534,6 +534,12 @@
     base.default
   }
 
+  let fold = if "fold" in other-args {
+    other-args.fold
+  } else {
+    base.fold
+  }
+
   (
     ..base,
     type-kind: "collection",
@@ -543,6 +549,7 @@
     cast: cast,
     error: error,
     default: default,
+    fold: fold,
   )
 }
 
@@ -654,6 +661,36 @@
       }
     },
 
-    error: error
+    error: error,
+
+    fold: if param.fold == none {
+      base-type.fold
+    } else if param.fold == auto {
+      (outer, inner) => {
+        let combined = outer + inner
+
+        for (k, v) in outer {
+          if k in inner {
+            combined.at(k) = v + inner.at(k)
+          }
+        }
+
+        combined
+      }
+    } else if type(param.fold) == function {
+      (outer, inner) => {
+        let combined = outer + inner
+
+        for (k, v) in outer {
+          if k in inner {
+            combined.at(k) = (param.fold)(v, inner.at(k))
+          }
+        }
+
+        combined
+      }
+    } else {
+      assert(false, message: "elembic: types.dict: parameter didn't have a valid fold function")
+    }
   )
 }
