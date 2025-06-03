@@ -27,7 +27,7 @@
 
 // Lazy tracking
 #wock(inner: [
-  #e.debug-get(styles => {
+  #e.internal.debug-get(styles => {
     assert.eq(styles.global.ancestry-chain, ())
   })
 ])
@@ -36,7 +36,7 @@
   show: e.settings(track-ancestry: (dock, wock))
 
   wock(inner: [
-    #e.debug-get(styles => {
+    #e.internal.debug-get(styles => {
       let wock-within = styles.global.ancestry-chain.first()
       assert.eq(wock-within.eid, e.eid(wock))
       assert.eq(wock-within.fields.color, blue)
@@ -48,7 +48,7 @@
   show: e.settings(track-ancestry: "any")
 
   wock(inner: [
-    #e.debug-get(styles => {
+    #e.internal.debug-get(styles => {
       let wock-within = styles.global.ancestry-chain.first()
       assert.eq(wock-within.eid, e.eid(wock))
       assert.eq(wock-within.fields.color, blue)
@@ -60,7 +60,7 @@
 #show: e.cond-set(e.filters.and_(wock, e.within(wock)))
 
 #wock(inner: [
-  #e.debug-get(styles => {
+  #e.internal.debug-get(styles => {
     let wock-within = styles.global.ancestry-chain.first()
     assert.eq(wock-within.eid, e.eid(wock))
     assert.eq(wock-within.fields.color, blue)
@@ -68,7 +68,7 @@
 
   #wock(
     color: red,
-    inner: e.debug-get(styles => {
+    inner: e.internal.debug-get(styles => {
       let wock-within = styles.global.ancestry-chain.at(1)
       assert.eq(wock-within.eid, e.eid(wock))
       assert.eq(wock-within.fields.color, red)

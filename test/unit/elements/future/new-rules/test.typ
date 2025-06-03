@@ -25,7 +25,7 @@
   let value = 321
   let brand-new-rule = prepare-rule((
     (prepared-rule-key): true,
-    version: e.constants.element-version,
+    version: e.internal.constants.element-version,
     kind: "new-rule",
     value: value,
     name: none,
@@ -50,7 +50,7 @@
 
   show: brand-new-rule
 
-  e.debug-get(styles => {
+  e.internal.debug-get(styles => {
     assert.eq(styles.elements.at(e.eid(wock)).goofy, value)
     assert.eq(styles.settings.goofy, value)
     assert.eq(styles.global.goofy, value)

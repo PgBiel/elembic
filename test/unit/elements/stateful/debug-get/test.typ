@@ -21,7 +21,7 @@
 #show: e.stateful.set_(wock, color: blue)
 
 #context {
-  let styles = e.stateful.debug-get()
+  let styles = e.internal.stateful-debug-get()
   let (get,) = styles.ctx
   assert.eq(get(wock).color, blue)
   assert.eq(get(wock).inner, [Hello!])

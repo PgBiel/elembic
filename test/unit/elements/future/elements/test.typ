@@ -21,7 +21,7 @@
 
 #let modify-data(mapper) = prepare-rule((
   (prepared-rule-key): true,
-  version: e.constants.element-version,
+  version: e.internal.constants.element-version,
   kind: "modifier",
   mapper: mapper,
   name: none,

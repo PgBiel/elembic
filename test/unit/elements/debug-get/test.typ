@@ -19,7 +19,7 @@
 
 #show: e.set_(wock, color: blue)
 
-#e.debug-get(
+#e.internal.debug-get(
   styles => {
     let (get,) = styles.ctx
     assert.eq(get(wock).color, blue)
@@ -27,5 +27,6 @@
 
     assert(e.eid(wock) in styles.elements)
     assert("chain" in styles.elements.at(e.eid(wock)))
+    assert(styles.global.version == e.internal.constants.element-version)
   }
 )

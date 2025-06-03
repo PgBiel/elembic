@@ -47,7 +47,7 @@
 #let modify-rule-in-chain(name) = {
   prepare-rule((
     (prepared-rule-key): true,
-    version: e.constants.element-version,
+    version: e.internal.constants.element-version,
     kind: "new-rule",
     name: none,
     names: (),
@@ -68,7 +68,7 @@
   ))
 }
 
-#let check-if-it-worked() = e.debug-get(styles => {
+#let check-if-it-worked() = e.internal.debug-get(styles => {
   assert.eq(styles.elements.at(e.eid(wock)).goofy, test-value)
   assert.eq(styles.settings.goofy, test-value)
   assert.eq(styles.global.goofy, test-value)

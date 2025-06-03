@@ -18,7 +18,7 @@
 
 #let only-purples-filter = (
   (filter-key): true,
-  version: e.constants.element-version,
+  version: e.internal.constants.element-version,
   kind: "new-filter",
   elements: ((e.eid(wock)): e.data(wock)),
   desired-color: purple,

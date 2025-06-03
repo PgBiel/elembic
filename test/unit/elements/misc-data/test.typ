@@ -33,8 +33,8 @@
 
 #assert.eq(e.func-name[= abc], "heading")
 
-#assert.eq(type(e.constants.element-version), int)
-#assert.eq(type(e.constants.type-version), int)
-#assert.eq(type(e.constants.style-modes), dictionary)
+#assert.eq(type(e.internal.constants.element-version), int)
+#assert.eq(type(e.internal.constants.type-version), int)
+#assert.eq(type(e.internal.constants.style-modes), dictionary)
 
 #w
