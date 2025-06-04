@@ -26,7 +26,7 @@
   - [Constructing elements](./elements/styling/constructing.md)
   - [Set rules](./elements/styling/set-rules.md)
   - [Show rules](./elements/styling/show-rules.md)
-  - [Filtered rules]()
+  - [Filtered rules](./elements/styling/filtered-rules.md)
   - [Conditional set rules]()
   - [Selectors and show-set]()
 
