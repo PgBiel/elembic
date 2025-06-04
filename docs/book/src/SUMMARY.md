@@ -30,6 +30,12 @@
   - [Conditional set rules]()
   - [Selectors and show-set]()
 
+- [Element filters](./elements/filters/README.md)
+  - [Fields](./elements/filters/fields.md)
+  - [Logic operators]()
+  - [Matching ancestry]()
+  - [Custom filters]()
+
 # Types
 
 - [Type system](./types/type-system/README.md)
