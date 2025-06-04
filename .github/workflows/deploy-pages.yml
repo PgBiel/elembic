@@ -26,12 +26,18 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MDBOOK_VERSION: 0.4.37
+      MDBOOK_ADMONISH_VERSION: 1.19.0
     steps:
       - uses: actions/checkout@v4
       - name: 📥 Install mdBook
         run: |
           mkdir -p bin
           curl -sSL https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=bin
+        working-directory: "docs/book"
+      - name: 📥 Install mdbook-admonish
+        run: |
+          mkdir -p bin
+          curl -sSL https://github.com/tommilligan/mdbook-admonish/releases/download/v${MDBOOK_ADMONISH_VERSION}/mdbook-admonish-v${MDBOOK_ADMONISH_VERSION}-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=bin
         working-directory: "docs/book"
       - name: 📄 Setup Pages
         id: pages
