@@ -20,6 +20,12 @@ When specifying an element's fields, you should use the `field` function for eac
 
     Read more about synthesis below.
 
+8. `folds` (boolean, named, optional): if `false`, set rules and arguments changing this field will always completely override the previous value instead of joining. This only has an effect on foldable types, such as arrays, dictionaries and strokes. For other types, that is already what happens: no joining.
+
+9. `internal` (boolean, named, optional): if `true`, indicates this field should be hidden from documentation. Has no effect on `elembic` itself and is only meant to be read by external tools.
+
+10. `meta` (dictionary, named, optional): an optional dictionary with arbitrary keys and values to be read by external tools, such as documentation generators.
+
 ## Synthesizing fields
 
 Some elements will have conveniently **auto-generated fields**, which are created after set rules are applied, but **before show rules.** To do this, there are two steps:
