@@ -30,6 +30,11 @@
   - [Conditional set rules]()
   - [Selectors and show-set]()
 
+- [Scripting with elements]()
+  - [Query]()
+  - [Reflection]()
+  - [Comparisons]()
+
 - [Element filters](./elements/filters/README.md)
   - [Fields](./elements/filters/fields.md)
   - [Logic operators](./elements/filters/logic-ops.md)
