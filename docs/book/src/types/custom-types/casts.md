@@ -2,7 +2,39 @@
 
 You can add casts from native types (or any types supported by the type system, such as [literals](../type-system/special-types.md#typesliteral-accepting-only-a-single-value-of-a-type)) to your custom type, allowing fields receiving your type to also accept the casted-from types.
 
-This is done through the `casts: (cast1, cast2, ...)` parameter. Each cast takes at least `(from: typename, with: constructor => value => constructor(...))`, where `value` was already casted to `typename` beforehand (e.g. if `typename` is float, then `value` will always have type `float`, even if the user passes an integer). It may optionally take `check: value => bool` as well to only accept that `typename` if `check(value)` is `true`.
+## Dictionary cast
+
+The simplest cast, allows casting dictionaries to your type when they have the correct structure. In summary, the dictionary's keys must correspond to **named fields** in your type. To use its default implementation, simply add `casts: ((from: dictionary),)` and the rest is sorted out. (You can add other casts, as explained below, by adding more casts to that list.)
+
+Fails if there are required positional fields.
+
+For example:
+
+```rs
+#import "@preview/elembic:X.X.X" as e: field, types
+
+#let person = e.types.declare(
+  "person",
+  prefix: "@preview/my-package,v1",
+  fields: (
+    // All fields named, one required
+    field("name", str, doc: "Person's name", required: true, named: true),
+    field("age", int, doc: "Person's age", default: 40),
+    field("preference", types.any, doc: "Anything the person likes", default: none)
+  ),
+  casts: ((from: dictionary),) // <-- note the comma!
+)
+
+#assert.eq(
+  types.cast((name: "Johnson", age: 20, preference: "ice cream"), person),
+  // Same as using the default constructor
+  (true, person(name: "Johnson", age: 20, preference: "ice cream"))
+)
+```
+
+## Custom casts
+
+Additional casts are given by the `casts: (cast1, cast2, ...)` parameter. Each cast takes at least `(from: typename, with: constructor => value => constructor(...))`, where `value` was already casted to `typename` beforehand (e.g. if `typename` is float, then `value` will always have type `float`, even if the user passes an integer). It may optionally take `check: value => bool` as well to only accept that `typename` if `check(value)` is `true`.
 
 In the future, automatic casting from dictionaries will be supported (although it can already be manually implemented).
 
