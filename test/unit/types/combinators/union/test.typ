@@ -69,7 +69,7 @@
 
 #assert.eq(types.union(array, types.any).fold, none)
 
-#let non-empty-array = types.wrap(array, check: _ => x => x != ())
+#let non-empty-array = types.wrap(array, check: _ => x => x != (), fold: none)
 #let non-empty-array-with-fold = types.wrap(array, check: _ => x => x != (), fold: _ => (a, b) => b + a)
 #assert.eq(types.union(array, non-empty-array).fold, none)
 #assert.eq(types.union(array, non-empty-array-with-fold).fold, none)

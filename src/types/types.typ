@@ -229,17 +229,6 @@
     overrides.default = ()
   }
 
-  if ("check" in overrides or "output" in overrides) and "fold" not in overrides {
-    // Folding might not be valid anymore:
-    // 1. By overriding the check, it's possible a fold that, say, adds two numbers, would no longer be valid
-    // if, for example, the new check ensures each number is smaller than 59 (you might add up to that).
-    //    In addition, the fold might now receive parameters that would fail the new check while being cast.
-    // 2. By overriding the output:
-    //    a. and removing old output, it's possible the fold produces invalid output.
-    //    b. and adding new output, it's possible the fold receives parameters of an unexpected type.
-    overrides.fold = none
-  }
-
   let new-default = overrides.at("default", default: typeinfo.default)
   let new-output = overrides.at("output", default: typeinfo.output)
   let new-input = overrides.at("input", default: typeinfo.input)
@@ -261,6 +250,23 @@
 
   if new-cast == none and "any" not in new-input and new-output.any(out => out == "any" or out not in new-input) {
     assert(false, message: "elembic: types.wrap: new type has no casting, but list of valid output types includes invalid input types. Please ensure 'output' is a subset of 'input' in this case, or add a cast.")
+  }
+
+  if (
+    (
+      "check" in overrides and new-check != typeinfo.check
+      or "output" in overrides and new-output != typeinfo.output
+    )
+    and "fold" not in overrides and typeinfo.fold != none
+  ) {
+    // Folding might not be valid anymore:
+    // 1. By overriding the check, it's possible a fold that, say, adds two numbers, would no longer be valid
+    // if, for example, the new check ensures each number is smaller than 59 (you might add up to that).
+    //    In addition, the fold might now receive parameters that would fail the new check while being cast.
+    // 2. By overriding the output:
+    //    a. and removing old output, it's possible the fold produces invalid output.
+    //    b. and adding new output, it's possible the fold receives parameters of an unexpected type.
+    assert(false, message: "elembic: types.wrap: new type has overridden check and/or output types, but not 'fold', usually a function (outer output, inner output) => folded output\n  hint: it's possible the previous fold function could now produce a value that would never have passed the check or been a valid output type if kept, e.g. joining two single-element arrays would generate a two-element array which may violate a check that only allows casting single-element arrays into the new type\n  hint: either explicitly remove folding with 'fold: none', keep the previous fold function with 'fold: prev => prev' if you're sure it still works properly with the new check or list of output types, or override it with 'fold: prev => (outer, inner) => folded'")
   }
 
   base.wrap(typeinfo, overrides)
