@@ -27,7 +27,7 @@
   - [Set rules](./elements/styling/set-rules.md)
   - [Show rules](./elements/styling/show-rules.md)
   - [Filtered rules](./elements/styling/filtered-rules.md)
-  - [Conditional set rules]()
+  - [Conditional set rules](./elements/styling/cond-set.md)
   - [Selectors and show-set]()
 
 - [Scripting with elements](./elements/scripting/README.md)
