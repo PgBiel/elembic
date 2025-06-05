@@ -28,6 +28,7 @@
   - [Show rules](./elements/styling/show-rules.md)
   - [Filtered rules](./elements/styling/filtered-rules.md)
   - [Conditional set rules](./elements/styling/cond-set.md)
+  - [Revoking rules](./elements/styling/revoke.md)
   - [Selectors and show-set]()
 
 - [Scripting with elements](./elements/scripting/README.md)
