@@ -29,7 +29,7 @@
   - [Filtered rules](./elements/styling/filtered-rules.md)
   - [Conditional set rules](./elements/styling/cond-set.md)
   - [Revoking rules](./elements/styling/revoke.md)
-  - [Selectors and show-set]()
+  - [Typst selectors](./elements/styling/select.md)
 
 - [Scripting with elements](./elements/scripting/README.md)
   - [Fields and reflection](./elements/scripting/reflection.md)
