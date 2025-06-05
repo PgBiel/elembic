@@ -30,10 +30,9 @@
   - [Conditional set rules]()
   - [Selectors and show-set]()
 
-- [Scripting with elements]()
-  - [Query]()
-  - [Reflection]()
-  - [Comparisons]()
+- [Scripting with elements](./elements/scripting/README.md)
+  - [Fields and reflection](./elements/scripting/reflection.md)
+  - [Query](./elements/scripting/query.md)
 
 - [Element filters](./elements/filters/README.md)
   - [Fields](./elements/filters/fields.md)
