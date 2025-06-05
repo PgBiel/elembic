@@ -8,7 +8,13 @@ For example, `e.filters.and_(theorem, e.within(container))` will match all `theo
 This feature can have a **potentially significant performance impact** on elements repeated hundreds or thousands of times, being more or less equivalent to [filtered rules](../styling/filtered-rules.md) in performance. Be mindful when using it. We do mitigate the performance impact through "lazy ancestry tracking", explained shortly below.
 ```
 
-## Exact and max depth
+````admonish note title="Restricting the domain"
+Similarly to [NOT filters](./logic-ops.md), `e.within(parent)` filters may be applied to any elements within `parent` in principle. Therefore, to use them in filtered rules and `query`, they must be used within filter operators which restrict which elements they may apply to, usually AND.
+
+For example, `e.filters.and_(e.filters.or_(elem1, elem2), e.within(parent))` will only match `elem1` and `elem2` instances within `parent`, which is something that elembic can work with for [`e.filtered`](../styling/filtered-rules.md) and other rules taking filters.
+````
+
+## Matching exact and max depth
 
 You can choose to only match descendants at a certain exact depth, or at a maximum depth. This can be specified with `e.within(elem, depth: 2)` and `e.within(elem, max-depth: 2)`.
 

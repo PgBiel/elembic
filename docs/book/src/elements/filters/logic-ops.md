@@ -22,14 +22,14 @@ Consider the example below:
     theorem.with(supplement: [Lemma]), // Or is a theorem tagged as a Lemma...
   ),
 
-  // ...with the word "Matched (element name)!"
-  it => [Matched #e.data(it).name!]
+  // ...with the sentence "Matched (element name)!"
+  it => [Matched #e.func-name(it)!]
 )
 
 // Not replaced: is a container, but has a red fill; and is not a theorem.
 #container(fill: red)
 
-// Replaced with "Matched 'container'!"
+// Replaced with "Matched container!"
 #container(fill: blue)
 ```
 
@@ -40,5 +40,5 @@ To solve this, each NOT filter must be ultimately (directly or indirectly) wrapp
 
 For example, `e.filters.and_(e.filters.or_(elem1, elem2), e.filters.not_(elem1.with(fill: red)))` will match any `elem2` instances, and `elem1` instances with a non-red fill, but won't match `elem3` for example, even though it would satisfy the NOT filter on its own. This filter can now be used in filtered rules!
 
-Something similar occurs with [custom filters](./custom.md).
+Something similar occurs with [custom filters](./custom.md) and [nested element filters](./within.md).
 ```
