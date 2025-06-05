@@ -8,7 +8,11 @@ You can use `types.union(int, str)` to indicate that a field depends on either a
 
 As special aliases, there are `types.option(typ)` and `types.smart(typ)` for `types.union(none, typ)` and `types.union(auto, typ)` respectively.
 
-> **Note: Unions are ordered.** This means that `types.union(int, float) != types.union(float, int)`. This is relevant when two or more types in the union can accept the same native type, with differing checks or casts. In the case of `int` and `float`, the integer `5` will remain the integer `5` when casting to `types.union(int, float)`, but will be casted to the float `5.0` when casted to `types.union(float, int)`. (Of course, a float such as `4.0` will remain a float in both cases, since it isn't accepted by `int`). Keep this in mind!
+```admonish note
+**Unions are ordered.** This means that `types.union(int, float) != types.union(float, int)`.
+
+This is relevant when two or more types in the union can accept the same native type, with differing checks or casts. In the case of `int` and `float`, the integer `5` will remain the integer `5` when casting to `types.union(int, float)`, but will be casted to the float `5.0` when casted to `types.union(float, int)`. (Of course, a float such as `4.0` will remain a float in both cases, since it isn't accepted by `int`).
+```
 
 ### Folding in unions
 

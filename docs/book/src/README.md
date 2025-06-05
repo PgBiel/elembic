@@ -2,7 +2,9 @@
 
 **Welcome to Elembic!** Elembic is a framework that lets you **create your own elements and types in Typst**, including **support for type-checking and casting** on the fly.
 
-> **WARNING:** Elembic is currently experimental. Expect breaking changes before 0.1.0 is released and it is published to the package manager.
+```admonish warning
+Elembic is currently experimental. Expect breaking changes before 0.1.0 is released and it is published to the package manager.
+```
 
 Elembic supports **Typst 0.11.0 or later.**
 

@@ -6,7 +6,11 @@ This is done through the `casts: (cast1, cast2, ...)` parameter. Each cast takes
 
 In the future, automatic casting from dictionaries will be supported (although it can already be manually implemented).
 
-> **Note: Casts are ordered.** This means that specifying a cast from `int` and then `float` is different from specifying a cast from `float` followed by `int`, for example. This is relevant when two or more types in the union can accept the same native type, with differing checks or casts. In the case of `int` and `float`, the integer `5` will trigger the cast from `int` as you'd expect if the `int` cast comes first, but will converted to `5.0` before triggering the cast from `float` if the `float` cast is specified first. (Of course, a float such as `4.0` will trigger the cast from `float` in both cases, since it isn't accepted by `int`). Keep this in mind!
+```admonish note
+**Casts are ordered.** This means that specifying a cast from `int` and then `float` is different from specifying a cast from `float` followed by `int`, for example.
+
+This is relevant when two or more types in the union can accept the same native type as input, with differing checks or casts. In the case of `int` and `float`, the integer `5` will trigger the cast from `int` as you'd expect if the `int` cast comes first, but will converted to `5.0` before triggering the cast from `float` if the `float` cast is specified first. (Of course, a float such as `4.0` will trigger the cast from `float` in both cases, since it isn't accepted by `int`).
+```
 
 These principles are made evident in the example below:
 
