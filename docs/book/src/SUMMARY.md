@@ -32,9 +32,9 @@
 
 - [Element filters](./elements/filters/README.md)
   - [Fields](./elements/filters/fields.md)
-  - [Logic operators]()
-  - [Matching ancestry]()
-  - [Custom filters]()
+  - [Logic operators](./elements/filters/logic-ops.md)
+  - [Nested elements](./elements/filters/within.md)
+  - [Custom filters](./elements/filters/custom.md)
 
 # Types
 
