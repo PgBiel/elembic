@@ -9,24 +9,30 @@ Framework for custom elements and types in Typst. **Supports Typst 0.11.0 or lat
 
 ## About
 
-Elembic lets you create **custom elements,** which are **reusable document components,** with support for **typechecked fields, show and set rules** (without using any `state` by default), **revoke and reset rules, reference and outline support,** and more. In addition, Elembic lets you create **custom types,** which also support **typechecked fields** but also **custom casting**, and can be used in element fields or by themselves in arbitrary Typst code.
+Elembic lets you create [**custom elements,**](https://pgbiel.github.io/elembic/elements/creating/index.html) which are **reusable and customizable document components,** with support for **typechecked fields, [show and set rules](https://pgbiel.github.io/elembic/elements/styling/index.html)** (without using any `state` by default!), **[reference and outline support,](https://pgbiel.github.io/elembic/elements/creating/labels-refs.html)** as well as features not present in Typst elements today such as **[revokable rules](https://pgbiel.github.io/elembic/elements/styling/revoke.html)** and **[nested element selectors](https://pgbiel.github.io/elembic/elements/filters/within.html)**. In addition, Elembic lets you create [**custom types,**](https://pgbiel.github.io/elembic/types/custom-types/index.html) which also support **typechecked fields** but also [**custom casting**](https://pgbiel.github.io/elembic/types/custom-types/casts.html), and can be used in element fields or by themselves in arbitrary Typst code.
 
 Elembic's name comes from "element" + ["alembic"](https://en.wikipedia.org/wiki/Alembic), to indicate that one of Elembic's goals is to experiment with different approaches for this functionality, and to help shape a future update to Typst that includes native custom elements, which will eventually remove the need for using this package.
 
-It has a few limitations which are [appropriately noted in the book.](https://pgbiel.github.io/elembic/about/limitations.html)
+Its documentation is at the Elembic Handbook: [https://pgbiel.github.io/elembic](https://pgbiel.github.io/elembic)
+
+This library has a few limitations which are [appropriately noted in the book.](https://pgbiel.github.io/elembic/about/limitations.html)
+
+## Who is elembic for?
+
+Elembic is especially suited for:
+1. **Packages:** elembic's elements allows creating reusable components which can be freely customized by your package's end users. With typechecking and other features, elembic's got you covered in terms of flexibility.
+2. **Templates:** elembic's elements can be used for fine-grained configuration of parts of your template. See the ["Simple Thesis" example](https://pgbiel.github.io/elembic/examples/simple-thesis.html) for a sample.
 
 ## Installation
 
-You should copy the source code [**from the latest alpha release**](https://github.com/PgBiel/elembic/releases) either to your project or as a **local package.**
+Just import the latest elembic version from the package manager and you're ready to go!
 
-Instructions for using local packages can be found at [https://github.com/typst/packages](https://github.com/typst/packages), and involve
-moving the directory with elembic's code to `$LOCAL_PACKAGES_DIR/elembic/0.0.1`, where `$LOCAL_PACKAGES_DIR`
-depends on your operating system, as explained in the link.
+```rs
+#import "@preview/elembic:1.0.0" as e
 
-If you're on Linux, you can run the following one-liner command on your terminal to download the latest development version:
-
-```sh
-pkgbase="${XDG_DATA_HOME:-$HOME/.local/share}/typst/packages/local/elembic" && mkdir -p "$pkgbase/0.0.1" && curl -L https://github.com/PgBiel/elembic/archive/main.tar.gz | tar xz --strip-components=1 --directory="$pkgbase/0.0.1"
+#let element = e.element.declare(...)
+#show: e.set_(element, data: 20)
+// ...
 ```
 
 ## Example
@@ -34,7 +40,7 @@ pkgbase="${XDG_DATA_HOME:-$HOME/.local/share}/typst/packages/local/elembic" && m
 ### Custom element
 
 ```typ
-#import "@local/elembic:0.0.1" as e: field, types
+#import "@preview/elembic:1.0.0" as e: field, types
 
 #let bigbox = e.element.declare(
   "bigbox",
@@ -60,7 +66,7 @@ pkgbase="${XDG_DATA_HOME:-$HOME/.local/share}/typst/packages/local/elembic" && m
 ### Custom type
 
 ```typ
-#import "@local/elembic:0.0.1" as e: field, types
+#import "@preview/elembic:1.0.0" as e: field, types
 
 #let person = e.types.declare(
   "person",
