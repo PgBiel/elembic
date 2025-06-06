@@ -24,6 +24,7 @@
   #let person = e.types.declare(
     "person",
     prefix: "@preview/my-package,v1",
+    doc: "Relevant data for a person.",
     fields: (
       field("name", str, doc: "Person's name", required: true),
       field("age", int, doc: "Person's age", default: 40),

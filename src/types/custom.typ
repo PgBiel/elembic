@@ -58,6 +58,7 @@
   name,
   fields: none,
   prefix: none,
+  doc: none,
   default: none,
   parse-args: auto,
   typecheck: true,
@@ -73,6 +74,7 @@
   assert(type(fields) == array, message: "elembic: types.declare: please specify an array of fields, creating each field with the 'field' function." + fields-hint)
   assert(prefix != none, message: "elembic: types.declare: please specify a 'prefix: ...' for your type, to distinguish it from types with the same name. If you are writing a package or template to be used by others, please do not use an empty prefix.")
   assert(type(prefix) == str, message: "elembic: types.declare: the prefix must be a string, not '" + str(type(prefix)) + "'")
+  assert(doc == none or type(doc) == str, message: "elembic: types.declare: 'doc' must be none or a string (add documentation)")
   assert(parse-args == auto or type(parse-args) == function, message: "elembic: types.declare: 'parse-args' must be either 'auto' (use built-in parser) or a function (default arg parser, fields: dictionary, typecheck: bool) => (user arguments, include-required: true) => (bool (true on success, false on error), dictionary with parsed fields (or error message string if the bool is false)).")
   assert(type(typecheck) == bool, message: "elembic: types.declare: the 'typecheck' argument must be a boolean (true to enable typechecking in the constructor, false to disable).")
   assert(type(allow-unknown-fields) == bool, message: "elembic: types.declare: the 'allow-unknown-fields' argument must be a boolean.")
@@ -98,6 +100,7 @@
     name: name,
     fields: fields,
     prefix: prefix,
+    doc: doc,
     default: default,
     parse-args: parse-args,
     typecheck: typecheck,
@@ -170,6 +173,7 @@
     ),
     version: custom-type-version,
     name: name,
+    doc: doc,
     tid: tid,
     id: typeid,
     // We will add this here once the constructor is declared
