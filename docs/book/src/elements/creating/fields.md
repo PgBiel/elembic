@@ -76,7 +76,7 @@ Here's a bit of an artificial example just to showcase the functionality: we com
 
 ## All field options
 
-`e.fields` has the following arguments:
+`e.field` has the following arguments:
 
 1. `name` (string, positional): the field name, by which it will be accessed in the dictionary returned by `e.fields(element instance)`.
 2. `type_` (type / typeinfo, positional): the field's type, defines how to check whether user input to this field is valid (read more about types in [the Type system chapter](../../types/type-system.md)).

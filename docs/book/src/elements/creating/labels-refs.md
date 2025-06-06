@@ -1,6 +1,16 @@
 # Labels and references
 
-Labelable elements (with `labelable: true`, the default) can be labelled with `#elem(label: <label-name>)`. Compared to what would be a more usual syntax (`#elem() <label-name>`, which **should not be used**), using `label` as an argument not only allows accessing the element's final fields in show rules, it also allows **references** to work, when properly setup.
+## Labeling elements
+
+Elements can be labeled with `#elem(label: <label-name>)` (unless they set `labeled: false`.
+
+Compared to what would be a more usual syntax (`#elem() <label-name>`, which **should not be used**), using `label` as an argument has multiple benefits:
+
+1. It works as a field, and so `#show: e.show_(elem.with(label: <label-name>), it => ...)` works (as well as in [filtered rules](../styling/filtered-rules.md) and so on), and the label is available through [`e.fields`](../../misc/reference/data.md#efields).
+2. `#show <label-name>: it => ...` will have full field data available. (However, this show rule style is not revokable.)
+3. It allows custom references to work, as outlined below.
+
+## Referencing elements
 
 To add reference support to an element, add `reference: (...)` in the element's declaration. It requires the keys `supplement` and `numbering`, which can be their usual values (content and string) or functions `final fields => value`, if you want the user to be able to override those values through `supplement` and `numbering` fields in the element. However, your reference can also be fully customized with `(custom: fields => content)`.
 
