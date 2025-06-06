@@ -6,6 +6,8 @@ The main utility is [`e.data`](../../misc/reference/data.md#edata) and its helpe
 
 However, there are other useful functions, such as [`e.query`](./query.md) to query element instances.
 
+In addition, [`e.get`](./get.md) is the main way to introspect the style chain and read the latest values defined through set rules.
+
 ```admonish warning
 To compare element instances for equality, especially if you're a package author, use `e.eq`, as described in ["Fields and reflection"](./reflection.md).
 ```

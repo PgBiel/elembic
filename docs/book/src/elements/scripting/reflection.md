@@ -9,6 +9,8 @@ You can retrieve this data using the [dedicated data-extraction functions](../..
 You can use `e.fields(instance)`. Note that the returned dictionary **will be incomplete if the element was just created**. It is only complete **in show rules**, when set rules and default fields have been resolved.
 
 ```rs
+#import "@preview/elembic:X.X.X" as e
+
 #show: e.set_(elem, field-c: 10)
 
 #let instance = elem("abc", field-a: 5, field-b: 6)

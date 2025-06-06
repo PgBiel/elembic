@@ -28,6 +28,7 @@
 
 - [Scripting with elements](./elements/scripting/README.md)
   - [Fields and reflection](./elements/scripting/reflection.md)
+  - [Get rules](./elements/scripting/get.md)
   - [Query](./elements/scripting/query.md)
 
 - [Element filters](./elements/filters/README.md)
