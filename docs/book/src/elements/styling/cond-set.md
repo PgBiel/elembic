@@ -22,6 +22,6 @@ For example:
 // This will display "Theorem 1: The fact is true."
 #theorem[The fact is true.]
 
-// This will display "Lemma 1: The fact is also true."
+// This will display "Lemma 1: This fact is also true."
 #theorem(kind: "lemma")[This fact is also true.]
 ```
