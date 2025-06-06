@@ -10,10 +10,10 @@
 #let custom-type-data-key = "__elembic_custom_type_data"
 
 // Versions:
-#let element-version = 2  // v1 = alphas 1 and 2, v2 = alpha 3+
-#let type-version = 1
-#let custom-type-version = 2 // v1 = alphas 1 and 2, v2 = alpha 3+
-#let current-field-version = 2 // v1 = alphas 1 and 2, v2 = alpha 3+
+#let element-version = 3  // v1 = alphas 1 and 2, v2 = alpha 3-v1.0.0-rc2, v3 = v1.0.0+
+#let type-version = 2 // v1 = alphas to v1.0.0-rc2, v2 = v1.0.0+
+#let custom-type-version = 3 // v1 = alphas 1 and 2, v2 = alpha 3-v1.0.0-rc2, v3 = v1.0.0+
+#let current-field-version = 3 // v1 = alphas 1 and 2, v2 = alpha 3-v1.0.0-rc2, v3 = v1.0.0+
 
 // Potential modes for configuration of styles.
 // This defines how we declare a set rule (or similar)
