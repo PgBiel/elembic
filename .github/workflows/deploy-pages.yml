@@ -33,6 +33,7 @@ jobs:
         run: |
           mkdir -p bin
           curl -sSL https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=bin
+          echo "$(realpath bin)" >> $GITHUB_PATH
         working-directory: "docs/book"
       - name: 📥 Install mdbook-admonish
         run: |
@@ -43,7 +44,7 @@ jobs:
         id: pages
         uses: actions/configure-pages@v5
       - name: 🛠️ Build with mdBook
-        run: bin/mdbook build
+        run: mdbook build
         working-directory: "docs/book"
       - name: 📤 Upload artifact
         uses: actions/upload-pages-artifact@v3
