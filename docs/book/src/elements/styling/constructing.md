@@ -40,4 +40,4 @@ If you're repeating yourself a lot, always creating the same containers or with 
 #red-container[This is already red!]
 ```
 
-However, a better idea for templates and such is to use **set rules**.
+However, a better idea for templates and such is to use [set rules](./set-rules.md) to configure default values for each field.

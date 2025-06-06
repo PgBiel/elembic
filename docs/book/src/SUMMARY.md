@@ -17,11 +17,6 @@
   - [Outline](./elements/creating/outline.md)
   - [Extra options](./elements/creating/extra-options.md)
 
-- [Using elements](./elements/using/README.md)
-  - [Placing and styling](./elements/using/styling.md)
-  - [References and outline]()
-  - [Scripting with elements](./elements/using/scripting.md)
-
 - [Styling elements](./elements/styling/README.md)
   - [Constructing elements](./elements/styling/constructing.md)
   - [Set rules](./elements/styling/set-rules.md)

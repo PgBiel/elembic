@@ -16,3 +16,8 @@ command = "./bin/replace-pkg-version.sh"
 [preprocessor.admonish]
 command = "mdbook-admonish"
 assets_version = "3.0.3" # do not edit: managed by `mdbook-admonish install`
+
+[output.html.redirect]
+"elements/using/index.html" = "/elements/styling/index.html"
+"elements/using/styling.html" = "/elements/styling/index.html"
+"elements/using/scripting.html" = "/elements/scripting/index.html"
