@@ -10,11 +10,19 @@ You can use `construct: default-constructor => (..args) => value` to override th
 
 ## Custom argument parsing
 
-You can use `parse-args: (default arg parser, fields: dictionary, typecheck: bool) => (args, include-required: bool) => dictionary with fields` to override the built-in argument parser. This is used both for the constructor and for set rules.
+You can use `parse-args: (default arg parser, fields: dictionary, typecheck: bool) => (args, include-required: bool) => (true, dictionary with fields) or (false, error message)` to override the built-in argument parser. This is used both for the constructor and for set rules.
 
 Here, `args` is an [`arguments`](https://typst.app/docs/reference/foundations/arguments/) and `include-required: true` indicates the function is being called in the constructor, so **required fields must be parsed and enforced.**
 
 However, `include-required: false` indicates a call in set rules, so **required fields must not be parsed and forbidden.**
+
+In addition, the `default arg parser` function can be used as a base for the function's implementation, of signature `(arguments, include-required: bool) => (true, fields) or (false, error)`.
+
+```admonish warning
+Note that the custom args parsing function **should not panic** on invalid input, but rather return `(false, "error message")` in that case.
+
+This is consistent with the `default arg parser` function.
+```
 
 ### Argument sink
 
@@ -40,7 +48,8 @@ Here's how you'd use this to implement a positional argument sink:
     } else if args.pos() == () {
       args
     } else {
-      assert(false, message: "element 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
+      // Return errors the correct way
+      return (false, "element 'sunk': unexpected positional arguments\n  hint: these can only be passed to the constructor")
     }
 
     default-parser(args, include-required: include-required)
