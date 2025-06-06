@@ -1,14 +1,6 @@
 # Query
 
-Typst provides `query(selector)` for built-in Typst elements. The equivalent for custom `elembic` elements is `e.query(filter)`, which, similarly, must be used within `context { ... }`. Check ["Filters"](../filters/README.md) for information on filters.
-
-```admonish note title="Restricting filter domains"
-Filters must be restricted to a finite set of potentially matching elements to be used with `e.query`.
-
-This is only a problem with [`NOT`](../filters/logic-ops.md) and [`within`](../filters/within.md) filters, which could potentially match any elements. They can be restricted to certain elements with `e.filters.and_(e.filters.or_(elem1, elem2), e.filters.not_(elem1.with(field: 5)))` for example.
-
-In addition, using `e.within` with `e.query` won't work as expected without using `e.settings` to manually enable ancestry tracking; see the last section of this page for details.
-```
+Typst provides `query(selector)` for built-in Typst elements. The equivalent for custom `elembic` elements is `e.query(filter)`, which, similarly, must be used within `context { ... }`. It returns a list of elements matching `filter`. Check ["Filters"](../filters) for information on filters.
 
 For example:
 
@@ -24,8 +16,16 @@ For example:
 
   // This will be:
   // "Red element names: A, B"
-  [Red element names: #red.elems.map(it => e.fields(it).name).join[, ]]
+  [Red element names: #red-elems.map(it => e.fields(it).name).join[, ]]
 }
+```
+
+```admonish note title="Restricting filter domains"
+Filters must be restricted to a finite set of potentially matching elements to be used with `e.query`.
+
+This is only a problem with [`NOT`](../filters/logic-ops.md) and [`within`](../filters/within.md) filters, which could potentially match any elements. They can be restricted to certain elements with `e.filters.and_(e.filters.or_(elem1, elem2), e.filters.not_(elem1.with(field: 5)))` for example.
+
+In addition, using `e.within` with `e.query` won't work as expected without using `e.settings` to manually enable ancestry tracking; see the last section of this page for details.
 ```
 
 ## `before` and `after`

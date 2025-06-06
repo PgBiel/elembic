@@ -30,7 +30,8 @@ When specifying an element's fields, you should use the `field` function for eac
 
 Some elements will have conveniently **auto-generated fields**, which are created after set rules are applied, but **before show rules.** To do this, there are two steps:
 
-1. **List those fields as "synthesized" fields in the `fields` array.** Such fields cannot be manually specified by users, however they can be matched on by functions such as [`e.select`](../../misc/reference/elements.md#eselect).
+1. **List those fields as "synthesized" fields in the `fields` array.** To do this, just specify `e.field(..., synthesized: true)`.
+    - Such fields cannot be manually specified by users, however they can be matched on by [filters.](../filters)
 
 2. **Create a synthesis step for your element with `synthesize: fields => updated fields`.** Here, you can, for example, access Typst context, as well as use `e.counter(it)` to read the counter, and so on.
 
