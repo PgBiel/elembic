@@ -6,15 +6,19 @@ Here's some information about some special types combining other types.
 
 You can use `types.union(int, str)` to indicate that a field depends on either an integer or a string.
 
-As special aliases, there are `types.option(typ)` and `types.smart(typ)` for `types.union(none, typ)` and `types.union(auto, typ)` respectively.
+As **special aliases**, there are `types.option(typ)` and `types.smart(typ)` for `types.union(none, typ)` and `types.union(auto, typ)` respectively.
 
-> **Note: Unions are ordered.** This means that `types.union(int, float) != types.union(float, int)`. This is relevant when two or more types in the union can accept the same native type, with differing checks or casts. In the case of `int` and `float`, the integer `5` will remain the integer `5` when casting to `types.union(int, float)`, but will be casted to the float `5.0` when casted to `types.union(float, int)`. (Of course, a float such as `4.0` will remain a float in both cases, since it isn't accepted by `int`). Keep this in mind!
+```admonish note
+**Unions are ordered.** This means that `types.union(int, float) != types.union(float, int)`.
+
+This is relevant when two or more types in the union can accept the same native type, with differing checks or casts. In the case of `int` and `float`, the integer `5` will remain the integer `5` when casting to `types.union(int, float)`, but will be casted to the float `5.0` when casted to `types.union(float, int)`. (Of course, a float such as `4.0` will remain a float in both cases, since it isn't accepted by `int`).
+```
 
 ### Folding in unions
 
-At the moment, general unions (so, other than `option` and `smart`) completely disable folding, e.g. `types.union(int, stroke)` will disable folding between `4pt` and `black`, with `black` overriding the previous value. This could change in the future for some cases, but it cannot be kept in all cases since fold operates on `output` types, of which we have already lost the original type information, so it is generally ambiguous on which fold function to use.
+Folding is preserved in unions **unless it's ambiguous.** For example, it is preserved for `types.union(int, stroke, array)`: two arrays of this type are joined, a length and a color are cast to `stroke` and combined into a single `length + color` stroke, and integers have no folding and stay that way (the latest integer has priority).
 
-However, `option` and `smart` are exceptions: they will fold the non-`none` and non-`auto` type (respectively) if it can be folded. However, an explicit `none` or `auto` always takes priority. For example, with `types.option(stroke)`, when setting `none` followed by `4pt`, the result is `stroke(4pt)`; when setting `4pt` followed by `black`, the result is `4pt + black`; when setting `black` followed by `none`, the result is `none`. (Same would happen with `types.smart(stroke)` and `auto`.)
+However, if you have `types.union(types.array(int), types.array(float))`, folding is disabled (the latest array overrides the previous) as it is not straightforward to tell to which type an array could belong, so we avoid creating an invalid instance of this type (which could happen if we joined an int array with a float array).
 
 ## `types.exact`: Disable casting for a type
 

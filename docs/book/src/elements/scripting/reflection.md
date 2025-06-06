@@ -1,4 +1,4 @@
-# Scripting with Elements
+# Fields and reflection
 
 Elements naturally contain **data**, such as **the fields specified** for them, as well as their **names, unique IDs (`eid`), counters,** and so on.
 
@@ -16,10 +16,10 @@ You can use `e.fields(instance)`. Note that the returned dictionary **will be in
 // Field information incomplete: set rules not yet resolved
 #assert.eq(e.fields(instance), (pos-field: "abc", field-a: 5, field-b: 6))
 
-#show e.selector(elem): it => {
+#show: e.show_(elem, it => {
   // Field information is complete in show rules
   assert.eq(e.fields(it), (some-non-required-field: "default value", field-c: 10, pos-field: "abc", field-a: 5, field-b: 6))
-}
+})
 
 #instance
 ```
@@ -28,14 +28,25 @@ You can use `e.fields(instance)`. Note that the returned dictionary **will be in
 
 You can use `e.eid(instance)` or `e.eid(elem)` to obtain the corresponding unique element ID. This is always the same for types produced from the same element.
 
-Similarly, `e.func(instance)` will give you the constructor used to create this instance. However, **note that the constructor may change between versions of a package without changing the element ID.** That is, `e.eid(a) == e.eid(b)` might hold (they come from the same element), but `e.func(a) == e.func(b)` might not. This leads us to the point below.
+Similarly, `e.func(instance)` will give you the constructor used to create this instance.
 
-## Comparing elements
+However, it is not recommended to compare `e.func` because **note that the constructor may change between versions of a package without changing the element ID.** That is, `e.eid(a) == e.eid(b)` might hold (they come from the same element), but `e.func(a) == e.func(b)` might not, if `a` came from package version 0.0.1 and `b`, from version 0.0.2.
 
-To compare two element instances `a` and `b`, the recommended procedure is
+Therefore, to check if two element instances belong to the same element, write `e.eid(a) == e.eid(b)`.
+
+## Checking if elements are equal
+
+To check if two element instances `a` and `b` are **equal** (same type of element and have the same fields), it is recommended to use `e.eq`:
 
 ```rs
-#let eq(a, b) = e.eid(a) == e.eid(b) and e.fields(a) == e.fields(b)
+#let my-elem-instance = elem(field: 5)
+
+// AVOID (in packages): my-elem-instance == elem(field: 5)
+#if e.eq(my-elem-instance, elem(field: 5)) {
+  [They are equal!]
+} else {
+  [Nope, not equal]
+}
 ```
 
-This ensures tiny changes to the element's declaration between two versions of a package, without changing the `eid`, won't cause the comparison to become `false` if you were to compare `a == b` directly, or `e.func(a) == e.func(b)` (which would also change).
+Without `e.eq`, if the two elements come from different versions of the same package, `a == b` will be false, even if they have the same `eid` and fields.

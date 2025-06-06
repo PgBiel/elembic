@@ -268,7 +268,7 @@ You should use [`e.named`](#enamed) to add names to rules.
 
 ### `e.select`
 
-Prepare selectors which **only match elements with a certain
+Prepare Typst-native selectors which **only match elements with a certain
 set of values for their fields.** Receives filters in the format
 `element.with(field: A, other-field: B)`. Note that the fields
 must be specified through their names, even if they are usually
@@ -277,11 +277,10 @@ elements' `element.where(..fields)` selectors.
 
 For each filter specified, an additional selector argument
 is passed to the callback function. These selectors can be used
-for **show rules** and **querying**. Note that `#show sel: set (...)`
-will only apply to the element's body (which could be fine). In addition,
+for show-set rules. Note that `#show sel: set (...)`
+will only apply to the element's body (which is usually fine). In addition,
 rules applied as `#show sel: e.set_(...)` **are applied in reverse** due
-to how Typst works, so be careful when doing that, especially when using
-something like [`e.revoke`](#erevoke).
+to how Typst works, so consider using [filtered rules](../../elements/styling/filtered-rules.md) for that instead.
 
 You must wrap the remainder of the document that depends on those selectors
 as the value returned by the callback.
@@ -296,26 +295,21 @@ are not matched by the selectors, even if their fields' values match.
 ```rs
 #e.select(
   ..filters: element.with(one-field: expected-value, another-field: expected-value),
-  receiver: function(..selectors) -> content
+  receiver: function(..selectors) -> content,
+  prefix: str
 ) -> content
 ```
 
 **Example:**
 
 ```rs
-#e.select(superbox.with(fill: red), superbox.with(width: auto), (red-superbox, auto-superbox) => {
-  // Hide superboxes with red fill or auto width
-  show red-superbox: none
-  show auto-superbox: none
+#e.select(prefix: "@preview/my-package/1", superbox.with(fill: red), superbox.with(width: auto), (red-superbox, auto-superbox) => {
+  show red-superbox: set text(red)
+  show auto-superbox: set text(red)
 
-  // This one is hidden
-  #superbox(fill: red)
-
-  // This one is hidden
-  #superbox(width: auto)
-
-  // This one is kept
-  #superbox(fill: green, width: 5pt)
+  #superbox(fill: red)[Red text]
+  #superbox(width: auto)[Red text]
+  #superbox(fill: green, width: 5pt)[Not red text]
 })
 ```
 

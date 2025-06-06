@@ -156,12 +156,16 @@ There are three styling modes available for set rules (as well as apply rules, r
     - This is the default mode when using `e.set_(...)`, `e.revoke(...)` and others.
 2. **Leaky mode:** It is as fast as normal mode, but **has double the limit of rules** (**around 60**). However, **it is not hygienic** as it **resets existing `#set bibliography(title: ...)` rules** to their **first known values**. (That is, any `bibliography.title` set rules after the first set rule are lost, and the initial value is reset with each leaky rule.) If this is acceptable to you, then **feel free to use leaky rules** to easily increase the limit.
     - This mode can be used by packages' internal elements, for example, since that set rule is probably unimportant then.
-    - To switch to this mode, **replace all set rules with their `e.leaky` counterparts**. For example, you'd replace `e.set_(element, field: value)` with `e.leaky.set_(element, field: value)`. (You can create an alias such as `import e: leaky as lk` and then `lk.set_(...)` for ease of use.)
+    - To switch to this mode, you can simply write `#show: e.leaky.enable()` at the top of your document, or within any `#[ scope ]` to temporarily apply this change.
+      - Alternatively, you can also **replace all set rules with their `e.leaky` counterparts**. For example, you can replace `e.set_(element, field: value)` with `e.leaky.set_(element, field: value)`. (You can create an alias such as `import e: leaky as lk` and then `lk.set_(...)` for ease of use.)
+      - The alternative is more useful to package authors who may want more control. For general users, `e.leaky.enable()` is enough and recommended. **(The same can't be said for stateful mode mentioned below.)**
 3. **Stateful mode:** Rules in this mode **do not have any usage limits.** You can nest them as much as you want, even if you don't group them. However, the downside is that **this mode uses `state`,** which can cause **document relayouts and be slower**.
     - Note that you can restrict this mode change to a single scope and use other modes elsewhere in the document.
     - Other rule modes are **compatible with stateful mode**. You can still use non-stateful set rules when stateful mode is enabled; while they will still have a limit, they will read and update set rule data using `state` as well, so they stay in sync. In addition, **the limit of normal-mode rules is doubled** just by enabling stateful mode in the containing scope, since they will automatically switch to a more lightweight code path. Therefore, **package authors can use normal-mode rules without problems**.
 
-The easiest solution is to just **switch to stateful mode,** which uses `state` to keep track of set rules.
+The easiest solution is often to just **switch to leaky mode** with `#show: e.leaky.enable()`, which will double the non-consecutive rule limit, at the cost of pinning `bibliography.title` to its first known (to `elembic`) value.
+
+But if you need even more nested rules, you may have to **switch to stateful mode,** which uses `state` to keep track of set rules.
 It is slower and may trigger document relayouts in some cases, but has no usage limits (other than
 nesting many elements inside each other, which is a limitation shared by native elements as well and is
 unavoidable).
@@ -180,7 +184,7 @@ respectively, in the scopes where stateful mode was enabled. (The previous rules
     - While a Ctrl+F fixes it, it's a bit of a mouthful, so you may want to consider aliasing `e.stateful`
     to a variable such as `#import e: stateful as st`, then you can write `st.set_`, `st.apply` etc. instead.
     - Stateful-only rules have no usage limits, but **they only work in scopes where stateful mode is enabled.**
-    Otherwise, they have no effect, since the `state` changes will be ignored.
+    Otherwise, they cause an error, since the `state` changes would be ignored.
 
 The two steps above should be enough to fix the error for good, provided you understand the potential performance consequences. Of course, it just might not be at all significant for your document.
 
@@ -188,8 +192,8 @@ The two steps above should be enough to fix the error for good, provided you und
 
 Elembic's performance is, in general, satisfactory, and is logged on CI, but **may get worse if you use more features.** Here's a brief discussion about potential offenders:
 
-- **[Elements with `contextual: true`](../elements/creating/extra-options.md#making-more-context-available-with-contextual-true) have reduced benefits from memoization.** As such, if too many of them are placed (say, in the hundreds), they can cause a noticeable performance penalty. However, it is not a problem if only a few of them are placed.
+- **[Elements with `contextual: true`](../elements/creating/extra-options.md#making-more-context-available-with-contextual-true) have reduced benefits from memoization.** As such, if too many of them are placed (say, in the hundreds), they can cause a **considerable performance penalty**. However, it is not a problem if only a few of them are placed.
+- **[Filtered rules](../elements/styling/filtered-rules.md) and [ancestry tracking](../elements/filters/within.md)** are also heavy (although less) if there are too many matching elements (in the order of hundreds or thousands) / elements with ancestry tracking enabled. Be mindful when using these, and try to apply them to less used elements.
 - **Typechecking** of fields can add some overhead on each element instantiation, however this is expected to be mostly irrelevant in the average case (when using mostly native types or combinations of them) compared to Elembic's other features. Still, you can improve this by [overriding Elembic's default argument parser](../elements/creating/overriding-constr.md), or even disabling typechecking altogether with the `typecheck: false` option on elements, if that proves to be a bottleneck for your particular element.
-- **Special rules** such as revoke rules could potentially add some overhead. However, that overhead is expected to be **very insignificant,** especially if you aren't using hundreds of them.
 
 The only way to know whether Elembic is a good fit for you is to give it a try on your own document!

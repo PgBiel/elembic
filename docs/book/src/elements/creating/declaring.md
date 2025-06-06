@@ -102,7 +102,7 @@ Let's give it a shot by allowing the user to **customize what goes inside the el
 ```
 
 Note that this also allows users to **override the default values of fields** through **set rules**
-(see [Styling elements](../using/styling.md) for more information):
+(see ["Set rules"](../styling/set-rules.md) for more information):
 
 ```rs
 #import "@preview/elembic:X.X.X" as e
@@ -124,6 +124,18 @@ Note that this also allows users to **override the default values of fields** th
 
 // This theorem will display "Impressed!" in green.
 #theorem[Impressed!]
+```
+
+````admonish note title="Note on folding"
+By default, [folding](../styling/set-rules.md#folding) is enabled for compatible field types - most commonly, arrays, dictionaries and strokes.
+
+For fields with those types, this means consecutive set rules don't override each other, but have their values joined (see the linked page for details).
+
+If this is not desired for a specific field, set `e.field("that field", folds: false)`.
+````
+
+```admonish tip title="Tip: field options"
+`folds` is just one example of how you can configure a field. For a full list of field options, as well as more details on them, check out ["Specifying fields"](./fields.md).
 ```
 
 ## Accessing context
