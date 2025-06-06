@@ -111,5 +111,5 @@ We can then use this template in `main.typ` as follows:
 ```
 
 This will produce the following pages of output:
-![Title page - red and italics](https://github.com/user-attachments/assets/f2002ae1-d9ff-41c4-af37-cce788ce5cf4)
-![Introductin page](https://github.com/user-attachments/assets/b969576b-b588-41d5-8379-ee9e6a095e25)
+![Title page - red and italics](https://github.com/user-attachments/assets/94f4b57b-82fc-41ff-bc0a-36989b2db9bc)
+![Introduction page](https://github.com/user-attachments/assets/c2dae6d9-1a8c-4626-ad2d-acf394cceb74)
