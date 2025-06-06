@@ -16,6 +16,7 @@ For example:
 #let person = e.types.declare(
   "person",
   prefix: "@preview/my-package,v1",
+  doc: "Relevant data for a person.",
   fields: (
     // All fields named, one required
     field("name", str, doc: "Person's name", required: true, named: true),
@@ -52,6 +53,7 @@ These principles are made evident in the example below:
 #let person = e.types.declare(
   "person",
   prefix: "@preview/my-package,v1",
+  doc: "Relevant data for a person.",
   fields: (
     field("name", str, doc: "Person's name", required: true),
     field("age", int, doc: "Person's age", default: 40),

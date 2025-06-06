@@ -47,7 +47,8 @@ Let's add a color field to change the fill of text inside our theorem:
 
 #let theorem = e.element.declare(
   "theorem",
-  prefix: "my-package",
+  prefix: "@preview/my-package,v1",
+  doc: "Formats a theorem statement.",
 
   // Default show rule receives the constructed element.
   display: it => text(fill: it.fill)[Hello world!],
@@ -83,7 +84,8 @@ Let's give it a shot by allowing the user to **customize what goes inside the el
 
 #let theorem = e.element.declare(
   "theorem",
-  prefix: "my-package",
+  prefix: "@preview/my-package,v1",
+  doc: "Formats a theorem statement.",
 
   display: it => text(fill: it.fill)[#fields.body],
 
@@ -109,7 +111,8 @@ Note that this also allows users to **override the default values of fields** th
 
 #let theorem = e.element.declare(
   "theorem",
-  prefix: "my-package",
+  prefix: "@preview/my-package,v1",
+  doc: "Formats a theorem statement.",
 
   display: it => text(fill: it.fill)[#fields.body],
 

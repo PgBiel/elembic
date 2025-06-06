@@ -51,6 +51,7 @@ Here's a bit of an artificial example just to showcase the functionality: we com
 #let frame = e.element.declare(
   "frame",
   prefix: "@preview/my-package,v1",
+  doc: "Displays its body in a frame.",
   display: it => it.applied,
   fields: (
     field("body", content, doc: "Body to display.", required: true),

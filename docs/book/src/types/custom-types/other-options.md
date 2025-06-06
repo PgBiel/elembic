@@ -12,11 +12,12 @@ You can use `parse-args: (default arg parser, fields: dictionary, typecheck: boo
 
 ### Argument sink
 
-Here's how you'd use this to implement a positional argument sink:
+Here's how you'd use this to implement a positional argument sink (receiving a variable amount of positional arguments):
 
 ```rs
 #let sunk = e.types.declare(
   "sunk",
+  doc: "A test type to showcase argument sink",
   fields: (
     field("values", e.types.array(stroke), required: true),
     field("color", color, default: red),
