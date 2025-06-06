@@ -7,6 +7,9 @@
   - [Limitations](./about/limitations.md)
   - [FAQ](./about/faq.md)
 
+- [Examples](./examples/README.md)
+  - [Simple Thesis](./examples/simple-thesis.md)
+
 # Elements
 
 - [Creating elements](./elements/creating/README.md)

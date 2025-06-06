@@ -18,3 +18,7 @@ Get rules (`e.get`) allow you to **read the currently set values** for each elem
   [The chosen names are #get(elem).names.join[, ].]
 })
 ```
+
+```admonish tip title="Usage in templates"
+A template can use get rules for fine-grained settings. Check out the ["Simple Thesis Template" example](../examples/simple-thesis.md) for a sample.
+```
