@@ -65,7 +65,7 @@
   construct: none,
   scope: none,
   casts: none,
-  fold: none,
+  fold: auto,
 ) = {
 
   let fields-hint = if type(fields) == dictionary { "\n  hint: check if you didn't forget to add a trailing comma for a single field: write 'fields: (field,)', not 'fields: (field)'" } else { "" }
