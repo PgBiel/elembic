@@ -1,6 +1,6 @@
 [package]
 name = "elembic"
-version = "0.0.1"
+version = "1.0.0"
 compiler = "0.11.0"
 repository = "https://github.com/PgBiel/elembic"
 entrypoint = "src/lib.typ"
