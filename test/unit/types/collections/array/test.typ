@@ -1,8 +1,9 @@
 #import "/test/unit/base.typ": empty, type-assert-eq, unwrap
 #show: empty
 
-#import "/src/lib.typ": types
-#import types: exact, literal, ok, err, native
+#import "/src/lib.typ": types, result
+#import result: ok, err
+#import types: exact, literal, native
 #import "/src/types/types.typ": cast, validate, default
 
 #let pos-int = types.wrap(int, name: "positive integer", check: _ => i => i > 0, error: _ => i => "expected positive integer, got " + str(i))

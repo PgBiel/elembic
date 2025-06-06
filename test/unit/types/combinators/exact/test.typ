@@ -1,8 +1,9 @@
 #import "/test/unit/base.typ": empty
 #show: empty
 
-#import "/src/lib.typ": types
-#import types: exact, literal, ok, err, native, cast
+#import "/src/lib.typ": types, result
+#import result: ok, err
+#import types: exact, literal, native, cast
 
 #assert.eq(cast(5, float), ok(5.0))
 #assert.eq(type(cast(5, float).at(1)), float)

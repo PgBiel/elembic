@@ -5,6 +5,7 @@
 #import "pub/filters.typ"
 #import "pub/parsing.typ"
 #import "pub/types.typ"
+#import "pub/result.typ"
 #import "pub/leaky.typ"
 #import "pub/stateful.typ"
 #import "pub/internal.typ"

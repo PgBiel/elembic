@@ -1,8 +1,9 @@
 #import "/test/unit/base.typ": empty, type-assert-eq, unwrap
 #show: empty
 
-#import "/src/lib.typ": types
-#import types: exact, literal, ok, err, native, wrap
+#import "/src/lib.typ": types, result
+#import result: ok, err
+#import types: exact, literal, native, wrap
 #import "/src/types/types.typ": cast, validate, default
 
 #let larger-len = wrap(
