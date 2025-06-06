@@ -1,8 +1,6 @@
 # elembic
 Framework for custom elements and types in Typst. **Supports Typst 0.11.0 or later.**
 
-**WARNING:** elembic is currently experimental. Expect breaking changes before 0.1.0 is released and it is published to the package manager.
-
 **Read the book:** https://pgbiel.github.io/elembic
 
 **Mirrors:** [GitHub (pgbiel/elembic)](https://github.com/PgBiel/elembic); [Codeberg (pgbiel/elembic)](https://codeberg.org/PgBiel/elembic)
