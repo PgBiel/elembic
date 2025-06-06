@@ -2,10 +2,10 @@
 
 #let settings = e.element.declare(
   "thesis-settings",
-  doc: "Settings used by the thesis template.",
+  doc: "Settings for the best thesis template.",
   prefix: "@preview/thesis-template,v1",
 
-  // Not meant to be displayed
+  // Not meant to be displayed, only receives set rules
   display: it => panic("This element cannot be shown"),
 
   // The fields need defaults to be settable.
@@ -13,10 +13,11 @@
     e.field("title", str, doc: "The thesis title.", default: "My thesis"),
     e.field("author", str, doc: "The thesis author.", default: "Unspecified Author"),
     e.field("advisor", e.types.option(str), doc: "The advisor's name."),
-    e.field("coadvisors", e.types.array(str), doc: "The coadvisors' names."),
+    e.field("coadvisors", e.types.array(str), doc: "The co-advisors' names."),
   )
 )
 
+// Make title page an element so it is configurable
 #let title-page = e.element.declare(
   "title-page",
   doc: "Title page for the thesis.",
@@ -41,34 +42,24 @@
     }
 
     for coadvisor in opts.coadvisors {
-      [Coadvised by #coadvisor \ ]
+      [Co-advised by #coadvisor \ ]
     }
   }),
 )
 
-#let template = e.element.declare(
-  "thesis",
-  doc: "The best thesis template.",
-  prefix: "@preview/thesis-template,v1",
+#let template(doc) = e.get(get => {
+  // Apply settings to document metadata
+  set document(
+    title: get(settings).title,
+    author: get(settings).author,
+  )
 
-  fields: (
-    e.field("doc", content, doc: "The document to apply the template on.", required: true),
-  ),
+  // Apply some styles
+  set heading(numbering: "1.")
+  set par(first-line-indent: (all: true, amount: 2em))
 
-  display: it => e.get(get => {
-    // Apply settings to document metadata
-    set document(
-      title: get(settings).title,
-      author: get(settings).author,
-    )
+  title-page()
 
-    // Apply some styles
-    set heading(numbering: "1.")
-    set par(first-line-indent: (all: true, amount: 2em))
-
-    title-page()
-
-    // Place the document, now with styles applied
-    it.doc
-  }),
-)
+  // Place the document, now with styles applied
+  doc
+})
