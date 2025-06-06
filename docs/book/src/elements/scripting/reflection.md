@@ -16,10 +16,10 @@ You can use `e.fields(instance)`. Note that the returned dictionary **will be in
 // Field information incomplete: set rules not yet resolved
 #assert.eq(e.fields(instance), (pos-field: "abc", field-a: 5, field-b: 6))
 
-#show e.selector(elem): it => {
+#show: e.show_(elem, it => {
   // Field information is complete in show rules
   assert.eq(e.fields(it), (some-non-required-field: "default value", field-c: 10, pos-field: "abc", field-a: 5, field-b: 6))
-}
+})
 
 #instance
 ```

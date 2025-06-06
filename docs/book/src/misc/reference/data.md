@@ -303,7 +303,7 @@ Returns one of the element's selectors:
 **Example:**
 
 ```rs
-#show e.selector(elem): strong
+#show: e.show_(elem, strong)
 #show e.selector(elem, outer: true): set par(justify: false)
 
 #outline(target: e.selector(elem, outline: true))
