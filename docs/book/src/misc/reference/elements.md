@@ -14,6 +14,7 @@ Creates a new element, returning its constructor. Read the ["Creating custom ele
 #e.declare(
   name,
   prefix: str,
+  doc: none | str,
   display: function,
   fields: array,
   parse-args: auto | function(arguments, include-required: bool) -> dictionary = auto,
@@ -36,6 +37,7 @@ Creates a new element, returning its constructor. Read the ["Creating custom ele
 
 - `name`: The element's name.
 - `prefix`: The element's prefix, used to distinguish it from elements with the same name. This is usually your package's name alongside a (major) version.
+- `doc`: The element's documentation, if any.
 - `display`: Function `fields => content` to display the element.
 - `fields`: Array with this element's fields. They must be created with `e.field(...)`.
 - `parse-args`: Optional override for the built-in argument parser (or `auto` to keep as is). Must be in the form `function(args, include-required: bool) => dictionary`, where `include-required: true` means required fields are enforced (constructor), while `include-required: false` means they are forbidden (set rules).

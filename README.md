@@ -39,6 +39,7 @@ pkgbase="${XDG_DATA_HOME:-$HOME/.local/share}/typst/packages/local/elembic" && m
 #let bigbox = e.element.declare(
   "bigbox",
   prefix: "@preview/my-package,v1",
+  doc: "A fancy and customizable box.",
   display: it => block(fill: it.fill, stroke: it.stroke, inset: 5pt, it.body),
   fields: (
     field("body", types.option(content), doc: "Box contents", required: true),
