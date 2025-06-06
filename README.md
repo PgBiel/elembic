@@ -28,8 +28,8 @@ Just import the latest elembic version from the package manager and you're ready
 ```rs
 #import "@preview/elembic:1.0.0" as e
 
-#let element = e.element.declare(...)
-#show: e.set_(element, data: 20)
+// See the full example below
+#show: e.set_(element, stroke: red)
 // ...
 ```
 
