@@ -100,7 +100,7 @@ Here's a bit of an artificial example just to showcase the functionality: we com
 2. `type_` (type / typeinfo, positional): the field's type, defines how to check whether user input to this field is valid (read more about types in [the Type system chapter](../../types/type-system.md)).
 3. `doc` (string, named, optional): documentation for the field. **It is recommended to always set this.** The documentation (and other field metadata) can later be retrieved by accessing `e.data(elem).all-fields`, and can be used to auto-generate documentation, for example.
 4. `required` (boolean, named, optional): whether this field is **required** (and thus can only be specified at the constructor, as it will have no default). This defaults to **false**.
-5. `named` (boolean or `auto`, named, optional): whether this field should be specified **positionally** (`false` - that is, without its name) to the constructor and set rules, or **named** (`true` - the user must specify the field by name). By default, this is `auto`, which is `true` for required fields and `false` for optional fields (but you can have required named fields and optional positional fields by changing both parameters accordingly).
+5. `named` (boolean or `auto`, named, optional): whether this field should be specified **positionally** (`false` - that is, without its name) to the constructor and set rules, or **named** (`true` - the user must specify the field by name). By default, this is `auto`, which is `true` for optional fields and `false` for required fields (but you can have required named fields and optional positional fields by changing both parameters accordingly).
 6. `default` (any, named, optional): the default value for this field if `required` is `false`. If this argument is omitted, the type's default is used (as explained below), or otherwise the field has no default (only possible if it is required). If a value is specified, that value becomes the field's default value (**it will be cast to the given field type**). It was done this way so you can also specify `none` as a default (which is common).
 
     Note that many types have their own default values, so you can usually omit `default` entirely, as the field will then just use that type's default. For example, if the type is `int`, then `default` will automatically be set to `0` for such optional fields.
@@ -110,7 +110,7 @@ Here's a bit of an artificial example just to showcase the functionality: we com
 
     Therefore, **you should always list automatically generated fields as synthesized fields.** Elembic won't forbid you from adding "hidden fields" during synthesis, but then they will be seen as inexistent by the framework, so it is recommended to always list auto-generated fields as synthesized fields, with proper documentation for them.
 
-    Read more about synthesis below.
+    Read more about synthesis above.
 
 8. `folds` (boolean, named, optional): if `false`, set rules and arguments changing this field will always completely override the previous value instead of joining. This only has an effect on foldable types, such as arrays, dictionaries and strokes. For other types, that is already what happens: no joining.
 
