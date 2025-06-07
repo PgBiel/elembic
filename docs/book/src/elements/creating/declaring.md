@@ -20,6 +20,10 @@ It will return the **constructor** for this element, which you should **export f
   // so conflicts should be avoided.
   prefix: "@preview/my-package,v1",
 
+  // Some documentation for your element, describing what it does.
+  // Accessible later through `e.data(theorem).doc`.
+  doc: "Formats a theorem statement.",
+
   // Default show rule: how this element displays itself.
   display: it => [Hello world!],
 
