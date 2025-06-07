@@ -23,6 +23,14 @@ You can use `e.types.any` to disable typechecking for a single field, or `typech
 To check for a custom data structure (usually dictionary-based) in a field, consider creating your own [custom type](../../types/custom-types).
 ```
 
+```admonish tip title="Type combinators"
+There are several [type combinators](../../types/type-system/type-combinators.md) you can use:
+- Use `e.types.union(typeA, typeB, ...)` to indicate a field can have more than one type. The first matching type is used.
+- Use `e.types.option(type)` to indicate that a field can be set to (or defaults to) `none`.
+- Use `e.types.smart(type)` to indicate that a field can be set to `auto` to mean a smart default.
+- Use `e.types.array(type)` and `e.types.dict(type)` for arrays and dictionaries with only a specific type of value, such as `e.types.array(int)` for an array of integers.
+```
+
 ```admonish tip title="Changing types"
 
 To change existing types slightly, check out [type wrapping with `e.types.wrap`](../../types/type-system/wrapping-types.md). This can be used to:
