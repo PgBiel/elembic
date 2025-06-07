@@ -16,7 +16,7 @@ To check for a custom data structure (usually dictionary-based) in a field, cons
 
 ```admonish tip title="Changing types"
 
-To change existing types slightly, check out [type wrapping with `e.types.wrap`](../../types/type-system/wrapping-types.d). This can be used to:
+To change existing types slightly, check out [type wrapping with `e.types.wrap`](../../types/type-system/wrapping-types.md). This can be used to:
 
 1. Add custom [folding](../styling/set-rules.md#folding) behavior to your field (override `fold` with a function);
 
