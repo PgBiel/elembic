@@ -91,7 +91,7 @@ Let's give it a shot by allowing the user to **customize what goes inside the el
   prefix: "@preview/my-package,v1",
   doc: "Formats a theorem statement.",
 
-  display: it => text(fill: it.fill)[#fields.body],
+  display: it => text(fill: it.fill)[#it.body],
 
   fields: (
     // Force this field to be specified.
@@ -118,7 +118,7 @@ Note that this also allows users to **override the default values of fields** th
   prefix: "@preview/my-package,v1",
   doc: "Formats a theorem statement.",
 
-  display: it => text(fill: it.fill)[#fields.body],
+  display: it => text(fill: it.fill)[#it.body],
 
   fields: (
     // Force this field to be specified.
