@@ -4,6 +4,15 @@ The [previous section on declaring custom elements](./declaring.md) provided exa
 
 When specifying an element's fields, you should use the `field` function for each field, which supports a number of options.
 
+## Required and named fields
+
+By default, fields are optional and named (specified as `element(field-name: value)`, but can be omitted).
+Omitted optional fields are set to a type-specific default (e.g. `none` for `e.types.option(int)`, empty array for `array`), but you can specify a different default to `e.field` with `default: ("not", "empty")` for example.
+
+Setting `required: true` will cause the field to become required and positional (specified as `element(value)`, no default).
+
+You can use `named:` for other combinations: `required: true, named: true` for required and named and `required: false, named: false` for optional and positional fields.
+
 ## Type
 
 The field's type is a fundamental piece of information. Elembic uses this to **automatically check for invalid input** by the user when constructing your element. The [type system](../../types/type-system) chapter has more information on what you can do with types.
