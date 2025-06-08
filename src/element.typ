@@ -2626,6 +2626,31 @@
   (:..global-data, ctx: (get: getter))
 }
 
+#let _is-get(body) = (
+  type(body) == content
+    and body.func() == sequence
+    and body.children.len() == 2  // [#context{...}#metadata(get-meta)#lbl-special-rule-tag]
+    and body.children.last().func() == metadata
+    and body.children.last().at("label", default: none) == lbl-special-rule-tag
+    and body.children.last().value.kind == "get"
+)
+
+#let _recurse-get(body, elements: none) = {
+  let get-meta = body.children.last().value
+
+  if "__future" in get-meta and element-version <= get-meta.__future.max-version {
+    let res = (get-meta.__future.call)(body, __future-version: element-version)
+
+    if "doc" in res {
+      res.doc
+    }
+  } else if "receiver" in get-meta and type(get-meta.receiver) == function {
+    // Pick up updates from filtered rules
+    let getter = get-styles.with(elements: elements, use-routine: true)
+    (get-meta.receiver)(getter)
+  }
+}
+
 #let prepare-ctx(receiver, include-global: false) = context {
   let previous-bib-title = bibliography.title
   [#context {
@@ -2651,11 +2676,15 @@
     set bibliography(title: previous-bib-title)
 
     let getter = get-styles.with(elements: global-data.elements, use-routine: true)
-    if include-global {
+    let body = if include-global {
       receiver((:..global-data, ctx: (get: getter)))
     } else {
       receiver(getter)
     }
+
+    // Optimization: flatten 'get'
+    while _is-get(body) { body = _recurse-get(body, elements: global-data.elements) }
+    body
   }#lbl-get]
 }
 
@@ -2825,31 +2854,6 @@
   doc => {
     show: default-rules
     prepares.fold(doc, (acc, prepare) => prepare(acc))
-  }
-}
-
-#let _is-get(body) = (
-  type(body) == content
-    and body.func() == sequence
-    and body.children.len() == 2  // [#context{...}#metadata(get-meta)#lbl-special-rule-tag]
-    and body.children.last().func() == metadata
-    and body.children.last().at("label", default: none) == lbl-special-rule-tag
-    and body.children.last().value.kind == "get"
-)
-
-#let _recurse-get(body, elements: none) = {
-  let get-meta = body.children.last().value
-
-  if "__future" in get-meta and element-version <= get-meta.__future.max-version {
-    let res = (get-meta.__future.call)(body, __future-version: element-version)
-
-    if "doc" in res {
-      res.doc
-    }
-  } else if "receiver" in get-meta and type(get-meta.receiver) == function {
-    // Pick up updates from filtered rules
-    let getter = get-styles.with(elements: elements, use-routine: true)
-    (get-meta.receiver)(getter)
   }
 }
 
