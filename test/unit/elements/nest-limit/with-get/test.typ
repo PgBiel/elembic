@@ -31,3 +31,6 @@
 
 #range(20).fold([], (acc, _) => wock(acc))
 #dock(range(100).fold([], (acc, _) => e.get(_ => acc)))
+
+#dock(range(19).fold([], (acc, _) => [#e.get(_ => acc)<abc>]))
+#context assert.eq(query(<abc>).len(), 19)

@@ -19,3 +19,10 @@
   [],
   (acc, _) => e.get(get => assert.eq(get(dock).color, blue) + acc)
 )
+
+#range(20).fold(
+  [],
+  (acc, _) => [#e.get(get => assert.eq(get(dock).color, blue) + acc)<abc>]
+)
+
+#context assert.eq(query(<abc>).len(), 20)

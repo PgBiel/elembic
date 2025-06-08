@@ -2631,6 +2631,7 @@
     and body.func() == sequence
     and body.children.len() == 2  // [#context{...}#metadata(get-meta)#lbl-special-rule-tag]
     and body.children.last().func() == metadata
+    and body.at("label", default: none) == none
     and body.children.last().at("label", default: none) == lbl-special-rule-tag
     and body.children.last().value.kind == "get"
 )
