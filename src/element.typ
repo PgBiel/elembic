@@ -314,7 +314,7 @@
     }#lbl-get]
   }
 
-  [#metadata(((special-rule-key): "toggle-stateful-mode", version: element-version, enable: enable, force: force))#lbl-special-rule-tag]
+  [#metadata(((special-rule-key): "toggle-stateful-mode", data-kind: "special-rule", kind: "toggle-stateful-mode", version: element-version, enable: enable, force: force))#lbl-special-rule-tag]
 }
 
 // Check if an element instance satisfies a filter.
@@ -1712,7 +1712,7 @@
     // This allows extracting information about the rule before it is applied.
     // It also allows combining the rule with an outer rule before application,
     // as we do earlier.
-    [#body#metadata((version: element-version, routines: (prepare-rule: prepare-rule, apply-rules: apply-rules), doc: doc, rule: rule))#lbl-rule-tag]
+    [#body#metadata((data-kind: "prepared-rule", version: element-version, routines: (prepare-rule: prepare-rule, apply-rules: apply-rules), doc: doc, rule: rule))#lbl-rule-tag]
   }
 }
 
@@ -1971,6 +1971,8 @@
   [#metadata(
     (
       (special-rule-key): "select",
+      data-kind: "special-rule",
+      kind: "select",
       version: element-version,
       filters: filters,
       computed: (filters-by-eid: filters-by-eid, labels-by-eid: labels-by-eid, ordered-eids: ordered-eids),
@@ -2677,13 +2679,13 @@
 /// -> content
 #let prepare-get(receiver) = {
   let output = prepare-ctx(include-global: false, receiver)
-  [#output#metadata(((special-rule-key): "get", version: element-version, receiver: receiver))#lbl-special-rule-tag]
+  [#output#metadata(((special-rule-key): "get", data-kind: "special-rule", kind: "get", version: element-version, receiver: receiver))#lbl-special-rule-tag]
 }
 
 /// Used for debugging elembic. Passes the internal style chain information.
 #let prepare-debug(receiver) = {
   let output = prepare-ctx(include-global: true, receiver)
-  [#output#metadata(((special-rule-key): "debug-get", version: element-version, receiver: receiver))#lbl-special-rule-tag]
+  [#output#metadata(((special-rule-key): "debug-get", data-kind: "special-rule", kind: "debug-get", version: element-version, receiver: receiver))#lbl-special-rule-tag]
 }
 
 // Obtain a Typst selector to use to match this element in show rules or in the outline.
