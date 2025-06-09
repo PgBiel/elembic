@@ -12,7 +12,10 @@
 // Have a red background in the title page
 #show: e.set_(thesis.title-page, page-fill: red.lighten(50%))
 
-// Italic text in the title page
+// Override the bold text set rule
+#show e.selector(thesis.title-page, outer: true): set text(weight: "regular")
+
+// Apply italic text formatting in the title page
 #show: e.show_(thesis.title-page, emph)
 
 // Apply the template

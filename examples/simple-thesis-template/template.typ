@@ -27,10 +27,16 @@
     e.field("page-fill", e.types.option(e.types.paint), doc: "Optional page fill", default: none),
   ),
 
-  display: it => e.get(get => {
-    // Have a dedicated page
-    show: page.with(fill: it.page-fill)
+  // Default, overridable show-set rules
+  template: it => {
     set align(center)
+    set text(weight: "bold")
+    it
+  },
+
+  display: it => e.get(get => {
+    // Have a dedicated page with configurable fill
+    show: page.with(fill: it.page-fill)
 
     // Retrieve thesis settings
     let opts = get(settings)

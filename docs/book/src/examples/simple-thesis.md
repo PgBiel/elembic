@@ -34,10 +34,16 @@ We could have the following `template.typ` for a thesis. Note that we can retrie
     e.field("page-fill", e.types.option(e.types.paint), doc: "Optional page fill", default: none),
   ),
 
-  display: it => e.get(get => {
-    // Have a dedicated page
-    show: page.with(fill: it.page-fill)
+  // Default, overridable show-set rules
+  template: it => {
     set align(center)
+    set text(weight: "bold")
+    it
+  },
+
+  display: it => e.get(get => {
+    // Have a dedicated page with configurable fill
+    show: page.with(fill: it.page-fill)
 
     // Retrieve thesis settings
     let opts = get(settings)
@@ -70,7 +76,6 @@ We could have the following `template.typ` for a thesis. Note that we can retrie
   // Place the document, now with styles applied
   doc
 })
-
 ```
 
 We can then use this template in `main.typ` as follows:
@@ -91,7 +96,10 @@ We can then use this template in `main.typ` as follows:
 // Have a red background in the title page
 #show: e.set_(thesis.title-page, page-fill: red.lighten(50%))
 
-// Italic text in the title page
+// Override the bold text set rule
+#show e.selector(thesis.title-page, outer: true): set text(weight: "regular")
+
+// Apply italic text formatting in the title page
 #show: e.show_(thesis.title-page, emph)
 
 // Apply the template
