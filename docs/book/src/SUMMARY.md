@@ -9,6 +9,7 @@
 
 - [Examples](./examples/README.md)
   - [Simple Thesis](./examples/simple-thesis.md)
+  - [Simple Theorems](./examples/simple-theorems.md)
 
 # Elements
 
