@@ -18,7 +18,7 @@ This library has a few limitations which are [appropriately noted in the book.](
 ## Who is elembic for?
 
 Elembic is especially suited for:
-1. **Packages:** elembic's elements allows creating reusable components which can be freely customized by your package's end users. With typechecking and other features, elembic's got you covered in terms of flexibility.
+1. **Packages:** elembic's elements allows creating reusable components which can be freely customized by your package's end users. With typechecking and other features, elembic's got you covered in terms of flexibility. See the ["Simple Theorems" example](https://pgbiel.github.io/elembic/examples/simple-theorems.html) for a sample.
 2. **Templates:** elembic's elements can be used for fine-grained configuration of parts of your template. See the ["Simple Thesis" example](https://pgbiel.github.io/elembic/examples/simple-thesis.html) for a sample.
 
 ## Installation
