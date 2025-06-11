@@ -145,6 +145,80 @@ If this is not desired for a specific field, set `e.field("that field", folds: f
 `folds` is just one example of how you can configure a field. For a full list of field options, as well as more details on them, check out ["Specifying fields"](./fields.md).
 ```
 
+## Overridable set rules
+
+Instead of applying set rules at the top of your display function, **apply set rules through `template:` instead.** This allows **overriding them** with show-set on the element's [selector](../styling/select.md).
+
+For example, this doesn't work (note how the set rules cannot be overridden):
+
+```rs
+#import "@preview/elembic:X.X.X" as e
+
+#let theorem = e.element.declare(
+  "theorem",
+  // Don't do this!
+  display: it => {
+    // Oh no: these set rules cannot be overridden!
+    set text(red)
+    set align(center)
+    it.body
+  },
+
+  prefix: "@preview/my-package,v1",
+  doc: "Formats a theorem statement.",
+  fields: (e.field("body", content, required: true),)
+)
+
+// Let's try to override these set rules:
+#show e.selector(theorem): set text(blue)
+#show e.selector(theorem): set align(left)
+
+// Didn't work!
+#theorem[Still red and centered...]
+```
+
+![theorem still red and centered](https://github.com/user-attachments/assets/13e6af0a-874b-4c56-9e25-177cf4ac3fbd)
+
+Do the following instead. With `template`, they can now be overridden:
+
+```rs
+#import "@preview/elembic:X.X.X" as e
+
+#let theorem = e.element.declare(
+  "theorem",
+
+  template: it => {
+    // This is ok!
+    // They can be overridden!
+    set text(red)
+    set align(center)
+    it
+  },
+
+  display: it => {
+    it.body
+  },
+
+  prefix: "@preview/my-package,v1",
+  doc: "Formats a theorem statement.",
+  fields: (e.field("body", content, required: true),)
+)
+
+// Let's try to override these set rules:
+#show e.selector(theorem): set text(blue)
+#show e.selector(theorem): set align(left)
+
+// It worked!
+#theorem[Blue and left-aligned at last!]
+```
+
+![theorem blue and left-aligned](https://github.com/user-attachments/assets/fb72ff3d-c558-4744-82ae-e1788e5591b8)
+
+## Element reflection
+
+If you need to access data about the element within `display` (or other element functions receiving fields), you can use [`e.data` or its related functions](../../misc/reference/data.md). In particular, `e.counter(it)` provides the element's counter, whereas `e.func(it)` provides the element constructor itself. Check the [page about custom references](./labels-refs.md) for more information.
+
+
 ## Accessing context
 
-If you need to access the current context within `display` (or other element functions receiving fields), you can use [`e.data` or its related functions](../../misc/reference/data.md). In particular, `e.counter(it)` provides the element's counter, whereas `e.func(it)` provides the element constructor itself. Check the [page about custom references](./labels-refs.md) for more information.
+Read ["Accessing context"](./context.md) for details on how to access contextual values in your `display` function.
