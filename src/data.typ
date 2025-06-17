@@ -82,6 +82,9 @@
 // This is only used if the element isn't 'refable'.
 #let lbl-counter-head = "__elembic_element_counter_"
 
+// Kind of the special figure used by a labelable element.
+#let lbl-labelable-elem-figure-kind = "__elembic_element_labelable_figure"
+
 // Prefix for the figure kind used by 'refable' elements.
 // This is not to be confused with figures containing the elements.
 // This is the kind for a hidden figure used for ref purposes.
@@ -207,6 +210,23 @@
       or str(it.at("label", default: "")).starts-with(lbl-show-head) and last.func() == metadata
     ) {
       // Decomposing a recently-constructed (but not placed) element
+      last.value
+    } else {
+      (data-kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
+    }
+  } else if it.func() == figure and it.has("kind") and it.kind == lbl-labelable-elem-figure-kind {
+    let last
+    if it.body.func() == sequence and it.body.children.len() >= 2 and {
+      last = it.body.children.last()
+      (
+        last.at("label", default: none) == lbl-tag
+        // Workaround for 0.11.0 weirdly placing some 'meta' element sometimes
+        or sys.version < version(0, 12, 0) and {
+          last = it.children.at(it.children.len() - 2)
+          last.at("label", default: none) == lbl-tag
+        }
+      )
+    } {
       last.value
     } else {
       (data-kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)

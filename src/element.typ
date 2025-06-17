@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-select-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
+#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-labelable-elem-figure-kind, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-select-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "types/base.typ"
 #import "types/types.typ"
@@ -2805,9 +2805,43 @@
   results
 }
 
+#let default-prepare-rules(doc) = {
+  // Custom references
+  show ref: ref_
+
+  // Fix labelable elements
+  show figure.where(kind: lbl-labelable-elem-figure-kind): set align(start)
+  show figure.where(kind: lbl-labelable-elem-figure-kind): fig => {
+    let fig-label = fig.at("label", default: none)
+    if fig-label == none {
+      fig.body
+    } else {
+      let fig-data = data(fig)
+      if "instance-internal-args" in fig-data and "default-constructor" in fig-data {
+        let named-args = fig-data.instance-internal-args.named()
+        let given-label = named-args.at("label", default: none)
+
+        if "label" in named-args and (given-label == none or type(given-label) == label and given-label != fig-label) {
+          // Don't override label specified via argument, unless it's equal to
+          // the figure's label, then we should avoid a double label
+          fig.body
+        } else {
+          (fig-data.default-constructor)(..fig-data.instance-internal-args, label: fig-label, __elembic_outer_label: true)
+        }
+      } else {
+        fig.body
+      }
+    }
+  }
+
+  doc
+}
+
 /// Applies necessary show rules to the entire document so that custom elements behave
 /// properly. This is usually only needed for elements which have custom references,
 /// since, in that case, the document-wide rule `#show ref: e.ref` is required.
+/// In addition, labelable elements (supporting outer labels) also need at least
+/// `#show: e.prepare()` to work properly.
 /// **It is recommended to always use `e.prepare` when using Elembic.**
 ///
 /// However, **some custom elements also have their own `prepare` functions.** (Read
@@ -2833,14 +2867,9 @@
   ..args
 ) = {
   assert(args.named() == (:), message: "elembic: element.prepare: unexpected named arguments")
-  let default-rules = doc => {
-    show ref: ref_
-
-    doc
-  }
 
   if args.pos() == () {
-    return default-rules
+    return default-prepare-rules
   }
 
   let elems = args.pos().map(data)
@@ -2853,7 +2882,7 @@
   let prepares = elems.filter(elem => "prepare" in elem and elem.prepare != none).map(elem => elem.prepare.with(elem.func))
 
   doc => {
-    show: default-rules
+    show: default-prepare-rules
     prepares.fold(doc, (acc, prepare) => prepare(acc))
   }
 }
@@ -2974,7 +3003,7 @@
   construct: none,
   scope: none,
   count: counter.step,
-  labelable: true,
+  labelable: auto,
   reference: none,
   outline: none,
   synthesize: none,
@@ -2997,7 +3026,7 @@
   assert(contextual == auto or type(contextual) == bool, message: "elembic: element.declare: 'contextual' must be 'auto' (true if using a contextual feature) or a boolean (true to wrap the output in a 'context { ... }', false to not).")
   assert(construct == none or type(construct) == function, message: "elembic: element.declare: 'construct' must be 'none' (use default constructor) or a function receiving the original constructor and returning the new constructor.")
   assert(scope == none or type(scope) in (dictionary, module), message: "elembic: element.declare: 'scope' must be either 'none', a dictionary or a module")
-  assert(type(labelable) == bool, message: "elembic: element.declare: 'labelable' must be a boolean (true to enable the special 'label' constructor argument, false to disable it)")
+  assert(labelable == auto or type(labelable) == bool, message: "elembic: element.declare: 'labelable' must be auto (only adds the 'label' constructor argument with 'elem(label: <label>)') or a boolean (true to also enable labels with 'elem() <label>' - requires prior 'show: e.prepare()' to work -, false to disable it)")
   assert(
     reference == none
     or type(reference) == dictionary
@@ -3019,7 +3048,7 @@
     message: "elembic: element.declare: 'outline' must be 'none', 'auto' (to use data from 'reference') or a dictionary with 'caption'."
   )
   assert(outline != auto or reference != none, message: "elembic: element.declare: if 'outline' is set to 'auto', 'reference' must be specified and not be 'none'.")
-  assert(labelable or reference == none, message: "elembic: element.declare: 'labelable' must be true for 'reference' to not be 'none'")
+  assert(labelable in (auto, true) or reference == none, message: "elembic: element.declare: 'labelable' must be 'true' or 'auto' for 'reference' to not be 'none'")
 
   // All element args as originally provided.
   let elem-args = arguments(
@@ -3042,6 +3071,8 @@
     synthesize: synthesize,
     contextual: contextual,
   )
+
+  let has-label-arg = labelable in (auto, true)
 
   if contextual == auto {
     // Provide separate context for synthesize.
@@ -3080,7 +3111,7 @@
   let fields = field-internals.parse-fields(fields, allow-unknown-fields: allow-unknown-fields)
   let (all-fields, user-fields, foldable-fields) = fields
 
-  if labelable and "label" in all-fields {
+  if has-label-arg and "label" in all-fields {
     assert(false, message: "elembic: element.declare: labelable element cannot have a conflicting 'label' field\n  hint: you can set 'labelable: false' to disable the special label parameter, but note that it will then be impossible to refer to your element")
   }
 
@@ -3142,7 +3173,7 @@
     if not allow-unknown-fields {
       // Note: 'where' on synthesized fields is legal,
       // so we check 'all-fields' rather than 'user-fields'.
-      let unknown-fields = args.keys().filter(k => k not in all-fields and (not labelable or k != "label"))
+      let unknown-fields = args.keys().filter(k => k not in all-fields and (not has-label-arg or k != "label"))
       if unknown-fields != () {
         let s = if unknown-fields.len() == 1 { "" } else { "s" }
         assert(false, message: "elembic: element.where: element '" + name + "': unknown field" + s + " " + unknown-fields.map(f => "'" + f + "'").join(", "))
@@ -3294,7 +3325,7 @@
   let _missing() = {}
   let std-label = label
 
-  let default-constructor(..args, __elembic_data: none, __elembic_func: auto, __elembic_mode: auto, __elembic_settings: (:), label: _missing) = {
+  let default-constructor(..args, __elembic_data: none, __elembic_func: auto, __elembic_mode: auto, __elembic_settings: (:), __elembic_outer_label: false, label: _missing) = {
     if __elembic_func == auto {
       __elembic_func = default-constructor
     }
@@ -3314,14 +3345,18 @@
       }
     }
 
-    let labeling = false
+    let original-args = if has-label-arg and label == _missing { args } else { arguments(..args, label: label) }
+
+    let labeling = none
     let ref-label = none
-    if labelable {
+    if has-label-arg {
       if label == _missing {
         label = none
       } else if type(label) == std-label {
         ref-label = std-label(lbl-ref-figure-label-head + str(label))
-        labeling = true
+        if __elembic_outer_label != true {
+          labeling = label
+        }
       } else if label != none {
         assert(false, message: "elembic: element '" + name + "': expected label or 'none' for 'label', found " + base.typename(label))
       }
@@ -3573,6 +3608,7 @@
             reference: reference,
             custom-ref: none,
             fields-known: true,
+            labelable: labelable,
             valid: true
           )
 
@@ -3594,7 +3630,7 @@
               new-fields
             }
 
-            if labelable and label != none and label != _missing {
+            if has-label-arg and label != none and label != _missing {
               synthesized-fields.label = label
             }
 
@@ -3859,11 +3895,11 @@
                 // Include metadata for querying
                 let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
 
-                if labeling {
+                if labeling != none {
                   [#{
                     show <__some_unknown_label>: it => it
                     [#meta-body#metadata(tag)#lbl-tag]
-                  }#label]
+                  }#labeling]
                 } else {
                   meta-body
                 }
@@ -3921,11 +3957,11 @@
               // Include metadata for querying
               let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
 
-              if labeling {
+              if labeling != none {
                 [#{
                   show <__some_unknown_label>: it => it
                   [#meta-body#metadata(tag)#lbl-tag]
-                }#label]
+                }#labeling]
               } else {
                 meta-body
               }
@@ -3965,6 +4001,8 @@
       body: inner,
       scope: scope,
       fields: args,
+      instance-args: original-args,
+      instance-internal-args: arguments(..original-args, __elembic_data: __elembic_data, __elembic_mode: __elembic_mode, __elembic_settings: __elembic_settings, __elembic_outer_label: __elembic_outer_label),
       func: __elembic_func,
       default-constructor: default-constructor,
       name: name,
@@ -3981,7 +4019,25 @@
       inner = template[#inner#tag]
     }
 
-    [#inner#tag]
+    inner = [#inner#tag]
+
+    // To accept outer labels, we need to use a special figure as a workaround.
+    // The label is applied to the figure. We then use a show rule to replace
+    // the figure with a newly-constructed element receiving the label by
+    // parameter.
+    if labelable == true {
+      figure(
+        kind: lbl-labelable-elem-figure-kind,
+        supplement: [Missing `#show: e.prepare()` at the top of your document],
+        numbering: "1.",
+        caption: none,
+        ..if sys.version >= version(0, 12, 0) {
+          (placement: none, scope: "column")
+        },
+      )[#inner]
+    } else {
+      inner
+    }
   }
 
   let final-constructor = if construct != none {
@@ -3990,7 +4046,7 @@
       assert(type(test-construct) == function, message: "elembic: element.declare: the 'construct' function must receive original constructor and return the new constructor, a new function, not '" + str(type(test-construct)) + "'.")
     }
 
-    let final-constructor(..args, __elembic_data: none, __elembic_mode: auto, __elembic_settings: (:)) = {
+    let final-constructor(..args, __elembic_data: none, __elembic_mode: auto, __elembic_settings: (:), __elembic_outer_label: false) = {
       if __elembic_data != none {
         return if __elembic_data == special-data-values.get-data {
           (data-kind: "element", ..elem-data, func: final-constructor, default-constructor: default-constructor.with(__elembic_func: final-constructor), where: where(final-constructor))
@@ -4001,7 +4057,7 @@
         }
       }
 
-      construct(default-constructor.with(__elembic_func: final-constructor, __elembic_mode: __elembic_mode, __elembic_settings: __elembic_settings))(..args)
+      construct(default-constructor.with(__elembic_func: final-constructor, __elembic_mode: __elembic_mode, __elembic_settings: __elembic_settings, __elembic_outer_label: __elembic_outer_label))(..args)
     }
 
     final-constructor
