@@ -168,14 +168,18 @@
 #let data(it) = {
   if type(it) == function {
     it(__elembic_data: special-data-values.get-data)
-  } else if type(it) == dictionary and element-key in it {
-    (data-kind: "element", ..it)
-  } else if type(it) == dictionary and custom-type-data-key in it {
-    (data-kind: "custom-type-data", ..it)
-  } else if type(it) == dictionary and custom-type-key in it {
-    it.at(custom-type-key)
-  } else if type(it) == dictionary and stored-data-key in it {
-    it.at(stored-data-key)
+  } else if type(it) == dictionary {
+    if element-key in it {
+      (data-kind: "element", ..it)
+    } else if custom-type-data-key in it {
+      (data-kind: "custom-type-data", ..it)
+    } else if custom-type-key in it {
+      it.at(custom-type-key)
+    } else if stored-data-key in it {
+      it.at(stored-data-key)
+    } else {
+      (data-kind: "unknown", body: it, fields: (:), func: none, eid: none, fields-known: false, valid: false)
+    }
   } else if type(it) != content {
     (data-kind: "unknown", body: it, fields: (:), func: none, eid: none, fields-known: false, valid: false)
   } else if (
