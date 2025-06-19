@@ -71,24 +71,30 @@ Just import the latest elembic version from the package manager and you're ready
   prefix: "@preview/my-package,v1",
   doc: "Relevant data for a person.",
   fields: (
-    field("name", str, doc: "Person's name", required: true),
+    field("name", str, doc: "Person's name", required: true, named: true),
     field("age", int, doc: "Person's age", default: 40),
     field("preference", types.any, doc: "Anything the person likes", default: none)
   ),
   casts: (
-    (from: str, with: person => name => person(name)),
+    (from: dictionary),
+    (from: str, with: person => name => person(name: name)),
   )
 )
 
 #assert.eq(
-  e.repr(person("John", age: 50, preference: "soup")),
+  e.repr(person(name: "John", age: 50, preference: "soup")),
   "person(age: 50, name: \"John\", preference: \"soup\")"
 )
 
 // Manually invoke typechecking and cast
 #assert.eq(
+  types.cast((name: "abc", age: 99), person),
+  (true, person(name: "abc", age: 99))
+)
+
+#assert.eq(
   types.cast("abc", person),
-  (true, person("abc"))
+  (true, person(name: "abc"))
 )
 
 // Can then use 'person' as the type of an element's field, for example
