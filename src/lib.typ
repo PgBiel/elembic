@@ -1,5 +1,6 @@
-#import "element.typ": set_, data, apply, revoke, reset, named, filtered, cond-set, show_, style-modes, prepare-get as get, settings, elem-selector as selector, select, elem-query as query, ref_ as ref, prepare, within-filter as within
+#import "element.typ": set_, data, apply, revoke, reset, named, filtered, cond-set, show_, style-modes, prepare-get as get, settings, elem-selector as selector, select, elem-query as query, ref_ as ref, prepare
 #import "fields.typ": field
+#import "filters.typ": within-filter as within
 #import "pub/data.typ": *
 #import "pub/element.typ"
 #import "pub/filters.typ"

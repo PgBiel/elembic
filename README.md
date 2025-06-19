@@ -99,6 +99,7 @@ Just import the latest elembic version from the package manager and you're ready
 - `pub/`: Contains public re-exports of each module (so we can keep some things private)
 - `data`: Functions and constants related to extracting data from elements and types
 - `element`: Functions related to creating and using elements and their rules (set rules, revoke rules and so on)
+- `filters`: Functions to create and match element filters
 - `types`: Functions and constants related to Elembic's custom type system
 - `fields`: Functions related to element and type field parsing
 
