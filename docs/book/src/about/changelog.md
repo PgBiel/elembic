@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.1.0 (2025-06-19)
+
+### What's changed
+
+- **Critical fix:** Fix joining in show rules on `e.selector` and labeled elements ([PR GH#54](https://github.com/PgBiel/elembic/pull/54))
+- Elements can now **opt into** support for **outer labels** to work just like native elements with `labelable: true` ([PR GH#52](https://github.com/PgBiel/elembic/pull/52))
+  - Elements with `labelable: true` can be labeled with `#elem(...) <label-here>` (as well as with the old syntax below).
+  - However, the element will then require `#show: e.prepare()` by the user to work.
+  - In addition, the element can no longer be inline.
+  - The default of `labelable: auto` works as before and only accepts labels specified by parameter: `#elem(..., label: <label-here>)`.
+  - Setting `labelable: false` removes the special `label` field altogether.
+
+**Full Changelog**: [https://github.com/PgBiel/elembic/compare/v1.1.0...v1.0.0](https://github.com/PgBiel/elembic/compare/v1.1.0...v1.0.0)
+
 ## v1.0.0 (2025-06-09)
 
 Elembic is now available on the Typst package manager! Use it today with:
