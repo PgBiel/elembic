@@ -6,6 +6,7 @@
   - [Installation](./about/installation.md)
   - [Limitations](./about/limitations.md)
   - [FAQ](./about/faq.md)
+  - [Changelog](./about/changelog.md)
 
 - [Examples](./examples/README.md)
   - [Simple Thesis](./examples/simple-thesis.md)
