@@ -82,6 +82,9 @@
 // This is only used if the element isn't 'refable'.
 #let lbl-counter-head = "__elembic_element_counter_"
 
+// Prefix for labels for 'context' which should panic with 'missing prepare(elem)'.
+#let lbl-elem-prepare-check-head = "__elembic_elem_prepare_check_"
+
 // Kind of the special figure used by a labelable element.
 #let labelable-elem-figure-kind = "__elembic_element_labelable_figure"
 
@@ -92,6 +95,9 @@
 
 // Custom label applied to the hidden reference figure when the user specifies their own label.
 #let lbl-ref-figure-label-head = "__elembic_element_ref_figure_label_"
+
+// Label for a context which should panic with 'missing prepare()'...
+#let lbl-empty-prepare-check = <__elembic_empty_prepare_check>
 
 // Label for the hidden figure used for references.
 #let lbl-ref-figure = <__elembic_element_ref_figure>

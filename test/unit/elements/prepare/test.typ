@@ -31,6 +31,9 @@
 
 #show: e.prepare(wock, dock)
 
+#wock()
+#dock()
+
 #context assert.eq(text.fill, red)
 #e.get(get => assert.eq(get(wock).color, blue))
 #e.get(get => assert.eq(get(wock).thing, yellow))

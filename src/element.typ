@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, labelable-elem-figure-kind, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-select-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
+#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-elem-prepare-check-head, lbl-empty-prepare-check, labelable-elem-figure-kind, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-select-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "types/base.typ"
 #import "types/types.typ"
@@ -2834,6 +2834,9 @@
     }
   }
 
+  // Remove error about missing preparation
+  show lbl-empty-prepare-check: none
+
   doc
 }
 
@@ -2879,7 +2882,18 @@
   }
 
   assert(elems.all(it => it.data-kind == "element"), message: "elembic: element.prepare: positional arguments must be elements")
-  let prepares = elems.filter(elem => "prepare" in elem and elem.prepare != none).map(elem => elem.prepare.with(elem.func))
+  let prepares = elems.filter(elem => "prepare" in elem and elem.prepare != none).map(elem => {
+    if "lbl-elem-prepare-check" in elem {
+      doc => {
+        // Remove error about missing element preparation
+        show elem.lbl-elem-prepare-check: none
+
+        (elem.prepare)(elem.func, doc)
+      }
+    } else {
+      elem.prepare.with(elem.func)
+    }
+  })
 
   doc => {
     show: default-prepare-rules
@@ -3084,6 +3098,7 @@
   let lbl-show = label(lbl-show-head + eid)
   let lbl-meta = label(lbl-meta-head + eid)
   let lbl-outer = label(lbl-outer-head + eid)
+  let lbl-elem-prepare-check = label(lbl-elem-prepare-check-head + eid)
   let ref-figure-kind = if reference == none and outline == none { none } else { lbl-ref-figure-kind-head + eid }
   // Use same counter as hidden figure for ease of use
   let counter-key = lbl-counter-head + eid
@@ -3207,6 +3222,7 @@
     meta-sel: lbl-meta,
     outer-sel: lbl-outer,
     outline-sel: if outline == none { none } else { figure.where(kind: ref-figure-kind) },
+    lbl-elem-prepare-check: lbl-elem-prepare-check,
     counter: element-counter,
     parse-args: parse-args,
     default-data: default-data,
@@ -3975,6 +3991,16 @@
               })
             }
           }
+        }
+
+        if prepare != none {
+          [#context {
+            assert(false, message: "elembic: element '" + name + "' needs preparation to display properly. Call '#show: e.prepare(" + name + ", /*, other elements...*/)' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that, check if both elembic and this element's package are up-to-date")
+          }#lbl-elem-prepare-check]
+        } else if labelable == true {
+          [#context {
+            assert(false, message: "elembic: element '" + name + "' is labelable and needs basic preparation to display properly, call '#show: e.prepare()' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that, check if both elembic and this element's package are up-to-date")
+          }#lbl-empty-prepare-check]
         }
 
         if data-changed and not updates-stylechain-inside {
