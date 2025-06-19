@@ -3345,7 +3345,7 @@
       }
     }
 
-    let original-args = if has-label-arg and label == _missing { args } else { arguments(..args, label: label) }
+    let original-args = if label == _missing { args } else { arguments(..args, label: label) }
 
     let labeling = none
     let ref-label = none
