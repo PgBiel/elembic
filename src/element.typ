@@ -3835,10 +3835,19 @@
                   tag.ctx = (ancestry: ancestry)
                 }
 
-                let body = [#[#body#metadata(tag)#lbl-tag]#lbl-show]
+                let body = [#{
+                  // Wrap anything in a label in a styled() to ensure joining
+                  // with the labeled sequence won't append to the labeled
+                  // sequence. See issue #53 on GitHub for more information.
+                  show <__some_unknown_label>: it => it
+                  [#body#metadata(tag)#lbl-tag]
+                }#lbl-show]
 
                 if select-labels != () {
-                  body = select-labels.fold(body, (acc, lbl) => [#[#acc#metadata(tag)#lbl-tag]#lbl])
+                  body = select-labels.fold(body, (acc, lbl) => [#{
+                    show <__some_unknown_label>: it => it
+                    [#acc#metadata(tag)#lbl-tag]
+                  }#lbl])
                 }
 
                 let shown-body = if show-rules == () {
@@ -3851,7 +3860,10 @@
                 let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
 
                 if labeling {
-                  [#[#meta-body#metadata(tag)#lbl-tag]#label]
+                  [#{
+                    show <__some_unknown_label>: it => it
+                    [#meta-body#metadata(tag)#lbl-tag]
+                  }#label]
                 } else {
                   meta-body
                 }
@@ -3885,10 +3897,19 @@
                 tag.ctx = (ancestry: ancestry)
               }
 
-              let body = [#[#body#metadata(tag)#lbl-tag]#lbl-show]
+              let body = [#{
+                // Wrap anything in a label in a styled() to ensure joining
+                // with the labeled sequence won't append to the labeled
+                // sequence. See issue #53 on GitHub for more information.
+                show <__some_unknown_label>: it => it
+                [#body#metadata(tag)#lbl-tag]
+              }#lbl-show]
 
               if select-labels != () {
-                body = select-labels.fold(body, (acc, lbl) => [#[#acc#metadata(tag)#lbl-tag]#lbl])
+                body = select-labels.fold(body, (acc, lbl) => [#{
+                  show <__some_unknown_label>: it => it
+                  [#acc#metadata(tag)#lbl-tag]
+                }#lbl])
               }
 
               let shown-body = if show-rules == () {
@@ -3901,7 +3922,10 @@
               let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
 
               if labeling {
-                [#[#meta-body#metadata(tag)#lbl-tag]#label]
+                [#{
+                  show <__some_unknown_label>: it => it
+                  [#meta-body#metadata(tag)#lbl-tag]
+                }#label]
               } else {
                 meta-body
               }

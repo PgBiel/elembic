@@ -59,6 +59,7 @@
 )
 
 #let _sequence = [].func()
+#let _styled = { set text(red); [a] }.func()
 
 #let element(name, eid) = (
   ..base-typeinfo,
@@ -66,7 +67,7 @@
   name: "element '" + name + "'",
   input: (content,),
   output: (content,),
-  check: c => c.func() == _sequence and data(c).eid == eid,
+  check: c => c.func() in (_sequence, _styled) and data(c).eid == eid,
   data: (name: name, eid: eid),
   error: c => "expected element " + name + ", found " + func-name(c),
 )
@@ -80,7 +81,7 @@
     name: "native element '" + repr(func) + "'",
     input: (content,),
     output: (content,),
-    check: if func == _sequence { c => c.func() == _sequence and data(c).eid == none } else { c => c.func() == func },
+    check: if func in (_sequence, _styled) { c => c.func() == func and data(c).eid == none } else { c => c.func() == func },
     data: (func: func),
     error: c => "expected native element " + repr(func) + ", found " + func-name(c),
   )
