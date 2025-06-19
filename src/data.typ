@@ -10,9 +10,9 @@
 #let custom-type-data-key = "__elembic_custom_type_data"
 
 // Versions:
-#let element-version = 3  // v1 = alphas 1 and 2, v2 = alpha 3-v1.0.0-rc2, v3 = v1.0.0+
-#let type-version = 2 // v1 = alphas to v1.0.0-rc2, v2 = v1.0.0+
-#let custom-type-version = 3 // v1 = alphas 1 and 2, v2 = alpha 3-v1.0.0-rc2, v3 = v1.0.0+
+#let element-version = 4  // v1 = alphas 1 and 2, v2 = alpha 3-v1.0.0-rc2, v3 = v1.0.0, v4 = v1.1.0+
+#let type-version = 3 // v1 = alphas to v1.0.0-rc2, v2 = v1.0.0, v3 = v1.1.0+
+#let custom-type-version = 4 // v1 = alphas 1 and 2, v2 = alpha 3-v1.0.0-rc2, v3 = v1.0.0, v4 = v1.1.0+
 #let current-field-version = 3 // v1 = alphas 1 and 2, v2 = alpha 3-v1.0.0-rc2, v3 = v1.0.0+
 
 // Potential modes for configuration of styles.
