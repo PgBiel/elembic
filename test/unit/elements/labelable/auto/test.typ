@@ -10,7 +10,7 @@
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
   ),
-  labelable: true,
+  labelable: auto,
   prefix: ""
 )
 
