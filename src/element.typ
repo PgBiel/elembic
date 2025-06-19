@@ -2746,6 +2746,7 @@
       verify-filter: verify-filter,
       select: select,
       toggle-stateful: toggle-stateful-mode,
+      declare: declare,
       settings: settings
     )
   )
