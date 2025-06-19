@@ -83,7 +83,7 @@
 #let lbl-counter-head = "__elembic_element_counter_"
 
 // Kind of the special figure used by a labelable element.
-#let lbl-labelable-elem-figure-kind = "__elembic_element_labelable_figure"
+#let labelable-elem-figure-kind = "__elembic_element_labelable_figure"
 
 // Prefix for the figure kind used by 'refable' elements.
 // This is not to be confused with figures containing the elements.
@@ -214,7 +214,7 @@
     } else {
       (data-kind: "content", body: it, fields: it.fields(), func: it.func(), eid: none, fields-known: false, valid: false)
     }
-  } else if it.func() == figure and it.has("kind") and it.kind == lbl-labelable-elem-figure-kind {
+  } else if it.func() == figure and it.has("kind") and it.kind == labelable-elem-figure-kind {
     let last
     if it.body.func() == sequence and it.body.children.len() >= 2 and {
       last = it.body.children.last()

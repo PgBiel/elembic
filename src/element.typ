@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-labelable-elem-figure-kind, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-select-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
+#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, labelable-elem-figure-kind, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-select-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "types/base.typ"
 #import "types/types.typ"
@@ -2810,8 +2810,8 @@
   show ref: ref_
 
   // Fix labelable elements
-  show figure.where(kind: lbl-labelable-elem-figure-kind): set align(start)
-  show figure.where(kind: lbl-labelable-elem-figure-kind): fig => {
+  show figure.where(kind: labelable-elem-figure-kind): set align(start)
+  show figure.where(kind: labelable-elem-figure-kind): fig => {
     let fig-label = fig.at("label", default: none)
     if fig-label == none {
       fig.body
@@ -4027,7 +4027,7 @@
     // parameter.
     if labelable == true {
       figure(
-        kind: lbl-labelable-elem-figure-kind,
+        kind: labelable-elem-figure-kind,
         supplement: [Missing `#show: e.prepare()` at the top of your document],
         numbering: "1.",
         caption: none,
