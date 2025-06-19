@@ -13,7 +13,8 @@
   }
 }
 
-#let sequence_ = [].func()
+#let _sequence = [].func()
+#let _styled = { set text(red); [a] }.func()
 #let typeof(value) = {
   let element-data
   if type(value) == dictionary and custom-type-key in value {
@@ -22,7 +23,7 @@
     } else {
       (value.at(custom-type-key).func)(__elembic_data: special-data-values.get-data).typeinfo
     }
-  } else if type(value) == content and value.func() == sequence_ and {
+  } else if type(value) == content and value.func() in (_sequence, _styled) and {
     element-data = data(value)
     element-data.eid != none
   } {

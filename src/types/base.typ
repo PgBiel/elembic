@@ -59,6 +59,7 @@
 )
 
 #let _sequence = [].func()
+#let _styled = { set text(red); [a] }.func()
 
 #let element(name, eid) = (
   ..base-typeinfo,
@@ -66,7 +67,7 @@
   name: "element '" + name + "'",
   input: (content,),
   output: (content,),
-  check: c => c.func() == _sequence and data(c).eid == eid,
+  check: c => c.func() in (_sequence, _styled) and data(c).eid == eid,
   data: (name: name, eid: eid),
   error: c => "expected element " + name + ", found " + func-name(c),
 )
@@ -80,7 +81,7 @@
     name: "native element '" + repr(func) + "'",
     input: (content,),
     output: (content,),
-    check: if func == _sequence { c => c.func() == _sequence and data(c).eid == none } else { c => c.func() == func },
+    check: if func in (_sequence, _styled) { c => c.func() == func and data(c).eid == none } else { c => c.func() == func },
     data: (func: func),
     error: c => "expected native element " + repr(func) + ", found " + func-name(c),
   )
@@ -204,20 +205,20 @@
       // since it is a subset of input, therefore input would be just ("any",) and
       // the check above would have had to pass in that case.
       let all-funcs = checked-types.map(t => t.data.func)
-      let non-seq-funcs = all-funcs.filter(f => f != _sequence)
-      let has-seq = _sequence in all-funcs
+      let non-elem-funcs = all-funcs.filter(f => f != _sequence and f != _styled)
+      let has-elem-func = _sequence in all-funcs or _styled in all-funcs
 
       // Check sequence separately, as a sequence can also be a custom element,
       // so we must tell them apart.
-      if has-seq {
-        if non-seq-funcs == () {
+      if has-elem-func {
+        if non-elem-funcs == () {
           x => {
             let typ = type(x)
             if typ == dictionary and custom-type-key in x {
               // Custom type must be checked differently in inputs
               typ = x.at(custom-type-key).id
             }
-            typ in unchecked-inputs or typ == content and x.func() == _sequence and data(x).eid == none
+            typ in unchecked-inputs or typ == content and x.func() in (_sequence, _styled) and data(x).eid == none
           }
         } else {
           x => {
@@ -226,7 +227,7 @@
               // Custom type must be checked differently in inputs
               typ = x.at(custom-type-key).id
             }
-            typ in unchecked-inputs or typ == content and (x.func() in non-seq-funcs or x.func() == _sequence and data(x).eid == none)
+            typ in unchecked-inputs or typ == content and (x.func() in non-elem-funcs or x.func() in (_sequence, _styled) and data(x).eid == none)
           }
         }
       } else {
@@ -236,7 +237,7 @@
             // Custom type must be checked differently in inputs
             typ = x.at(custom-type-key).id
           }
-          typ in unchecked-inputs or typ == content and x.func() in non-seq-funcs
+          typ in unchecked-inputs or typ == content and x.func() in non-elem-funcs
         }
       }
     } else if checked-types.all(t => t.type-kind == "element" and ("__future_cast" not in t or t.__future_cast.max-version < type-version)) {
@@ -248,7 +249,7 @@
           // Custom type must be checked differently in inputs
           typ = x.at(custom-type-key).id
         }
-        typ in unchecked-inputs or typ == content and x.func() == _sequence and data(x).eid in all-eids
+        typ in unchecked-inputs or typ == content and x.func() in (_sequence, _styled) and data(x).eid in all-eids
       }
     } else if checked-types.all(t => t.type-kind == "literal" and ("__future_cast" not in t or t.__future_cast.max-version < type-version)) {
       let values-inputs-and-checks = checked-types.map(t => (t.data.value, t.input, t.data.typeinfo.check))

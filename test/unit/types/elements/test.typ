@@ -1,4 +1,4 @@
-#import "/test/unit/base.typ": empty
+#import "/test/unit/base.typ": empty, unwrap
 #show: empty
 
 #import "/src/lib.typ" as e: types, field
@@ -81,7 +81,9 @@
 
 #show e.selector(stock): it => {
   assert.eq(cast(it, stock), (true, it))
+  assert.eq(cast(it, types.union(stock, wock)), (true, it))
   assert.eq(e.fields(it), e.fields(stock(color: red, inner: [Hello!])))
+  assert.eq(types.typeof(it).data.eid, e.eid(stock))
 }
 
 #let pretty-much-wock = e.element.declare(
@@ -98,5 +100,7 @@
 #assert.eq(cast(pretty-much-wock(), types.literal(wock())), (true, pretty-much-wock()))
 #assert.eq(cast(pretty-much-wock(), types.union(content, e.types.literal(wock()), e.types.literal(wock(color: blue)))), (true, pretty-much-wock()))
 #assert.eq(cast(pretty-much-wock(), types.union(e.types.literal(wock()), e.types.literal(wock(color: blue)))), (true, pretty-much-wock()))
+
+#assert.eq(types.typeof(wock()).data.eid, e.eid(wock))
 
 #stock()

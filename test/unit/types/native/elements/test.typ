@@ -6,6 +6,7 @@
 #import "/src/types/types.typ": cast
 
 #let sequence = [].func()
+#let styled = { set text(red); [a] }.func()
 
 #let wock = e.element.declare(
   "wock",
@@ -45,3 +46,13 @@
 #assert.eq(cast([= efg], types.union(stroke, native-elem(sequence), native-elem(heading))), (true, [= efg]))
 #assert.eq(cast(5pt, types.union(stroke, native-elem(sequence), native-elem(heading))), (true, stroke(5pt)))
 #assert.eq(cast(wock(), types.union(stroke, native-elem(sequence), native-elem(heading))), (false, "all typechecks for union failed\n  hint (native element 'sequence'): expected native element sequence, found wock\n  hint (native element 'heading'): expected native element heading, found wock"))
+
+#[
+  #show e.selector(wock): it => {
+    assert.eq(cast(it, native-elem(sequence)), (false, "expected native element sequence, found wock"))
+    assert.eq(cast(it, native-elem(styled)), (false, "expected native element styled, found wock"))
+    assert.eq(cast(it, types.union(native-elem(sequence), native-elem(heading))), (false, "expected native elements sequence or heading, found wock"))
+    assert.eq(cast(it, types.union(native-elem(styled), native-elem(heading))), (false, "expected native elements styled or heading, found wock"))
+  }
+  #wock()
+]

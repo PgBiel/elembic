@@ -146,6 +146,7 @@
 #let filter-key = "__elembic_element_filter"
 
 #let sequence = [].func()
+#let styled = { set text(red); [a] }.func()
 
 // Special values that can be passed to a type or element's constructor to retrieve some data or show
 // some behavior.
@@ -183,11 +184,16 @@
   } else if type(it) != content {
     (data-kind: "unknown", body: it, fields: (:), func: none, eid: none, fields-known: false, valid: false)
   } else if (
-    it.has("label")
-    and str(it.label).starts-with(lbl-show-head)
+    it.func() == styled
+    and it.has("label")
+    and it.child.func() == sequence
+    and it.child.children.len() >= 2
+    and it.child.children.last().at("label", default: none) == lbl-tag
   ) {
-    // Decomposing an element inside a show rule
-    it.children.at(1).value
+    // Any labeled elements need to be wrapped in a 'styled' to avoid
+    // interference when joining with the element in a show rule on the
+    // label.
+    it.child.children.last().value
   } else if it.func() == sequence and it.children.len() >= 2 {
     let last = it.children.last()
     if (
@@ -197,6 +203,8 @@
         last = it.children.at(it.children.len() - 2)
         last.at("label", default: none) == lbl-tag
       }
+      // Pre-1.0 elembic versions didn't add a label to metadata
+      or str(it.at("label", default: "")).starts-with(lbl-show-head) and last.func() == metadata
     ) {
       // Decomposing a recently-constructed (but not placed) element
       last.value
@@ -386,7 +394,7 @@
     return none
   }
   let name = repr(c.func())
-  if c.func() == sequence {
+  if c.func() in (sequence, styled) {
     let element-data = data(c)
     if "eid" in element-data and element-data.eid != none {
       name = if "name" in element-data and type(element-data.name) == str { element-data.name } else { "unknown custom element" }
@@ -410,7 +418,7 @@
   }
   let typename = ""
   let value-type = type(value)
-  if value-type == content and value.func() == sequence {
+  if value-type == content and value.func() in (sequence, styled) {
     let value-data = data(value)
     if "eid" in value-data and value-data.eid != none {
       value = value-data.fields
