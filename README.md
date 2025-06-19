@@ -26,7 +26,7 @@ Elembic is especially suited for:
 Just import the latest elembic version from the package manager and you're ready to go!
 
 ```typ
-#import "@preview/elembic:1.0.0" as e
+#import "@preview/elembic:1.1.0" as e
 
 // See the full example below
 #show: e.set_(element, stroke: red)
@@ -38,7 +38,7 @@ Just import the latest elembic version from the package manager and you're ready
 ### Custom element
 
 ```typ
-#import "@preview/elembic:1.0.0" as e: field, types
+#import "@preview/elembic:1.1.0" as e: field, types
 
 #let bigbox = e.element.declare(
   "bigbox",
@@ -64,7 +64,7 @@ Just import the latest elembic version from the package manager and you're ready
 ### Custom type
 
 ```typ
-#import "@preview/elembic:1.0.0" as e: field, types
+#import "@preview/elembic:1.1.0" as e: field, types
 
 #let person = e.types.declare(
   "person",
