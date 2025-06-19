@@ -51,6 +51,8 @@
   #show e.selector(wock): it => {
     assert.eq(cast(it, native-elem(sequence)), (false, "expected native element sequence, found wock"))
     assert.eq(cast(it, native-elem(styled)), (false, "expected native element styled, found wock"))
+    assert.eq(cast(it, types.union(native-elem(sequence), native-elem(heading))), (false, "expected native elements sequence or heading, found wock"))
+    assert.eq(cast(it, types.union(native-elem(styled), native-elem(heading))), (false, "expected native elements styled or heading, found wock"))
   }
   #wock()
 ]
