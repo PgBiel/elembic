@@ -2541,10 +2541,14 @@
 /// updated context to get the latest counter value (after the step / update) with
 /// `e.counter(it).get()`. Defaults to `counter.step` to step the counter once before
 /// each element placed.
-/// - labelable (bool): Defaults to `true`, allows specifying `#element(label: <abc>)`, which
-/// not only ensures show rules on that label work and have access to the element's final fields,
-/// but also allows referring to that element. When `false`, the element may have a field
-/// named `label` instead, but it won't have these effects.
+/// - labelable (auto|bool): Set this to `true` to support outer label syntax: `#elem(...) <label-here>`.
+/// The downsides are that `#show: e.prepare()` becomes required to use the element, the element can no longer be inline,
+/// and show rules on the individual labels no longer have access to final fields.
+/// Defaults to `auto`, which still allows labeling without those downsides by specifying `#element(label: <abc>)`,
+/// ensuring show rules on that label work and have access to the element's final fields.
+/// In both cases, also allows referring to labeled elements with `@chosen-label` (requires `#show: e.prepare()` to work),
+/// but the element may not have its own settable field named `label`.
+/// When `false`, the element may have a field named `label` instead, but it won't have any of those effects.
 /// - reference (none | (supplement: none | str | content | function fields => str | content, numbering: none | str | function fields => str | function, custom: none | function fields => content)):
 /// When not `none`, allows referring to the new element with Typst's built-in
 /// `@ref` syntax. Requires the user to execute `#show: e.prepare()` at the top
