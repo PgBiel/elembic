@@ -156,6 +156,7 @@
 
 #let sequence = [].func()
 #let styled = { set text(red); [a] }.func()
+#let elem-funcs = (sequence, styled, figure)
 
 // Special values that can be passed to a type or element's constructor to retrieve some data or show
 // some behavior.
@@ -420,7 +421,7 @@
     return none
   }
   let name = repr(c.func())
-  if c.func() in (sequence, styled) {
+  if c.func() in elem-funcs {
     let element-data = data(c)
     if "eid" in element-data and element-data.eid != none {
       name = if "name" in element-data and type(element-data.name) == str { element-data.name } else { "unknown custom element" }
@@ -444,7 +445,7 @@
   }
   let typename = ""
   let value-type = type(value)
-  if value-type == content and value.func() in (sequence, styled) {
+  if value-type == content and value.func() in elem-funcs {
     let value-data = data(value)
     if "eid" in value-data and value-data.eid != none {
       value = value-data.fields

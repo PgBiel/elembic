@@ -24,6 +24,7 @@
     field("color", color, default: red),
     field("inner", content, default: [Hello!])
   ),
+  labelable: true,
   prefix: ""
 )
 
@@ -78,6 +79,7 @@
 #assert.eq(cast(wock(color: black), types.literal(wock(color: black))), (true, wock(color: black)))
 
 #assert.eq(types.option(types.typeof(wock())), types.option(wock))
+#assert.eq(types.option(types.typeof(dock())), types.option(dock))
 
 #show e.selector(stock): it => {
   assert.eq(cast(it, stock), (true, it))
