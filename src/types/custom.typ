@@ -16,7 +16,9 @@
     let combined = outer + inner
 
     for (field-name, fold-data) in foldable-fields {
-      if field-name in inner {
+      // If the field is required but not given, the default is a dummy value,
+      // so don't fold with it.
+      if field-name in inner and (field-name in outer or not fold-data.required) {
         let outer = outer.at(field-name, default: fold-data.default)
         if fold-data.folder == auto {
           combined.at(field-name) = outer + inner.at(field-name)
@@ -337,7 +339,7 @@
     if foldable-fields != (:) {
       // Fold received arguments with defaults
       for (field-name, fold-data) in foldable-fields {
-        if field-name in args {
+        if field-name in args and not fold-data.required {
           let outer = default-fields.at(field-name, default: fold-data.default)
           if fold-data.folder == auto {
             final-fields.at(field-name) = outer + args.at(field-name)

@@ -85,7 +85,8 @@
   //   foldable-field-name: (
   //     folder: auto or (outer, inner) => combined value  // how to combine two values, auto = simple sum, equivalent to (a, b) => a + b
   //     default: stroke(),  // default value for this field to begin folding. This is 'field.default' unless 'required = true'.
-  //                         // Then, it is the type's default.
+  //                         // Then, no default is used, and the field might be missing if not set.
+  //     required: false, // If the field is required, no default is used to start folding.
   //     values: (4pt, orange, ...)  // list of all set values for this field (length = amount of times this field was changed)
   //                                 // only 'values' is used if possible, for efficiency. E.g.: values.sum(default: stroke())
   //     data: (                                   // list to associate each value with the real style chain index and name.
@@ -421,6 +422,8 @@
                 (
                   folder: fold-data.folder,
                   default: fold-data.default,
+                  // Support elements made with elembic <1.1.1
+                  required: fold-data.at("required", default: false),
                   values: (value,),
                   data: (value-data,)
                 )
@@ -2098,12 +2101,30 @@
 
   // Apply folds separately (their fields' values are meaningless in the above dict)
   for (field-name, fold-data) in fold-chain {
-    final-values.at(field-name) = if fold-data.values == () {
-      fold-data.default
+    if fold-data.values == () {
+      // Use default.
+      // Field might be missing if no default.
+      if not fold-data.required {
+        final-values.insert(field-name, fold-data.default)
+      }
     } else if fold-data.folder == auto {
-      fold-data.default + fold-data.values.sum()
+      // Fold with '+'
+      final-values.insert(field-name, if fold-data.required {
+        fold-data.values.sum()
+      } else {
+        fold-data.default + fold-data.values.sum()
+      })
+    } else if fold-data.required {
+      // Folder function, but no default (reduce)
+      final-values.insert(if sys.version >= version(0, 12, 0) {
+        fold-data.values.reduce(fold-data.folder)
+      } else {
+        // Workaround for lack of 'array.reduce' in Typst 0.11.x
+        fold-data.values.slice(1).fold(fold-data.values.first(), fold-data.folder)
+      })
     } else {
-      fold-data.values.fold(fold-data.default, fold-data.folder)
+      // Folder function with default
+      final-values.insert(field-name, fold-data.values.fold(fold-data.default, fold-data.folder))
     }
   }
 
@@ -3131,7 +3152,9 @@
 
           // Fold received arguments with outer chain or defaults
           for (field-name, fold-data) in foldable-fields {
-            if field-name in args {
+            // If the field is required but not given, the default is a dummy value,
+            // so don't fold with it.
+            if field-name in args and (field-name in outer-chain or not fold-data.required) {
               let outer = outer-chain.at(field-name, default: fold-data.default)
               if fold-data.folder == auto {
                 finalized-chain.insert(field-name, outer + args.at(field-name))
@@ -3249,7 +3272,10 @@
                     if field-name in cond-set-foldable-fields {
                       let fold-data = cond-set-foldable-fields.at(field-name)
                       let outer = new-synthesized-fields.at(field-name, default: fold-data.default)
-                      if fold-data.folder == auto {
+                      if field-name not in outer and fold-data.required {
+                        // No folding if field has no default and was not specified previously
+                        new-synthesized-fields.insert(field-name, value)
+                      } else if fold-data.folder == auto {
                         new-synthesized-fields.insert(field-name, outer + value)
                       } else {
                         new-synthesized-fields.insert(field-name, (fold-data.folder)(outer, value))

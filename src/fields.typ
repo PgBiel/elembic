@@ -57,11 +57,9 @@
   let fold = if folds and not synthesized and "fold" in typeinfo and typeinfo.fold != none {
     assert(typeinfo.fold == auto or type(typeinfo.fold) == function, message: error-prefix + "type '" + typeinfo.name + "' doesn't appear to have a valid fold field (must be auto or function)")
     let fold-default = if required {
-      // No field default, use the type's own default to begin folding
-      let (res, value) = types.default(typeinfo)
-      assert(res, message: if not res { error-prefix + value } else { "" })
-
-      value
+      // No field default, use dummy value
+      // 'required' must be checked later
+      none
     } else {
       // Use the field default as starting point for folding
       default
@@ -70,6 +68,7 @@
     (
       folder: typeinfo.fold,
       default: fold-default,
+      required: required
     )
   } else {
     none
