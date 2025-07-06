@@ -15,7 +15,7 @@
   named: auto,
   synthesized: false,
   default: _missing,
-  folds: true,
+  folds: auto,
   internal: false,
   meta: (:),
 ) = {
@@ -25,7 +25,8 @@
   assert(doc == none or type(doc) == str, message: error-prefix + "'doc' must be none or a string (add documentation)")
   assert(type(synthesized) == bool, message: error-prefix + "'synthesized' must be a boolean (true: field is automatically synthesized and cannot be specified or overridden by the user; false: field can be manually specified and overridden by the user)")
   assert(type(required) == bool, message: error-prefix + "'required' must be a boolean")
-  assert(type(folds) == bool, message: error-prefix + "'folds' must be a boolean")
+  assert(folds == auto or type(folds) == bool, message: error-prefix + "'folds' must be a boolean or auto")
+  assert(folds != true or not required, message: error-prefix + "'folds' cannot be set to 'true' on required fields at the moment")
   assert(type(internal) == bool, message: error-prefix + "'internal' must be a boolean")
   assert(type(meta) == dictionary, message: error-prefix + "'meta' must be a dictionary")
   assert(named == auto or type(named) == bool, message: error-prefix + "'named' must be a boolean or auto")
@@ -52,6 +53,10 @@
     }
 
     value
+  }
+
+  if folds == auto {
+    folds = not required
   }
 
   let fold = if folds and not synthesized and "fold" in typeinfo and typeinfo.fold != none {
