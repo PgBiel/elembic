@@ -59,8 +59,8 @@
 #assert.eq(cast(wock(), types.union(wock, dock, 5)), (true, wock()))
 #assert.eq(cast(dock(), types.union(wock, dock, 5)), (true, dock()))
 #assert.eq(cast(5, types.union(wock, dock, 5)), (true, 5))
-#assert.eq(cast([abc], types.union(wock, dock, 5)), (false, "all typechecks for union failed\n  hint (element 'wock'): expected element wock, found text\n  hint (element 'dock'): expected element dock, found text\n  hint (literal '5'): given value wasn't equal to literal '5'"))
-#assert.eq(cast(stock(), types.union(wock, dock, 5)), (false, "all typechecks for union failed\n  hint (element 'wock'): expected element wock, found stock\n  hint (element 'dock'): expected element dock, found stock\n  hint (literal '5'): given value wasn't equal to literal '5'"))
+#assert.eq(cast([abc], types.union(wock, dock, 5)), (false, "all typechecks for union failed\n  hint (element 'wock'): expected element wock, found text\n  hint (element 'dock'): expected element dock, found text"))
+#assert.eq(cast(stock(), types.union(wock, dock, 5)), (false, "all typechecks for union failed\n  hint (element 'wock'): expected element wock, found stock\n  hint (element 'dock'): expected element dock, found stock"))
 
 #assert.eq(cast(wock(), types.union(int, wock, dock)), (true, wock()))
 #assert.eq(cast(dock(), types.union(int, wock, dock)), (true, dock()))

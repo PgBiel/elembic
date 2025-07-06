@@ -40,5 +40,5 @@
 #assert.eq(cast(1, person-union), (true, person1("Young", 1)))
 #assert.eq(cast(20, person-union), (true, person1("Generic", 20)))
 #assert.eq(cast(10pt, person-union), (true, person2("Generic", 5, border: 10pt)))
-#assert.eq(cast(20pt, person-union), (false, "all typechecks for union failed\n  hint (person1): failed to cast to custom type 'person1'\n  hint (person2): failed to cast to custom type 'person2'"))
+#assert.eq(cast(20pt, person-union), (false, "all typechecks for union failed\n  hint (person2): failed to cast to custom type 'person2'"))
 #assert.eq(cast("abc", person-union), (false, "expected person1, integer, person2 or length, found string"))
