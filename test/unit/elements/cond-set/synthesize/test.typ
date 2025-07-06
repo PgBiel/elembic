@@ -26,13 +26,16 @@
 )
 
 #wibble(number1: 20, run: it => assert.eq(it.number2, 21) + assert.eq(it.number4, 11))
+#wibble(number1: 20, label: <abc>, run: it => assert.eq(it.number2, 21) + assert.eq(it.number4, 11) + assert.eq(it.label, <abc>))
 
 // This shouldn't change anything
 #show: e.cond-set(wibble)
 
 #wibble(number1: 20, run: it => assert.eq(it.number2, 21) + assert.eq(it.number4, 11))
+#wibble(number1: 20, label: <abc>, run: it => assert.eq(it.number2, 21) + assert.eq(it.number4, 11) + assert.eq(it.label, <abc>))
 
 // Updating number3 should implicitly update number4
 #show: e.cond-set(wibble.with(number1: 20), number3: 50)
 
 #wibble(number1: 20, run: it => assert.eq(it.number2, 21) + assert.eq(it.number4, 51))
+#wibble(number1: 20, label: <abc>, run: it => assert.eq(it.number2, 21) + assert.eq(it.number4, 51) + assert.eq(it.label, <abc>))
