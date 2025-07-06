@@ -18,6 +18,9 @@
 #assert.eq(cast(none, types.union(color, float, content, length)), (true, []))
 #assert.eq(cast(5, types.union(color, types.exact(float), content, length)), (false, "expected color, float, none, content, string, symbol or length, found integer"))
 
+#assert.eq(cast((a: false), types.union(types.dict(int), types.dict(str))), (false, "all typechecks for union failed\n  hint (dict of integer): a value in a dictionary of integer did not typecheck\n  hint: at key \"a\": expected integer, found boolean\n  hint (dict of string): a value in a dictionary of string did not typecheck\n  hint: at key \"a\": expected string, found boolean"))
+#assert.eq(cast("multi input", types.union("a", types.dict(str))), (false, "all typechecks for union failed\n  hint (literal 'a'): given value wasn't equal to literal 'a'"))
+
 #assert.eq(default(types.union(color, 5, float)).first(), false)
 
 // Folding

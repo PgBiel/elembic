@@ -34,4 +34,4 @@
 #assert.eq(cast(int, person), (true, person("Joseph", 50)))
 #assert.eq(cast("abc", person), (false, "expected person, integer, float, stroke, length, color, gradient, " + str(types.native.tiling) + ", dictionary, type or function, found string"))
 #assert.eq(cast(5.0, person), (false, "all casts to custom type 'person' failed\n  hint (large float): value must be larger than 5"))
-#assert.eq(cast(float, person), (false, "all casts to custom type 'person' failed\n  hint (large float): value must be larger than 5"))
+#assert.eq(cast(float, person), (false, "all casts to custom type 'person' failed"))

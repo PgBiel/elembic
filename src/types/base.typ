@@ -335,7 +335,7 @@
   } else {
     let error-types = typeinfos.filter(t => t.error != none)
     x => {
-      "all typechecks for union failed" + error-types.map(t => "\n  hint (" + t.name + "): " + (t.error)(x)).sum(default: "")
+      "all typechecks for union failed" + error-types.filter(t => typeid(x) in t.input).map(t => "\n  hint (" + t.name + "): " + (t.error)(x)).sum(default: "")
     }
   }
 
