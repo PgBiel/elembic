@@ -3289,7 +3289,28 @@
                 }
               }
 
-              synthesized-fields = new-synthesized-fields
+              synthesized-fields = if affected-fields == (:) {
+                // No cond-set rules matched or did anything
+                synthesized-fields
+              } else if synthesize == none {
+                // Modified fields + args = final result
+                new-synthesized-fields
+              } else {
+                // Need to re-synthesize fields
+                tag.fields = new-synthesized-fields
+                let new-fields = synthesize(new-synthesized-fields + ((stored-data-key): tag))
+                if type(new-fields) != dictionary {
+                  assert(false, message: "elembic: element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
+                }
+                if stored-data-key in new-fields {
+                  _ = new-fields.remove(stored-data-key)
+                }
+                if has-label-arg and label != none and label != _missing {
+                  new-fields.label = label
+                }
+
+                new-fields
+              }
             }
 
             let new-global-data = if data-changed { editable-global-data } else { none }
