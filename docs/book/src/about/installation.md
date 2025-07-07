@@ -18,12 +18,12 @@ If you'd like to contribute or try out the latest development version, Elembic m
 
 To install Elembic as a local package in your system, see [https://github.com/typst/packages?tab=readme-ov-file#local-packages](https://github.com/typst/packages?tab=readme-ov-file#local-packages) for instructions.
 
-In particular, it involves downloading Elembic's files from either [GitHub (pgbiel/elembic)](https://github.com/PgBiel/elembic) or [Codeberg (pgbiel/elembic)](https://codeberg.org/PgBiel/elembic) and then copying it to `$LOCAL_PACKAGES_DIR/elembic/1.1.0`.
+In particular, it involves downloading Elembic's files from either [GitHub (pgbiel/elembic)](https://github.com/PgBiel/elembic) or [Codeberg (pgbiel/elembic)](https://codeberg.org/PgBiel/elembic) and then copying it to `$LOCAL_PACKAGES_DIR/elembic/1.1.1`.
 
 If you're using a Linux platform, there is the following one-liner command to install the latest development version (note: does not remove a prior installation):
 
 ```sh
-pkgbase="${XDG_DATA_HOME:-$HOME/.local/share}/typst/packages/local/elembic" && mkdir -p "$pkgbase/1.1.0" && curl -L https://github.com/PgBiel/elembic/archive/main.tar.gz | tar xz --strip-components=1 --directory="$pkgbase/1.1.0"
+pkgbase="${XDG_DATA_HOME:-$HOME/.local/share}/typst/packages/local/elembic" && mkdir -p "$pkgbase/1.1.1" && curl -L https://github.com/PgBiel/elembic/archive/main.tar.gz | tar xz --strip-components=1 --directory="$pkgbase/1.1.1"
 ```
 
-Elembic can then be imported with `import "@local/elembic:1.1.0" as e`.
+Elembic can then be imported with `import "@local/elembic:1.1.1" as e`.
