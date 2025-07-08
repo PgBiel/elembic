@@ -9,7 +9,7 @@ Bug fixes.
    - This might be revised in the future for custom types.
 - Fix panic when generating typecheck error message for unions with `check`able types, such as `literal(...)` or `dict(T)` ([GH#63](https://github.com/PgBiel/elembic/pull/63))
 
-**Full Changelog**: https://github.com/PgBiel/elembic/compare/v1.1.0...v1.1.1
+**Full Changelog**: [https://github.com/PgBiel/elembic/compare/v1.1.0...v1.1.1](https://github.com/PgBiel/elembic/compare/v1.1.0...v1.1.1)
 
 ## v1.1.0 (2025-06-19)
 
