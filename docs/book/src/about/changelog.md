@@ -23,7 +23,7 @@ Bug fixes.
   - The default of `labelable: auto` works as before and only accepts labels specified by parameter: `#elem(..., label: <label-here>)`.
   - Setting `labelable: false` removes the special `label` field altogether.
 
-**Full Changelog**: [https://github.com/PgBiel/elembic/compare/v1.1.0...v1.0.0](https://github.com/PgBiel/elembic/compare/v1.1.0...v1.0.0)
+**Full Changelog**: [https://github.com/PgBiel/elembic/compare/v1.0.0...v1.1.0](https://github.com/PgBiel/elembic/compare/v1.1.0...v1.0.0)
 
 ## v1.0.0 (2025-06-09)
 
