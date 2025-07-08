@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.1.1 (2025-07-08)
+
+Bug fixes.
+
+- Synthesized fields are no longer removed when using `cond-set`, instead being computed again ([GH#60](https://github.com/PgBiel/elembic/pull/60))
+- Required fields are no longer foldable to avoid bugs in some edge cases ([GH#61](https://github.com/PgBiel/elembic/pull/61))
+   - This might be revised in the future for custom types.
+- Fix panic when generating typecheck error message for unions with `check`able types, such as `literal(...)` or `dict(T)` ([GH#63](https://github.com/PgBiel/elembic/pull/63))
+
+**Full Changelog**: https://github.com/PgBiel/elembic/compare/v1.1.0...v1.1.1
+
 ## v1.1.0 (2025-06-19)
 
 ### What's changed
