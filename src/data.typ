@@ -97,7 +97,8 @@
 #let lbl-ref-figure-label-head = "__elembic_element_ref_figure_label_"
 
 // Label for a context which should panic with 'missing prepare()'...
-#let lbl-empty-prepare-check = <__elembic_empty_prepare_check>
+#let lbl-empty-prepare-check-v1 = <__elembic_empty_prepare_check> // elembic <=v1.1.1
+#let lbl-empty-prepare-check = <__elembic_empty_prepare_check_v2> // elembic >=v1.1.2
 
 // Label for the hidden figure used for references.
 #let lbl-ref-figure = <__elembic_element_ref_figure>

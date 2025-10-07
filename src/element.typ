@@ -1,4 +1,4 @@
-#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-elem-prepare-check-head, lbl-empty-prepare-check, labelable-elem-figure-kind, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-select-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
+#import "data.typ": data, lbl-show-head, lbl-meta-head, lbl-outer-head, lbl-counter-head, lbl-elem-prepare-check-head, lbl-empty-prepare-check-v1, lbl-empty-prepare-check, labelable-elem-figure-kind, lbl-ref-figure-kind-head, lbl-ref-figure-label-head, lbl-ref-figure, lbl-get, lbl-tag, lbl-rule-tag, lbl-old-rule-tag, lbl-special-rule-tag, lbl-data-metadata, lbl-stateful-mode, lbl-leaky-mode, lbl-normal-mode, lbl-auto-mode, lbl-global-select-head, prepared-rule-key, stored-data-key, element-key, element-data-key, element-meta-key, global-data-key, filter-key, special-rule-key, special-data-values, custom-type-key, custom-type-data-key, type-key, element-version, style-modes, style-state
 #import "fields.typ" as field-internals
 #import "filters.typ": verify-filter
 #import "types/base.typ"
@@ -2383,6 +2383,7 @@
 
   // Fix labelable elements
   show figure.where(kind: labelable-elem-figure-kind): set align(start)
+  show figure.where(kind: labelable-elem-figure-kind): set block(breakable: true)
   show figure.where(kind: labelable-elem-figure-kind): fig => {
     let fig-label = fig.at("label", default: none)
     if fig-label == none {
@@ -2407,6 +2408,7 @@
   }
 
   // Remove error about missing preparation
+  show lbl-empty-prepare-check-v1: none
   show lbl-empty-prepare-check: none
 
   doc
@@ -3593,11 +3595,11 @@
 
         if prepare != none {
           [#context {
-            assert(false, message: "elembic: element '" + name + "' needs preparation to display properly. Call '#show: e.prepare(" + name + ", /*, other elements...*/)' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that, check if both elembic and this element's package are up-to-date")
+            assert(false, message: "elembic: element '" + name + "' needs preparation to display properly. Call '#show: e.prepare(" + name + ", /*, other elements...*/)' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that but this error persists, check if both elembic and this element's package are up-to-date")
           }#lbl-elem-prepare-check]
         } else if labelable == true {
           [#context {
-            assert(false, message: "elembic: element '" + name + "' is labelable and needs basic preparation to display properly, call '#show: e.prepare()' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that, check if both elembic and this element's package are up-to-date")
+            assert(false, message: "elembic: element '" + name + "' is labelable and needs basic preparation to display properly, call '#show: e.prepare()' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that but this error persists, check if both elembic and this element's package are up-to-date")
           }#lbl-empty-prepare-check]
         }
 
