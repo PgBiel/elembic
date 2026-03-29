@@ -335,7 +335,7 @@
 #let dict_(type_) = {
   let (res, param) = validate(type_)
   if not res {
-    assert(false, message: "elembic: types.array: " + param)
+    assert(false, message: "elembic: types.dict: " + param)
   }
 
   base.dict_(
