@@ -2194,7 +2194,8 @@
     message: "elembic: stateful.debug-get: cannot use this function without enabling the global stateful toggle\n  hint: if you don't mind the performance hit, write '#show: e.stateful.enable()' somewhere above the 'context {}' in which this call happens, or at the top of the document to apply to all rules as well"
   )
 
-  let getter = get-styles.with(elements: global-data.elements, use-routine: true)
+  let bound-elements = global-data.elements
+  let getter = (element, elements: bound-elements, use-routine: true) => get-styles(element, elements: elements, use-routine: use-routine)
   (:..global-data, ctx: (get: getter))
 }
 
@@ -2219,7 +2220,8 @@
     }
   } else if "receiver" in get-meta and type(get-meta.receiver) == function {
     // Pick up updates from filtered rules
-    let getter = get-styles.with(elements: elements, use-routine: true)
+    let bound-elements = elements
+    let getter = (element, elements: bound-elements, use-routine: true) => get-styles(element, elements: elements, use-routine: use-routine)
     (get-meta.receiver)(getter)
   }
 }
@@ -2248,7 +2250,8 @@
 
     set bibliography(title: previous-bib-title)
 
-    let getter = get-styles.with(elements: global-data.elements, use-routine: true)
+    let bound-elements = global-data.elements
+    let getter = (element, elements: bound-elements, use-routine: true) => get-styles(element, elements: elements, use-routine: use-routine)
     let body = if include-global {
       receiver((:..global-data, ctx: (get: getter)))
     } else {
@@ -2728,7 +2731,8 @@
 
   let default-fields = fields.user-fields.values().map(f => if f.required { (:) } else { ((f.name): f.default) }).sum(default: (:))
 
-  let set-rule = set_.with((parse-args: parse-args, eid: eid, default-data: default-data, fields: fields))
+  let set-target = (parse-args: parse-args, eid: eid, default-data: default-data, fields: fields)
+  let set-rule = (..args) => set_(set-target, ..args)
 
   let get-rule(receiver) = prepare-get(g => receiver(g((eid: eid, default-fields: default-fields))))
 
@@ -2920,12 +2924,666 @@
   let _missing() = {}
   let std-label = label
 
+  // Share declaration-wide captures across instances.
+  let render-instance(args, __elembic_func, default-constructor, label, ref-label, labeling, previous-bib-title) = {
+    set bibliography(title: previous-bib-title)
+
+    // Only update style chain if needed, e.g. filtered rules
+    let data-changed = false
+    let global-data = if (
+      type(bibliography.title) == content
+      and bibliography.title.func() == metadata
+      and bibliography.title.at("label", default: none) == lbl-data-metadata
+    ) {
+      bibliography.title.value
+    } else {
+      (..default-global-data, first-bib-title: previous-bib-title)
+    }
+
+    let is-stateful = global-data.stateful
+    if is-stateful {
+      let chain = style-state.get()
+      global-data = if chain == () {
+        default-global-data
+      } else {
+        chain.last()
+      }
+    }
+
+    let ancestry = ()
+    let synthesized-futures = ()  // forward-compat callbacks which need synthesized fields
+    if "global" in global-data {
+      if "ancestry-chain" in global-data.global {
+        ancestry = global-data.global.ancestry-chain
+      }
+
+      // For set rules from the future...
+      if "__futures" in global-data.global and "global-data" in global-data.global.__futures {
+        for future in global-data.global.__futures.global-data {
+          if element-version <= future.max-version {
+            let res = (future.call)(
+              global-data: global-data,
+              element-data: global-data.elements.at(eid, default: default-data),
+              args: args,
+              all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func)),
+              __future-version: element-version
+            )
+
+            if "global-data" in res {
+              global-data = res.global-data
+              if "data-changed" in res {
+                // Maybe we don't want to forward changes to children
+                // More efficient etc.
+                data-changed = data-changed or res.data-changed
+              } else {
+                // Assume we want to forward these changes to children
+                data-changed = true
+              }
+            }
+
+            continue
+          }
+        }
+      }
+    }
+
+    let element-data = global-data.elements.at(eid, default: default-data)
+
+    if "__futures" in element-data {
+      if "construct" in element-data.__futures {
+        for future in element-data.__futures.construct {
+          if element-version <= future.max-version {
+            let res = (future.call)(
+              global-data: global-data,
+              element-data: element-data,
+              args: args,
+              all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func)),
+              __future-version: element-version
+            )
+
+            if "construct" in res {
+              return res.construct
+            }
+          }
+        }
+      }
+
+      if "element-data" in element-data.__futures {
+        for future in element-data.__futures.element-data {
+          if element-version <= future.max-version {
+            let res = (future.call)(
+              global-data: global-data,
+              element-data: element-data,
+              args: args,
+              all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func)),
+              __future-version: element-version
+            )
+
+            if "construct" in res {
+              return res.construct
+            }
+
+            if "element-data" in res {
+              element-data = res.element-data
+            }
+          }
+        }
+      }
+
+      if "synthesized-fields" in element-data.__futures {
+        synthesized-futures += element-data.__futures.synthesized-fields.filter(f => element-version <= f.max-version)
+      }
+    }
+
+    let has-synthesized-futures = synthesized-futures != ()
+    let settings = if "settings" in global-data { global-data.settings } else { default-global-data.settings }
+    let filters = element-data.at("filters", default: default-data.filters)
+    let has-filters = filters.all != ()
+    let cond-sets = element-data.at("cond-sets", default: default-data.cond-sets)
+    let has-cond-sets = cond-sets.args != ()
+    let show-rules = element-data.at("show-rules", default: default-data.show-rules)
+    let has-show-rules = show-rules.callbacks != ()
+    let selects = element-data.at("selects", default: default-data.selects)
+    let has-selects = selects.filters != ()
+    let has-ancestry-tracking = (
+      // Either a rule with a 'within(this element)' filter was used, or
+      // the user specifically requested ancestry tracking.
+      element-data.at("track-ancestry", default: default-data.track-ancestry)
+      or "track-ancestry" in settings and (
+        settings.track-ancestry == "any"
+        or eid in settings.track-ancestry
+      )
+    )
+
+    // Whether ancestry should be made available in a query() for this
+    // element, allowing usage of 'within()' rules for that element in a
+    // query.
+    let store-ancestry = has-ancestry-tracking or "store-ancestry" in settings and (
+      settings.store-ancestry == "any"
+      or eid in settings.store-ancestry
+    )
+
+    let updates-stylechain-inside = has-filters or has-ancestry-tracking
+
+    let (folded-fields, constructed-fields, active-revokes, first-active-index) = if (
+      element-data.revoke-chain == default-data.revoke-chain
+      and (
+        foldable-fields == (:)
+        or element-data.fold-chain == default-data.fold-chain
+        and args.keys().all(f => f not in foldable-fields)
+      )
+    ) {
+      let folded-fields = default-fields + element-data.chain.sum(default: (:))
+      // Sum the chain of dictionaries so that the latest value specified for
+      // each property wins.
+      (folded-fields, folded-fields + args, (:), 0)
+    } else {
+      // We can't just sum, we need to filter and fold first.
+      // Memoize this operation through a function.
+      let (folded, active-revokes, first-active-index) = fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
+      let outer-chain = default-fields + folded
+      let finalized-chain = outer-chain + args
+
+      // Fold received arguments with outer chain or defaults
+      for (field-name, fold-data) in foldable-fields {
+        if field-name in args {
+          let outer = outer-chain.at(field-name, default: fold-data.default)
+          if fold-data.folder == auto {
+            finalized-chain.insert(field-name, outer + args.at(field-name))
+          } else {
+            finalized-chain.insert(field-name, (fold-data.folder)(outer, args.at(field-name)))
+          }
+        }
+      }
+
+      (outer-chain, finalized-chain, active-revokes, first-active-index)
+    }
+
+    let filter-revokes
+    let filter-first-active-index
+    let editable-global-data
+    if has-filters or has-synthesized-futures {
+      // The closures inside context {} below will capture global-data,
+      // reducing potential for memoization of their output, so, for
+      // performance reasons, we only pass the real global data if
+      // necessary due to filtering (which will update the data on a
+      // match).
+      editable-global-data = global-data
+      filter-revokes = active-revokes
+      filter-first-active-index = first-active-index
+    } else if has-cond-sets or has-show-rules or has-selects {
+      // No need for global data, but still need revokes to see which
+      // conditional sets were revoked
+      filter-revokes = active-revokes
+      filter-first-active-index = first-active-index
+      if updates-stylechain-inside {
+        editable-global-data = global-data
+      }
+    } else if updates-stylechain-inside {
+      editable-global-data = global-data
+    }
+
+    let cond-set-foldable-fields
+    if has-cond-sets {
+      cond-set-foldable-fields = foldable-fields
+    }
+
+    let all-elem-data-for-futures
+    let element-data-for-futures
+    if has-synthesized-futures {
+      all-elem-data-for-futures = (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func))
+      element-data-for-futures = element-data
+    }
+
+    let shown = {
+      let bound-elements = global-data.elements
+      let tag-getter = (element, elements: bound-elements, use-routine: false) => get-styles(element, elements: elements, use-routine: use-routine)
+      let tag = (
+        data-kind: "element-instance",
+        body: none,
+        fields: constructed-fields,
+        func: __elembic_func,
+        scope: scope,
+        default-constructor: default-constructor,
+        name: name,
+        eid: eid,
+        ctx: if contextual {
+          // Note: we add ancestry later if there is ancestry tracking
+          // to avoid interfering with memoization of other things
+          (get: tag-getter, ancestry: ancestry)
+        } else {
+          (:)
+        },
+        counter: element-counter,
+        reference: reference,
+        custom-ref: none,
+        fields-known: true,
+        labelable: labelable,
+        valid: true
+      )
+
+      {
+        // Use context for synthesize as well
+        let synthesized-fields = if synthesize == none {
+          constructed-fields
+        } else {
+          // Pass contextual information to synthesize
+          // Remove it afterwards to ensure the final tag's 'fields' won't
+          // have its own copy of the tag
+          let new-fields = synthesize(constructed-fields + ((stored-data-key): tag))
+          if type(new-fields) != dictionary {
+            assert(false, message: "elembic: element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
+          }
+          if stored-data-key in new-fields {
+            _ = new-fields.remove(stored-data-key)
+          }
+          new-fields
+        }
+
+        if has-label-arg and label != none and label != _missing {
+          synthesized-fields.label = label
+        }
+
+        // Update synthesized fields BEFORE applying filters!
+        if has-cond-sets {
+          let i = 0
+          let new-synthesized-fields = folded-fields // only add args later (args must win)
+          let affected-fields = (:)
+          for filter in cond-sets.filters {
+            let data = cond-sets.data.at(i)
+            if (
+              filter != none
+              and (data.index == none or data.index >= filter-first-active-index)
+              and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
+              and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
+            ) {
+              let cond-args = cond-sets.args.at(i)
+
+              affected-fields += cond-args
+
+              // Fold received arguments with existing fields or defaults
+              for (field-name, value) in cond-args {
+                if field-name in cond-set-foldable-fields {
+                  let fold-data = cond-set-foldable-fields.at(field-name)
+                  let outer = new-synthesized-fields.at(field-name, default: fold-data.default)
+                  if fold-data.folder == auto {
+                    new-synthesized-fields.insert(field-name, outer + value)
+                  } else {
+                    new-synthesized-fields.insert(field-name, (fold-data.folder)(outer, value))
+                  }
+                } else {
+                  new-synthesized-fields.insert(field-name, value)
+                }
+              }
+            }
+            i += 1
+          }
+
+          // Fold args again (they must win).
+          for (field-name, value) in synthesized-fields {
+            if field-name not in args {
+              // Not an argument, and we already folded it with cond-sets
+              // before (not a synthesized field), so stop.
+              continue
+            }
+
+            if (
+              field-name in affected-fields
+              and field-name in cond-set-foldable-fields
+              // If field was changed due to synthetization, don't allow
+              // folding it further
+              and constructed-fields.at(field-name) == value
+            ) {
+              let fold-data = cond-set-foldable-fields.at(field-name)
+              if fold-data.folder == auto {
+                new-synthesized-fields.at(field-name) += args.at(field-name)
+              } else {
+                new-synthesized-fields.at(field-name) = (fold-data.folder)(new-synthesized-fields.at(field-name), args.at(field-name))
+              }
+            } else {
+              // Undo (give precedence to already folded and synthesized argument)
+              new-synthesized-fields.insert(field-name, value)
+            }
+          }
+
+          synthesized-fields = if affected-fields == (:) {
+            // No cond-set rules matched or did anything
+            synthesized-fields
+          } else if synthesize == none {
+            // Modified fields + args = final result
+            new-synthesized-fields
+          } else {
+            // Need to re-synthesize fields
+            tag.fields = new-synthesized-fields
+            let new-fields = synthesize(new-synthesized-fields + ((stored-data-key): tag))
+            if type(new-fields) != dictionary {
+              assert(false, message: "elembic: element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
+            }
+            if stored-data-key in new-fields {
+              _ = new-fields.remove(stored-data-key)
+            }
+            if has-label-arg and label != none and label != _missing {
+              new-fields.label = label
+            }
+
+            new-fields
+          }
+        }
+
+        let new-global-data = if data-changed { editable-global-data } else { none }
+        if has-synthesized-futures {
+          if new-global-data == none {
+            new-global-data = editable-global-data
+          }
+          let element-data-for-futures = element-data-for-futures
+          for future in synthesized-futures {
+            let res = (future.call)(
+              synthesized-fields: synthesized-fields,
+              global-data: new-global-data,
+              element-data: element-data-for-futures,
+              args: args,
+              all-element-data: all-elem-data-for-futures,
+              __future-version: element-version
+            )
+
+            if "construct" in res {
+              return res.construct
+            }
+
+            if "global-data" in res {
+              new-global-data = res.global-data
+            }
+
+            if "element-data" in res {
+              element-data-for-futures = res.element-data
+            }
+
+            if "synthesized-fields" in res {
+              synthesized-fields = res.synthesized-fields
+            }
+          }
+        }
+
+        let select-labels = ()
+        if has-selects {
+          let i = 0
+          for filter in selects.filters {
+            let data = selects.data.at(i)
+            if (
+              filter != none
+              and (data.index == none or data.index >= filter-first-active-index)
+              and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
+              and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
+            ) {
+              select-labels.push(selects.labels.at(i))
+            }
+            i += 1
+          }
+        }
+
+        let tag = tag
+        tag.fields = synthesized-fields
+
+        // Store contextual information in synthesize
+        synthesized-fields.insert(stored-data-key, tag)
+
+        if has-filters {
+          let i = 0
+          let rules = ()
+          for filter in filters.all {
+            let data = filters.data.at(i)
+            if (
+              filter != none
+              and (data.index == none or data.index >= filter-first-active-index)
+              and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
+              and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
+            ) {
+              let rule = filters.rules.at(i)
+              if rule.kind == apply {
+                rules += rule.rules
+              } else {
+                rules.push(rule)
+              }
+            }
+            i += 1
+          }
+
+          if rules != () {
+            // Only update style chain if at least one filter matches
+            new-global-data = editable-global-data
+
+            new-global-data += apply-rules(
+              rules,
+              elements: new-global-data.elements,
+              settings: new-global-data.at("settings", default: default-global-data.settings),
+              global: new-global-data.at("global", default: default-global-data.global)
+            )
+          }
+        }
+
+        if has-ancestry-tracking {
+          if new-global-data == none {
+            new-global-data = editable-global-data
+          }
+
+          if "global" not in new-global-data {
+            new-global-data.global = default-global-data
+          }
+          if "ancestry-chain" in new-global-data.global {
+            new-global-data.global.ancestry-chain.push((eid: eid, fields: synthesized-fields))
+          } else {
+            new-global-data.global.ancestry-chain = ((eid: eid, fields: synthesized-fields),)
+          }
+        }
+
+        // Save updated styles from applied rules
+        show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if new-global-data != none and not is-stateful
+
+        if new-global-data != none and is-stateful {
+          // Popping after the if below
+          style-state.update(chain => {
+            chain.push(new-global-data)
+            chain
+          })
+        }
+
+        // Filter show rules
+        let show-rules = if has-show-rules {
+          let i = 0
+          let final-rules = ()
+          for filter in show-rules.filters {
+            let data = show-rules.data.at(i)
+            if (
+              filter != none
+              and (data.index == none or data.index >= filter-first-active-index)
+              and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
+              and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
+            ) {
+              final-rules.push(show-rules.callbacks.at(i))
+            }
+            i += 1
+          }
+          final-rules
+        } else {
+          ()
+        }
+
+        let newest-global-data = if new-global-data == none { global-data } else { new-global-data }
+        if count-needs-fields or contextual {
+          if count-needs-fields {
+            count(synthesized-fields)
+          }
+
+          // Wrap in additional context so the counter step is detected
+          context {
+            let body = display(synthesized-fields)
+            let tag = tag
+            tag.body = body
+
+            if custom-ref != none {
+              // Update with body
+              let synthesized-fields = synthesized-fields
+              synthesized-fields.at(stored-data-key) = tag
+
+              tag.custom-ref = custom-ref(synthesized-fields)
+            }
+
+            let tag-metadata = metadata(tag)
+
+            if reference != none and ref-label != none or outline != none {
+              // Update with custom-ref
+              let synthesized-fields = synthesized-fields
+              synthesized-fields.at(stored-data-key) = tag
+
+              ref-figure(tag, synthesized-fields, ref-label)
+            }
+
+            if not contextual and store-ancestry {
+              tag.ctx = (ancestry: ancestry)
+            }
+
+            let body = [#{
+              // Wrap anything in a label in a styled() to ensure joining
+              // with the labeled sequence won't append to the labeled
+              // sequence. See issue #53 on GitHub for more information.
+              show <__some_unknown_label>: it => it
+              [#body#metadata(tag)#lbl-tag]
+            }#lbl-show]
+
+            if select-labels != () {
+              body = select-labels.fold(body, (acc, lbl) => [#{
+                show <__some_unknown_label>: it => it
+                [#acc#metadata(tag)#lbl-tag]
+              }#lbl])
+            }
+
+            let shown-body = if show-rules == () {
+              body
+            } else {
+              apply-show-rules(body, show-rules.len() - 1, show-rules)
+            }
+
+            // Include metadata for querying
+            let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
+
+            if labeling != none {
+              [#{
+                show <__some_unknown_label>: it => it
+                [#meta-body#metadata(tag)#lbl-tag]
+              }#labeling]
+            } else {
+              meta-body
+            }
+          }
+        } else {
+          let body = display(synthesized-fields)
+
+          // Optimization: flatten 'get'
+          while _is-get(body) { body = _recurse-get(body, elements: newest-global-data.elements) }
+
+          let tag = tag
+          tag.body = body
+
+          if custom-ref != none {
+            // Update with body
+            synthesized-fields.at(stored-data-key) = tag
+
+            tag.custom-ref = custom-ref(synthesized-fields)
+          }
+
+          let tag-metadata = metadata(tag)
+
+          if reference != none and ref-label != none or outline != none {
+            // Update with custom-ref
+            synthesized-fields.at(stored-data-key) = tag
+
+            ref-figure(tag, synthesized-fields, ref-label)
+          }
+
+          if not contextual and store-ancestry {
+            tag.ctx = (ancestry: ancestry)
+          }
+
+          let body = [#{
+            // Wrap anything in a label in a styled() to ensure joining
+            // with the labeled sequence won't append to the labeled
+            // sequence. See issue #53 on GitHub for more information.
+            show <__some_unknown_label>: it => it
+            [#body#metadata(tag)#lbl-tag]
+          }#lbl-show]
+
+          if select-labels != () {
+            body = select-labels.fold(body, (acc, lbl) => [#{
+              show <__some_unknown_label>: it => it
+              [#acc#metadata(tag)#lbl-tag]
+            }#lbl])
+          }
+
+          let shown-body = if show-rules == () {
+            body
+          } else {
+            apply-show-rules(body, show-rules.len() - 1, show-rules)
+          }
+
+          // Include metadata for querying
+          let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
+
+          if labeling != none {
+            [#{
+              show <__some_unknown_label>: it => it
+              [#meta-body#metadata(tag)#lbl-tag]
+            }#labeling]
+          } else {
+            meta-body
+          }
+        }
+
+        if new-global-data != none and is-stateful {
+          // Pushed before the if above
+          style-state.update(chain => {
+            _ = chain.pop()
+            chain
+          })
+        }
+      }
+    }
+
+    if prepare != none {
+      [#context {
+        assert(false, message: "elembic: element '" + name + "' needs preparation to display properly. Call '#show: e.prepare(" + name + ", /*, other elements...*/)' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that but this error persists, check if both elembic and this element's package are up-to-date")
+      }#lbl-elem-prepare-check]
+    } else if labelable == true {
+      [#context {
+        assert(false, message: "elembic: element '" + name + "' is labelable and needs basic preparation to display properly, call '#show: e.prepare()' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that but this error persists, check if both elembic and this element's package are up-to-date")
+      }#lbl-empty-prepare-check]
+    }
+
+    if data-changed and not updates-stylechain-inside {
+      if is-stateful {
+        [#style-state.update(chain => {
+          chain.push(global-data)
+          chain
+        })#shown#style-state.update(chain => {
+          _ = chain.pop()
+          chain
+        })]
+      } else {
+        show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
+        shown
+      }
+    } else {
+      shown
+    }
+  }
+
   let default-constructor(..args, __elembic_data: none, __elembic_func: auto, __elembic_mode: auto, __elembic_settings: (:), __elembic_outer_label: false, label: _missing) = {
     if __elembic_func == auto {
       __elembic_func = default-constructor
     }
 
-    let default-constructor = default-constructor.with(__elembic_func: __elembic_func)
+    let base-constructor = default-constructor
+    let bound-func = __elembic_func
+    let default-constructor = (..args, __elembic_func: bound-func) => base-constructor(..args, __elembic_func: __elembic_func)
     if __elembic_data != none {
       return if __elembic_data == special-data-values.get-data {
         (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func))
@@ -2973,652 +3631,7 @@
     let inner = early-step + [#context {
       let previous-bib-title = bibliography.title
       [#context {
-        set bibliography(title: previous-bib-title)
-
-        // Only update style chain if needed, e.g. filtered rules
-        let data-changed = false
-        let global-data = if (
-          type(bibliography.title) == content
-          and bibliography.title.func() == metadata
-          and bibliography.title.at("label", default: none) == lbl-data-metadata
-        ) {
-          bibliography.title.value
-        } else {
-          (..default-global-data, first-bib-title: previous-bib-title)
-        }
-
-        let is-stateful = global-data.stateful
-        if is-stateful {
-          let chain = style-state.get()
-          global-data = if chain == () {
-            default-global-data
-          } else {
-            chain.last()
-          }
-        }
-
-        let ancestry = ()
-        let synthesized-futures = ()  // forward-compat callbacks which need synthesized fields
-        if "global" in global-data {
-          if "ancestry-chain" in global-data.global {
-            ancestry = global-data.global.ancestry-chain
-          }
-
-          // For set rules from the future...
-          if "__futures" in global-data.global and "global-data" in global-data.global.__futures {
-            for future in global-data.global.__futures.global-data {
-              if element-version <= future.max-version {
-                let res = (future.call)(
-                  global-data: global-data,
-                  element-data: global-data.elements.at(eid, default: default-data),
-                  args: args,
-                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func)),
-                  __future-version: element-version
-                )
-
-                if "global-data" in res {
-                  global-data = res.global-data
-                  if "data-changed" in res {
-                    // Maybe we don't want to forward changes to children
-                    // More efficient etc.
-                    data-changed = data-changed or res.data-changed
-                  } else {
-                    // Assume we want to forward these changes to children
-                    data-changed = true
-                  }
-                }
-
-                continue
-              }
-            }
-          }
-        }
-
-        let element-data = global-data.elements.at(eid, default: default-data)
-
-        if "__futures" in element-data {
-          if "construct" in element-data.__futures {
-            for future in element-data.__futures.construct {
-              if element-version <= future.max-version {
-                let res = (future.call)(
-                  global-data: global-data,
-                  element-data: element-data,
-                  args: args,
-                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func)),
-                  __future-version: element-version
-                )
-
-                if "construct" in res {
-                  return res.construct
-                }
-              }
-            }
-          }
-
-          if "element-data" in element-data.__futures {
-            for future in element-data.__futures.element-data {
-              if element-version <= future.max-version {
-                let res = (future.call)(
-                  global-data: global-data,
-                  element-data: element-data,
-                  args: args,
-                  all-element-data: (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func)),
-                  __future-version: element-version
-                )
-
-                if "construct" in res {
-                  return res.construct
-                }
-
-                if "element-data" in res {
-                  element-data = res.element-data
-                }
-              }
-            }
-          }
-
-          if "synthesized-fields" in element-data.__futures {
-            synthesized-futures += element-data.__futures.synthesized-fields.filter(f => element-version <= f.max-version)
-          }
-        }
-
-        let has-synthesized-futures = synthesized-futures != ()
-        let settings = if "settings" in global-data { global-data.settings } else { default-global-data.settings }
-        let filters = element-data.at("filters", default: default-data.filters)
-        let has-filters = filters.all != ()
-        let cond-sets = element-data.at("cond-sets", default: default-data.cond-sets)
-        let has-cond-sets = cond-sets.args != ()
-        let show-rules = element-data.at("show-rules", default: default-data.show-rules)
-        let has-show-rules = show-rules.callbacks != ()
-        let selects = element-data.at("selects", default: default-data.selects)
-        let has-selects = selects.filters != ()
-        let has-ancestry-tracking = (
-          // Either a rule with a 'within(this element)' filter was used, or
-          // the user specifically requested ancestry tracking.
-          element-data.at("track-ancestry", default: default-data.track-ancestry)
-          or "track-ancestry" in settings and (
-            settings.track-ancestry == "any"
-            or eid in settings.track-ancestry
-          )
-        )
-
-        // Whether ancestry should be made available in a query() for this
-        // element, allowing usage of 'within()' rules for that element in a
-        // query.
-        let store-ancestry = has-ancestry-tracking or "store-ancestry" in settings and (
-          settings.store-ancestry == "any"
-          or eid in settings.store-ancestry
-        )
-
-        let updates-stylechain-inside = has-filters or has-ancestry-tracking
-
-        let (folded-fields, constructed-fields, active-revokes, first-active-index) = if (
-          element-data.revoke-chain == default-data.revoke-chain
-          and (
-            foldable-fields == (:)
-            or element-data.fold-chain == default-data.fold-chain
-            and args.keys().all(f => f not in foldable-fields)
-          )
-        ) {
-          let folded-fields = default-fields + element-data.chain.sum(default: (:))
-          // Sum the chain of dictionaries so that the latest value specified for
-          // each property wins.
-          (folded-fields, folded-fields + args, (:), 0)
-        } else {
-          // We can't just sum, we need to filter and fold first.
-          // Memoize this operation through a function.
-          let (folded, active-revokes, first-active-index) = fold-styles(element-data.chain, element-data.data-chain, element-data.revoke-chain, element-data.fold-chain)
-          let outer-chain = default-fields + folded
-          let finalized-chain = outer-chain + args
-
-          // Fold received arguments with outer chain or defaults
-          for (field-name, fold-data) in foldable-fields {
-            if field-name in args {
-              let outer = outer-chain.at(field-name, default: fold-data.default)
-              if fold-data.folder == auto {
-                finalized-chain.insert(field-name, outer + args.at(field-name))
-              } else {
-                finalized-chain.insert(field-name, (fold-data.folder)(outer, args.at(field-name)))
-              }
-            }
-          }
-
-          (outer-chain, finalized-chain, active-revokes, first-active-index)
-        }
-
-        let filter-revokes
-        let filter-first-active-index
-        let editable-global-data
-        if has-filters or has-synthesized-futures {
-          // The closures inside context {} below will capture global-data,
-          // reducing potential for memoization of their output, so, for
-          // performance reasons, we only pass the real global data if
-          // necessary due to filtering (which will update the data on a
-          // match).
-          editable-global-data = global-data
-          filter-revokes = active-revokes
-          filter-first-active-index = first-active-index
-        } else if has-cond-sets or has-show-rules or has-selects {
-          // No need for global data, but still need revokes to see which
-          // conditional sets were revoked
-          filter-revokes = active-revokes
-          filter-first-active-index = first-active-index
-          if updates-stylechain-inside {
-            editable-global-data = global-data
-          }
-        } else if updates-stylechain-inside {
-          editable-global-data = global-data
-        }
-
-        let cond-set-foldable-fields
-        if has-cond-sets {
-          cond-set-foldable-fields = foldable-fields
-        }
-
-        let all-elem-data-for-futures
-        let element-data-for-futures
-        if has-synthesized-futures {
-          all-elem-data-for-futures = (data-kind: "element", ..elem-data, func: __elembic_func, default-constructor: default-constructor, where: where(__elembic_func))
-          element-data-for-futures = element-data
-        }
-
-        let shown = {
-          let tag = (
-            data-kind: "element-instance",
-            body: none,
-            fields: constructed-fields,
-            func: __elembic_func,
-            scope: scope,
-            default-constructor: default-constructor,
-            name: name,
-            eid: eid,
-            ctx: if contextual {
-              // Note: we add ancestry later if there is ancestry tracking
-              // to avoid interfering with memoization of other things
-              (get: get-styles.with(elements: global-data.elements), ancestry: ancestry)
-            } else {
-              (:)
-            },
-            counter: element-counter,
-            reference: reference,
-            custom-ref: none,
-            fields-known: true,
-            labelable: labelable,
-            valid: true
-          )
-
-          {
-            // Use context for synthesize as well
-            let synthesized-fields = if synthesize == none {
-              constructed-fields
-            } else {
-              // Pass contextual information to synthesize
-              // Remove it afterwards to ensure the final tag's 'fields' won't
-              // have its own copy of the tag
-              let new-fields = synthesize(constructed-fields + ((stored-data-key): tag))
-              if type(new-fields) != dictionary {
-                assert(false, message: "elembic: element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
-              }
-              if stored-data-key in new-fields {
-                _ = new-fields.remove(stored-data-key)
-              }
-              new-fields
-            }
-
-            if has-label-arg and label != none and label != _missing {
-              synthesized-fields.label = label
-            }
-
-            // Update synthesized fields BEFORE applying filters!
-            if has-cond-sets {
-              let i = 0
-              let new-synthesized-fields = folded-fields // only add args later (args must win)
-              let affected-fields = (:)
-              for filter in cond-sets.filters {
-                let data = cond-sets.data.at(i)
-                if (
-                  filter != none
-                  and (data.index == none or data.index >= filter-first-active-index)
-                  and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
-                ) {
-                  let cond-args = cond-sets.args.at(i)
-
-                  affected-fields += cond-args
-
-                  // Fold received arguments with existing fields or defaults
-                  for (field-name, value) in cond-args {
-                    if field-name in cond-set-foldable-fields {
-                      let fold-data = cond-set-foldable-fields.at(field-name)
-                      let outer = new-synthesized-fields.at(field-name, default: fold-data.default)
-                      if fold-data.folder == auto {
-                        new-synthesized-fields.insert(field-name, outer + value)
-                      } else {
-                        new-synthesized-fields.insert(field-name, (fold-data.folder)(outer, value))
-                      }
-                    } else {
-                      new-synthesized-fields.insert(field-name, value)
-                    }
-                  }
-                }
-                i += 1
-              }
-
-              // Fold args again (they must win).
-              for (field-name, value) in synthesized-fields {
-                if field-name not in args {
-                  // Not an argument, and we already folded it with cond-sets
-                  // before (not a synthesized field), so stop.
-                  continue
-                }
-
-                if (
-                  field-name in affected-fields
-                  and field-name in cond-set-foldable-fields
-                  // If field was changed due to synthetization, don't allow
-                  // folding it further
-                  and constructed-fields.at(field-name) == value
-                ) {
-                  let fold-data = cond-set-foldable-fields.at(field-name)
-                  if fold-data.folder == auto {
-                    new-synthesized-fields.at(field-name) += args.at(field-name)
-                  } else {
-                    new-synthesized-fields.at(field-name) = (fold-data.folder)(new-synthesized-fields.at(field-name), args.at(field-name))
-                  }
-                } else {
-                  // Undo (give precedence to already folded and synthesized argument)
-                  new-synthesized-fields.insert(field-name, value)
-                }
-              }
-
-              synthesized-fields = if affected-fields == (:) {
-                // No cond-set rules matched or did anything
-                synthesized-fields
-              } else if synthesize == none {
-                // Modified fields + args = final result
-                new-synthesized-fields
-              } else {
-                // Need to re-synthesize fields
-                tag.fields = new-synthesized-fields
-                let new-fields = synthesize(new-synthesized-fields + ((stored-data-key): tag))
-                if type(new-fields) != dictionary {
-                  assert(false, message: "elembic: element '" + name + "': 'synthesize' didn't return a dictionary, but rather " + repr(new-fields) + " (a(n) '" + str(type(new-fields)) + "') instead). Please contact the element author.")
-                }
-                if stored-data-key in new-fields {
-                  _ = new-fields.remove(stored-data-key)
-                }
-                if has-label-arg and label != none and label != _missing {
-                  new-fields.label = label
-                }
-
-                new-fields
-              }
-            }
-
-            let new-global-data = if data-changed { editable-global-data } else { none }
-            if has-synthesized-futures {
-              if new-global-data == none {
-                new-global-data = editable-global-data
-              }
-              let element-data-for-futures = element-data-for-futures
-              for future in synthesized-futures {
-                let res = (future.call)(
-                  synthesized-fields: synthesized-fields,
-                  global-data: new-global-data,
-                  element-data: element-data-for-futures,
-                  args: args,
-                  all-element-data: all-elem-data-for-futures,
-                  __future-version: element-version
-                )
-
-                if "construct" in res {
-                  return res.construct
-                }
-
-                if "global-data" in res {
-                  new-global-data = res.global-data
-                }
-
-                if "element-data" in res {
-                  element-data-for-futures = res.element-data
-                }
-
-                if "synthesized-fields" in res {
-                  synthesized-fields = res.synthesized-fields
-                }
-              }
-            }
-
-            let select-labels = ()
-            if has-selects {
-              let i = 0
-              for filter in selects.filters {
-                let data = selects.data.at(i)
-                if (
-                  filter != none
-                  and (data.index == none or data.index >= filter-first-active-index)
-                  and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
-                ) {
-                  select-labels.push(selects.labels.at(i))
-                }
-                i += 1
-              }
-            }
-
-            let tag = tag
-            tag.fields = synthesized-fields
-
-            // Store contextual information in synthesize
-            synthesized-fields.insert(stored-data-key, tag)
-
-            if has-filters {
-              let i = 0
-              let rules = ()
-              for filter in filters.all {
-                let data = filters.data.at(i)
-                if (
-                  filter != none
-                  and (data.index == none or data.index >= filter-first-active-index)
-                  and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
-                ) {
-                  let rule = filters.rules.at(i)
-                  if rule.kind == apply {
-                    rules += rule.rules
-                  } else {
-                    rules.push(rule)
-                  }
-                }
-                i += 1
-              }
-
-              if rules != () {
-                // Only update style chain if at least one filter matches
-                new-global-data = editable-global-data
-
-                new-global-data += apply-rules(
-                  rules,
-                  elements: new-global-data.elements,
-                  settings: new-global-data.at("settings", default: default-global-data.settings),
-                  global: new-global-data.at("global", default: default-global-data.global)
-                )
-              }
-            }
-
-            if has-ancestry-tracking {
-              if new-global-data == none {
-                new-global-data = editable-global-data
-              }
-
-              if "global" not in new-global-data {
-                new-global-data.global = default-global-data
-              }
-              if "ancestry-chain" in new-global-data.global {
-                new-global-data.global.ancestry-chain.push((eid: eid, fields: synthesized-fields))
-              } else {
-                new-global-data.global.ancestry-chain = ((eid: eid, fields: synthesized-fields),)
-              }
-            }
-
-            // Save updated styles from applied rules
-            show lbl-get: set bibliography(title: [#metadata(new-global-data)#lbl-data-metadata]) if new-global-data != none and not is-stateful
-
-            if new-global-data != none and is-stateful {
-              // Popping after the if below
-              style-state.update(chain => {
-                chain.push(new-global-data)
-                chain
-              })
-            }
-
-            // Filter show rules
-            let show-rules = if has-show-rules {
-              let i = 0
-              let final-rules = ()
-              for filter in show-rules.filters {
-                let data = show-rules.data.at(i)
-                if (
-                  filter != none
-                  and (data.index == none or data.index >= filter-first-active-index)
-                  and data.names.all(n => n not in filter-revokes or data.index == none or data.index >= filter-revokes.at(n))
-                  and verify-filter(synthesized-fields, eid: eid, filter: filter, ancestry: if "may-need-ancestry" in filter and filter.may-need-ancestry { ancestry } else { () })
-                ) {
-                  final-rules.push(show-rules.callbacks.at(i))
-                }
-                i += 1
-              }
-              final-rules
-            } else {
-              ()
-            }
-
-            let newest-global-data = if new-global-data == none { global-data } else { new-global-data }
-            if count-needs-fields or contextual {
-              if count-needs-fields {
-                count(synthesized-fields)
-              }
-
-              // Wrap in additional context so the counter step is detected
-              context {
-                let body = display(synthesized-fields)
-                let tag = tag
-                tag.body = body
-
-                if custom-ref != none {
-                  // Update with body
-                  let synthesized-fields = synthesized-fields
-                  synthesized-fields.at(stored-data-key) = tag
-
-                  tag.custom-ref = custom-ref(synthesized-fields)
-                }
-
-                let tag-metadata = metadata(tag)
-
-                if reference != none and ref-label != none or outline != none {
-                  // Update with custom-ref
-                  let synthesized-fields = synthesized-fields
-                  synthesized-fields.at(stored-data-key) = tag
-
-                  ref-figure(tag, synthesized-fields, ref-label)
-                }
-
-                if not contextual and store-ancestry {
-                  tag.ctx = (ancestry: ancestry)
-                }
-
-                let body = [#{
-                  // Wrap anything in a label in a styled() to ensure joining
-                  // with the labeled sequence won't append to the labeled
-                  // sequence. See issue #53 on GitHub for more information.
-                  show <__some_unknown_label>: it => it
-                  [#body#metadata(tag)#lbl-tag]
-                }#lbl-show]
-
-                if select-labels != () {
-                  body = select-labels.fold(body, (acc, lbl) => [#{
-                    show <__some_unknown_label>: it => it
-                    [#acc#metadata(tag)#lbl-tag]
-                  }#lbl])
-                }
-
-                let shown-body = if show-rules == () {
-                  body
-                } else {
-                  apply-show-rules(body, show-rules.len() - 1, show-rules)
-                }
-
-                // Include metadata for querying
-                let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
-
-                if labeling != none {
-                  [#{
-                    show <__some_unknown_label>: it => it
-                    [#meta-body#metadata(tag)#lbl-tag]
-                  }#labeling]
-                } else {
-                  meta-body
-                }
-              }
-            } else {
-              let body = display(synthesized-fields)
-
-              // Optimization: flatten 'get'
-              while _is-get(body) { body = _recurse-get(body, elements: newest-global-data.elements) }
-
-              let tag = tag
-              tag.body = body
-
-              if custom-ref != none {
-                // Update with body
-                synthesized-fields.at(stored-data-key) = tag
-
-                tag.custom-ref = custom-ref(synthesized-fields)
-              }
-
-              let tag-metadata = metadata(tag)
-
-              if reference != none and ref-label != none or outline != none {
-                // Update with custom-ref
-                synthesized-fields.at(stored-data-key) = tag
-
-                ref-figure(tag, synthesized-fields, ref-label)
-              }
-
-              if not contextual and store-ancestry {
-                tag.ctx = (ancestry: ancestry)
-              }
-
-              let body = [#{
-                // Wrap anything in a label in a styled() to ensure joining
-                // with the labeled sequence won't append to the labeled
-                // sequence. See issue #53 on GitHub for more information.
-                show <__some_unknown_label>: it => it
-                [#body#metadata(tag)#lbl-tag]
-              }#lbl-show]
-
-              if select-labels != () {
-                body = select-labels.fold(body, (acc, lbl) => [#{
-                  show <__some_unknown_label>: it => it
-                  [#acc#metadata(tag)#lbl-tag]
-                }#lbl])
-              }
-
-              let shown-body = if show-rules == () {
-                body
-              } else {
-                apply-show-rules(body, show-rules.len() - 1, show-rules)
-              }
-
-              // Include metadata for querying
-              let meta-body = [#shown-body#metadata(((element-meta-key): true, kind: "element-meta", eid: eid, rendered: body, (stored-data-key): tag))#lbl-meta#metadata(tag)#lbl-tag]
-
-              if labeling != none {
-                [#{
-                  show <__some_unknown_label>: it => it
-                  [#meta-body#metadata(tag)#lbl-tag]
-                }#labeling]
-              } else {
-                meta-body
-              }
-            }
-
-            if new-global-data != none and is-stateful {
-              // Pushed before the if above
-              style-state.update(chain => {
-                _ = chain.pop()
-                chain
-              })
-            }
-          }
-        }
-
-        if prepare != none {
-          [#context {
-            assert(false, message: "elembic: element '" + name + "' needs preparation to display properly. Call '#show: e.prepare(" + name + ", /*, other elements...*/)' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that but this error persists, check if both elembic and this element's package are up-to-date")
-          }#lbl-elem-prepare-check]
-        } else if labelable == true {
-          [#context {
-            assert(false, message: "elembic: element '" + name + "' is labelable and needs basic preparation to display properly, call '#show: e.prepare()' at the top of your document to fix\n\n  hint: here, 'e' comes from 'import \"@preview/elembic:VERSION\" as e'\n  hint: if you have already done that but this error persists, check if both elembic and this element's package are up-to-date")
-          }#lbl-empty-prepare-check]
-        }
-
-        if data-changed and not updates-stylechain-inside {
-          if is-stateful {
-            [#style-state.update(chain => {
-              chain.push(global-data)
-              chain
-            })#shown#style-state.update(chain => {
-              _ = chain.pop()
-              chain
-            })]
-          } else {
-            show lbl-get: set bibliography(title: [#metadata(global-data)#lbl-data-metadata])
-            shown
-          }
-        } else {
-          shown
-        }
+        render-instance(args, __elembic_func, default-constructor, label, ref-label, labeling, previous-bib-title)
       }#lbl-get]
     }#lbl-outer]
 
